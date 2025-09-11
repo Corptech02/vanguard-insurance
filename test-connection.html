@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test FMCSA Database Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>FMCSA Database Connection Test</h1>
+        
+        <div class="test-section">
+            <h2>1. Test API Connection</h2>
+            <button onclick="testAPIConnection()">Test API Status</button>
+            <div id="apiResults" class="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>2. Search Carriers by State</h2>
+            <select id="stateSelect">
+                <option value="OH">Ohio (OH)</option>
+                <option value="TX">Texas (TX)</option>
+                <option value="CA">California (CA)</option>
+                <option value="FL">Florida (FL)</option>
+            </select>
+            <button onclick="searchByState()">Search State</button>
+            <div id="stateResults" class="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>3. Search by USDOT Number</h2>
+            <input type="text" id="usdotInput" placeholder="Enter USDOT number" value="1234567">
+            <button onclick="searchByUSDOT()">Search USDOT</button>
+            <div id="usdotResults" class="results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>4. Test Lead Generation</h2>
+            <button onclick="generateTestLeads()">Generate Leads (OH)</button>
+            <div id="leadResults" class="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001';
+        
+        async function testAPIConnection() {
+            const resultsDiv = document.getElementById('apiResults');
+            resultsDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/stats/summary`);
+                const data = await response.json();
+                
+                resultsDiv.innerHTML = `<span class="success">✅ API Connected Successfully!</span>\n\n`;
+                resultsDiv.innerHTML += `Database Statistics:\n`;
+                resultsDiv.innerHTML += `- Total Carriers: ${data.total_carriers.toLocaleString()}\n`;
+                resultsDiv.innerHTML += `- Ohio Carriers: ${data.ohio_carriers.toLocaleString()}\n`;
+                resultsDiv.innerHTML += `- Carriers with Insurance: ${data.carriers_with_insurance.toLocaleString()}\n`;
+                resultsDiv.innerHTML += `- Average Coverage: $${data.average_coverage.toLocaleString()}\n`;
+                resultsDiv.innerHTML += `- Last Updated: ${data.last_updated}`;
+            } catch (error) {
+                resultsDiv.innerHTML = `<span class="error">❌ Connection Failed: ${error.message}</span>`;
+            }
+        }
+        
+        async function searchByState() {
+            const state = document.getElementById('stateSelect').value;
+            const resultsDiv = document.getElementById('stateResults');
+            resultsDiv.innerHTML = 'Searching...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        state: state,
+                        page: 1,
+                        per_page: 10
+                    })
+                });
+                
+                const data = await response.json();
+                
+                let html = `<span class="success">✅ Found ${data.total.toLocaleString()} carriers in ${state}</span>\n\n`;
+                html += `<table>`;
+                html += `<tr><th>USDOT</th><th>Company</th><th>City</th><th>Status</th><th>Fleet</th><th>Insurance</th></tr>`;
+                
+                data.carriers.forEach(carrier => {
+                    html += `<tr>`;
+                    html += `<td>${carrier.usdot_number}</td>`;
+                    html += `<td>${carrier.legal_name || 'N/A'}</td>`;
+                    html += `<td>${carrier.city || 'N/A'}</td>`;
+                    html += `<td>${carrier.status}</td>`;
+                    html += `<td>${carrier.power_units || 0}</td>`;
+                    html += `<td>$${(carrier.insurance_on_file || 0).toLocaleString()}</td>`;
+                    html += `</tr>`;
+                });
+                
+                html += `</table>`;
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<span class="error">❌ Search Failed: ${error.message}</span>`;
+            }
+        }
+        
+        async function searchByUSDOT() {
+            const usdot = document.getElementById('usdotInput').value;
+            const resultsDiv = document.getElementById('usdotResults');
+            resultsDiv.innerHTML = 'Searching...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        usdot_number: usdot,
+                        page: 1,
+                        per_page: 5
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.carriers.length > 0) {
+                    const carrier = data.carriers[0];
+                    let html = `<span class="success">✅ Carrier Found</span>\n\n`;
+                    html += `USDOT: ${carrier.usdot_number}\n`;
+                    html += `Name: ${carrier.legal_name || 'N/A'}\n`;
+                    html += `DBA: ${carrier.dba_name || 'N/A'}\n`;
+                    html += `Location: ${carrier.city || 'N/A'}, ${carrier.state || 'N/A'}\n`;
+                    html += `Phone: ${carrier.phone || 'N/A'}\n`;
+                    html += `Email: ${carrier.email || 'N/A'}\n`;
+                    html += `Fleet Size: ${carrier.power_units || 0} vehicles\n`;
+                    html += `Drivers: ${carrier.drivers || 0}\n`;
+                    html += `Status: ${carrier.status}\n`;
+                    html += `Insurance: $${(carrier.insurance_on_file || 0).toLocaleString()}\n`;
+                    html += `Insurance Carrier: ${carrier.insurance_carrier || 'N/A'}\n`;
+                    html += `Policy Number: ${carrier.policy_number || 'N/A'}`;
+                    resultsDiv.innerHTML = html;
+                } else {
+                    resultsDiv.innerHTML = `<span class="error">No carrier found with USDOT: ${usdot}</span>`;
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `<span class="error">❌ Search Failed: ${error.message}</span>`;
+            }
+        }
+        
+        async function generateTestLeads() {
+            const resultsDiv = document.getElementById('leadResults');
+            resultsDiv.innerHTML = 'Generating leads...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        state: 'OH',
+                        has_insurance: true,
+                        page: 1,
+                        per_page: 20
+                    })
+                });
+                
+                const data = await response.json();
+                
+                const withInsurance = data.carriers.filter(c => c.insurance_on_file > 0);
+                const activeCarriers = data.carriers.filter(c => c.status === 'Active');
+                
+                let html = `<span class="success">✅ Lead Generation Complete</span>\n\n`;
+                html += `Total Leads Generated: ${data.carriers.length}\n`;
+                html += `Carriers with Insurance: ${withInsurance.length}\n`;
+                html += `Active Carriers: ${activeCarriers.length}\n\n`;
+                html += `Sample Leads:\n`;
+                html += `─────────────────────────────────────\n`;
+                
+                data.carriers.slice(0, 5).forEach(carrier => {
+                    html += `${carrier.legal_name || 'Unknown'}\n`;
+                    html += `  USDOT: ${carrier.usdot_number}\n`;
+                    html += `  Location: ${carrier.city || 'N/A'}, ${carrier.state}\n`;
+                    html += `  Fleet: ${carrier.power_units || 0} vehicles\n`;
+                    html += `  Insurance: $${(carrier.insurance_on_file || 0).toLocaleString()}\n`;
+                    html += `─────────────────────────────────────\n`;
+                });
+                
+                resultsDiv.innerHTML = html;
+            } catch (error) {
+                resultsDiv.innerHTML = `<span class="error">❌ Lead Generation Failed: ${error.message}</span>`;
+            }
+        }
+        
+        // Test API on page load
+        window.onload = () => {
+            testAPIConnection();
+        };
+    </script>
+</body>
+</html>

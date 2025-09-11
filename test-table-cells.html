@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Table Cell Click-to-Dial</title>
+    <link rel="stylesheet" href="css/styles.css?v=24">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 40px;
+            font-family: 'Inter', sans-serif;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        .data-table th {
+            background: #f9fafb;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .test-button {
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .status {
+            padding: 10px;
+            background: #f0f9ff;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Testing Click-to-Dial on Table Cells</h1>
+    
+    <div class="status">
+        <p><strong>Instructions:</strong> The phone numbers and emails in the table below should become clickable after the page loads.</p>
+        <p>Double-click any phone number or email to test the functionality.</p>
+    </div>
+    
+    <button class="test-button" onclick="manualScan()">Force Scan Table</button>
+    <button class="test-button" onclick="simulateClientsView()">Simulate Clients View</button>
+    
+    <h2>Static Table (Loaded with page)</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Phone</th>
+                <th>Email</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>John Doe</td>
+                <td>(555) 123-4567</td>
+                <td>john.doe@email.com</td>
+                <td>Active</td>
+            </tr>
+            <tr>
+                <td>Jane Smith</td>
+                <td>555-234-5678</td>
+                <td>jane.smith@example.com</td>
+                <td>Pending</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h2>Dynamic Table (Added after click)</h2>
+    <div id="dynamic-content"></div>
+    
+    <script src="js/tool-windows.js"></script>
+    <script src="js/click-to-dial-email.js"></script>
+    <script>
+        function manualScan() {
+            console.log('Manually scanning table...');
+            if (window.scanForClickableContent) {
+                window.scanForClickableContent(document.body);
+                console.log('Scan complete!');
+            } else {
+                console.error('scanForClickableContent not available');
+            }
+        }
+        
+        function simulateClientsView() {
+            const container = document.getElementById('dynamic-content');
+            container.innerHTML = `
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Client Name</th>
+                            <th>Type</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Policies</th>
+                            <th>Premium</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>John Doe</td>
+                            <td><span class="badge badge-blue">Personal</span></td>
+                            <td>(555) 123-4567</td>
+                            <td>john.doe@email.com</td>
+                            <td>3</td>
+                            <td>$3,450/yr</td>
+                            <td><span class="status-badge active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Smith Agency LLC</td>
+                            <td><span class="badge badge-purple">Commercial</span></td>
+                            <td>(555) 234-5678</td>
+                            <td>info@smithagency.com</td>
+                            <td>5</td>
+                            <td>$12,800/yr</td>
+                            <td><span class="status-badge active">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            `;
+            
+            // Scan after adding content
+            setTimeout(() => {
+                if (window.scanForClickableContent) {
+                    window.scanForClickableContent(container);
+                    console.log('Dynamic content scanned!');
+                }
+            }, 100);
+        }
+        
+        // Log when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            console.log('Page loaded, click-to-dial should initialize automatically');
+            
+            // Check if the functionality is working
+            setTimeout(() => {
+                const clickablePhones = document.querySelectorAll('.clickable-phone');
+                const clickableEmails = document.querySelectorAll('.clickable-email');
+                console.log(`Found ${clickablePhones.length} clickable phone numbers`);
+                console.log(`Found ${clickableEmails.length} clickable emails`);
+                
+                if (clickablePhones.length === 0 && clickableEmails.length === 0) {
+                    console.warn('No clickable elements found! Trying manual scan...');
+                    manualScan();
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

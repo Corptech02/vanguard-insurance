@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Click-to-Dial and Click-to-Email</title>
+    <link rel="stylesheet" href="css/styles.css?v=24">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 40px;
+            font-family: 'Inter', sans-serif;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .test-section h2 {
+            margin-bottom: 15px;
+            color: #374151;
+        }
+        .client-card {
+            background: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .client-card h3 {
+            margin-bottom: 10px;
+            color: #111827;
+        }
+        .client-info {
+            color: #6b7280;
+            line-height: 1.6;
+        }
+        .instructions {
+            background: #dbeafe;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            color: #1e40af;
+        }
+        .instructions h3 {
+            margin-top: 0;
+        }
+        .tool-window {
+            position: fixed;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 1000;
+        }
+        .tool-window-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px;
+            border-radius: 8px 8px 0 0;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tool-window-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+        .tool-window-controls {
+            display: flex;
+            gap: 8px;
+        }
+        .tool-window-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .tool-window-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        .tool-window-content {
+            padding: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        .tool-window.minimized {
+            display: none;
+        }
+        .minimized-taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1f2937;
+            display: flex;
+            gap: 5px;
+            padding: 5px;
+            z-index: 999;
+        }
+        .taskbar-item {
+            background: #374151;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .taskbar-item:hover {
+            background: #4b5563;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h3>📌 Testing Instructions</h3>
+        <p><strong>How to test the click-to-dial and click-to-email functionality:</strong></p>
+        <ol>
+            <li>Double-click any phone number below - it should open the Phone tool and populate the dialer</li>
+            <li>Double-click any email address - it should open the Email tool in compose mode with the address populated</li>
+            <li>If a tool is already open, double-clicking should bring it to front and populate the new data</li>
+            <li>If a tool is minimized, it should be restored when double-clicking</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Sample Client Data with Phone Numbers and Emails</h2>
+        
+        <div class="client-card">
+            <h3>John Smith</h3>
+            <div class="client-info">
+                <div>Phone: (555) 123-4567</div>
+                <div>Email: john.smith@example.com</div>
+                <div>Company: ABC Insurance</div>
+            </div>
+        </div>
+        
+        <div class="client-card">
+            <h3>Sarah Johnson</h3>
+            <div class="client-info">
+                <div>Primary: 555-234-5678</div>
+                <div>Mobile: (555) 345-6789</div>
+                <div>Contact: sarah.johnson@company.com</div>
+                <div>Department: Sales</div>
+            </div>
+        </div>
+        
+        <div class="client-card">
+            <h3>Mike Davis</h3>
+            <div class="client-info">
+                <div>Office: 555.456.7890</div>
+                <div>Cell: 555 567 8901</div>
+                <div>Email Address: mike.davis@progressive.com</div>
+                <div>Position: Senior Agent</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Different Phone Number Formats</h2>
+        <p>All of these should be clickable:</p>
+        <ul>
+            <li>Standard: (555) 678-9012</li>
+            <li>Dashes: 555-789-0123</li>
+            <li>Dots: 555.890.1234</li>
+            <li>Spaces: 555 901 2345</li>
+            <li>No formatting: 5550123456</li>
+            <li>With country code: +1 555 123 4567</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>Different Email Formats</h2>
+        <p>All of these should be clickable:</p>
+        <ul>
+            <li>Simple: test@example.com</li>
+            <li>With subdomain: user@mail.example.com</li>
+            <li>With numbers: john123@company.net</li>
+            <li>With dots: first.last@organization.org</li>
+            <li>With underscores: user_name@service.io</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Mixed Content</h2>
+        <p>
+            You can reach our support team at support@vanguard.com or call us at (800) 555-1234 during business hours.
+            For urgent matters, contact our emergency line at 555-HELP-NOW (555-435-7669) or email urgent@vanguard.com.
+        </p>
+        <p>
+            Regional offices:<br>
+            New York: 212-555-0100 (ny@vanguard.com)<br>
+            Los Angeles: 310-555-0200 (la@vanguard.com)<br>
+            Chicago: 312-555-0300 (chicago@vanguard.com)
+        </p>
+    </div>
+    
+    <script src="js/tool-windows.js"></script>
+    <script src="js/click-to-dial-email.js"></script>
+</body>
+</html>

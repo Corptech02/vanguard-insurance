@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Lead Generation</title>
+    <link rel="stylesheet" href="css/styles.css?v=12">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .dashboard-content {
+            min-height: 600px;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Test Lead Generation Page</h1>
+        <p>Click the button below to test the Generate Leads form:</p>
+        
+        <button class="btn-primary" onclick="showGenerateLeadsForm()" style="padding: 10px 20px; font-size: 16px; margin: 20px 0;">
+            <i class="fas fa-magic"></i> Test Generate Leads Form
+        </button>
+        
+        <div class="dashboard-content">
+            <!-- Content will be loaded here -->
+        </div>
+    </div>
+
+    <script src="js/app.js?v=3"></script>
+    <script>
+        console.log('Test page loaded');
+        console.log('showGenerateLeadsForm function exists:', typeof showGenerateLeadsForm === 'function');
+    </script>
+</body>
+</html>

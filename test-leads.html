@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Leads View</title>
+</head>
+<body>
+    <div class="dashboard-content"></div>
+    <script>
+        // Clear localStorage to test with fresh data
+        localStorage.removeItem('leads');
+        
+        // Test function to see if it works in isolation
+        function getStageHtml(stage) {
+            const stageColors = {
+                'new': 'stage-new',
+                'quoted': 'stage-quoted',
+                'quote-sent-unaware': 'stage-quote-unaware',
+                'quote-sent-aware': 'stage-quote-aware',
+                'interested': 'stage-interested',
+                'not-interested': 'stage-not-interested',
+                'closed': 'stage-closed'
+            };
+            
+            const stageLabels = {
+                'new': 'New',
+                'quoted': 'Quoted',
+                'quote-sent-unaware': 'Quote Sent (Unaware)',
+                'quote-sent-aware': 'Quote Sent (Aware)',
+                'interested': 'Interested',
+                'not-interested': 'Not Interested',
+                'closed': 'Closed'
+            };
+            
+            return `<span class="stage-badge">${stageLabels[stage] || stage}</span>`;
+        }
+        
+        function testLeadsView() {
+            const dashboardContent = document.querySelector('.dashboard-content');
+            
+            try {
+                let leads = [
+                    { id: 1, name: 'Test Lead', phone: '555-1234', email: 'test@test.com', product: 'Commercial Auto', stage: 'new', assignedTo: 'John', created: '12/26/2024', renewalDate: '01/26/2025', premium: 5200 }
+                ];
+                
+                const totalLeads = leads.length;
+                const newLeads = leads.filter(l => l.stage === 'new').length;
+                
+                console.log('Total leads:', totalLeads);
+                console.log('New leads:', newLeads);
+                console.log('Division result:', totalLeads > 0 ? (newLeads/totalLeads)*100 : 0);
+                
+                const html = `
+                    <div class="leads-view">
+                        <h1>Test Leads View</h1>
+                        <p>Total Leads: ${totalLeads}</p>
+                        <p>New Leads: ${newLeads}</p>
+                        <p>Percentage: ${totalLeads > 0 ? (newLeads/totalLeads)*100 : 0}%</p>
+                        <p>Stage HTML: ${getStageHtml('new')}</p>
+                    </div>
+                `;
+                
+                dashboardContent.innerHTML = html;
+                console.log('HTML set successfully');
+                
+            } catch (error) {
+                console.error('Error:', error);
+                dashboardContent.innerHTML = 'Error: ' + error.message;
+            }
+        }
+        
+        // Run test
+        testLeadsView();
+    </script>
+</body>
+</html>

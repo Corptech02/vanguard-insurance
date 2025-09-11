@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Add Sample Data</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .success { color: green; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Add Sample Insurance Data</h1>
+    
+    <button onclick="addSampleClients()">Add 5 Sample Clients</button>
+    <button onclick="addSamplePolicies()">Add 3 Sample Policies</button>
+    <button onclick="addSampleLeads()">Add 4 Sample Leads</button>
+    <button onclick="clearAllData()">Clear All Data</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function addSampleClients() {
+            const existingClients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+            
+            const newClients = [
+                {
+                    id: Date.now() + 1,
+                    name: "John Smith",
+                    email: "john.smith@email.com",
+                    phone: "(555) 123-4567",
+                    address: "123 Main St, Springfield, IL 62701",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 2,
+                    name: "Sarah Johnson",
+                    email: "sarah.j@email.com",
+                    phone: "(555) 234-5678",
+                    address: "456 Oak Ave, Chicago, IL 60601",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    name: "Michael Davis",
+                    email: "mdavis@email.com",
+                    phone: "(555) 345-6789",
+                    address: "789 Pine Rd, Peoria, IL 61602",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 4,
+                    name: "Emily Wilson",
+                    email: "emily.w@email.com",
+                    phone: "(555) 456-7890",
+                    address: "321 Elm St, Rockford, IL 61101",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 5,
+                    name: "Robert Brown",
+                    email: "rbrown@email.com",
+                    phone: "(555) 567-8901",
+                    address: "654 Maple Dr, Aurora, IL 60505",
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            const allClients = [...existingClients, ...newClients];
+            localStorage.setItem('insurance_clients', JSON.stringify(allClients));
+            
+            showMessage(`Added 5 clients. Total clients: ${allClients.length}`, 'success');
+            updateStats();
+        }
+        
+        function addSamplePolicies() {
+            const existingPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+            
+            const newPolicies = [
+                {
+                    id: Date.now() + 1,
+                    policyNumber: "POL-" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    clientName: "John Smith",
+                    type: "Auto Insurance",
+                    premium: 1250.00,
+                    monthlyPremium: 1250.00,
+                    effectiveDate: new Date().toISOString(),
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: "Active"
+                },
+                {
+                    id: Date.now() + 2,
+                    policyNumber: "POL-" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    clientName: "Sarah Johnson",
+                    type: "Home Insurance",
+                    premium: 1800.00,
+                    monthlyPremium: 1800.00,
+                    effectiveDate: new Date().toISOString(),
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: "Active"
+                },
+                {
+                    id: Date.now() + 3,
+                    policyNumber: "POL-" + Math.random().toString(36).substr(2, 9).toUpperCase(),
+                    clientName: "Michael Davis",
+                    type: "Commercial Trucking",
+                    premium: 3500.00,
+                    monthlyPremium: 3500.00,
+                    effectiveDate: new Date().toISOString(),
+                    expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: "Active"
+                }
+            ];
+            
+            const allPolicies = [...existingPolicies, ...newPolicies];
+            localStorage.setItem('insurance_policies', JSON.stringify(allPolicies));
+            
+            showMessage(`Added 3 policies. Total policies: ${allPolicies.length}`, 'success');
+            updateStats();
+        }
+        
+        function addSampleLeads() {
+            const existingLeads = JSON.parse(localStorage.getItem('insurance_leads') || '[]');
+            
+            const newLeads = [
+                {
+                    id: Date.now() + 1,
+                    name: "Jessica Martinez",
+                    email: "jmartinez@email.com",
+                    phone: "(555) 678-9012",
+                    premium: 950.00,
+                    monthlyPremium: 950.00,
+                    insuranceType: "Auto",
+                    status: "New",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 2,
+                    name: "David Thompson",
+                    email: "dthompson@email.com",
+                    phone: "(555) 789-0123",
+                    premium: 1200.00,
+                    monthlyPremium: 1200.00,
+                    insuranceType: "Home",
+                    status: "Contacted",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 3,
+                    name: "Lisa Chen",
+                    email: "lchen@email.com",
+                    phone: "(555) 890-1234",
+                    premium: 2800.00,
+                    monthlyPremium: 2800.00,
+                    insuranceType: "Commercial",
+                    status: "Qualified",
+                    createdAt: new Date().toISOString()
+                },
+                {
+                    id: Date.now() + 4,
+                    name: "James Anderson",
+                    email: "janderson@email.com",
+                    phone: "(555) 901-2345",
+                    premium: 750.00,
+                    monthlyPremium: 750.00,
+                    insuranceType: "Auto",
+                    status: "New",
+                    createdAt: new Date().toISOString()
+                }
+            ];
+            
+            const allLeads = [...existingLeads, ...newLeads];
+            localStorage.setItem('insurance_leads', JSON.stringify(allLeads));
+            
+            showMessage(`Added 4 leads. Total leads: ${allLeads.length}`, 'success');
+            updateStats();
+        }
+        
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data?')) {
+                localStorage.setItem('insurance_clients', '[]');
+                localStorage.setItem('insurance_policies', '[]');
+                localStorage.setItem('insurance_leads', '[]');
+                localStorage.setItem('insurance_quotes', '[]');
+                showMessage('All data cleared', 'info');
+                updateStats();
+            }
+        }
+        
+        function showMessage(msg, type) {
+            const output = document.getElementById('output');
+            output.innerHTML = `<p class="${type}">${msg}</p>`;
+            updateStats();
+        }
+        
+        function updateStats() {
+            const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+            const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+            const leads = JSON.parse(localStorage.getItem('insurance_leads') || '[]');
+            
+            let totalPremium = 0;
+            policies.forEach(p => totalPremium += parseFloat(p.premium || p.monthlyPremium || 0));
+            
+            let totalLeadPremium = 0;
+            leads.forEach(l => totalLeadPremium += parseFloat(l.premium || l.monthlyPremium || 0));
+            
+            const stats = `
+                <h2>Current Stats:</h2>
+                <ul>
+                    <li>Active Clients: ${clients.length}</li>
+                    <li>Active Policies: ${policies.length}</li>
+                    <li>All Time Premium: $${totalPremium.toFixed(2)}</li>
+                    <li>Monthly Lead Premium: $${totalLeadPremium.toFixed(2)}</li>
+                </ul>
+            `;
+            
+            document.getElementById('output').innerHTML += stats;
+        }
+        
+        // Show initial stats
+        updateStats();
+    </script>
+</body>
+</html>

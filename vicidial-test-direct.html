@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ViciDial Direct Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            max-width: 800px; 
+            margin: 50px auto; 
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 { color: #333; }
+        .important {
+            background: #fffbf0;
+            border: 2px solid #f0ad4e;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .config {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .config input {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover { background: #45a049; }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        code { 
+            background: #f5f5f5; 
+            padding: 2px 5px; 
+            border-radius: 3px;
+            color: #d14;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 ViciDial Connection Test</h1>
+        
+        <div class="important">
+            <h3>⚠️ Important: Use this Proxy URL</h3>
+            <p>Your ViciDial is at <code>http://204.13.233.29</code> but browsers block direct access due to CORS.</p>
+            <p><strong>Use this proxy URL instead:</strong></p>
+            <p style="font-size: 18px; font-weight: bold;">
+                <code id="proxyUrl">https://102e761ac9d5.ngrok-free.app/vicidial/api</code>
+            </p>
+        </div>
+        
+        <div class="config">
+            <h3>Test Configuration:</h3>
+            <label>API URL (Proxy):</label>
+            <input type="text" id="apiUrl" value="https://102e761ac9d5.ngrok-free.app/vicidial/api" />
+            
+            <label>Username:</label>
+            <input type="text" id="username" value="6666" />
+            
+            <label>Password:</label>
+            <input type="password" id="password" value="corp06" />
+        </div>
+        
+        <button onclick="testConnection()">Test ViciDial Connection</button>
+        <button onclick="copyProxyUrl()">Copy Proxy URL</button>
+        
+        <div id="result"></div>
+        
+        <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <h3>💡 How to use in Vanguard:</h3>
+            <ol>
+                <li>Open your Vanguard Insurance Software</li>
+                <li>Go to ViciDial Integration settings</li>
+                <li>Enter this URL: <code>https://102e761ac9d5.ngrok-free.app/vicidial/api</code></li>
+                <li>Username: <code>6666</code></li>
+                <li>Password: <code>corp06</code></li>
+                <li>Click "Test Connection"</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        function showResult(html, className = '') {
+            document.getElementById('result').innerHTML = 
+                `<div class="result ${className}">${html}</div>`;
+        }
+        
+        async function testConnection() {
+            const apiUrl = document.getElementById('apiUrl').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            showResult('Testing connection to ViciDial...', 'info');
+            
+            try {
+                // Build the URL with parameters
+                const params = new URLSearchParams({
+                    source: 'test',
+                    user: username,
+                    pass: password,
+                    function: 'version'
+                });
+                
+                const fullUrl = `${apiUrl}?${params.toString()}`;
+                console.log('Testing:', fullUrl);
+                
+                const response = await fetch(fullUrl);
+                const text = await response.text();
+                
+                console.log('Response:', text);
+                
+                if (text.includes('VERSION')) {
+                    showResult(
+                        `<h3>✅ Success!</h3>
+                        <p>ViciDial connection is working!</p>
+                        <p>You can now use these credentials in your Vanguard system.</p>
+                        <pre>${text}</pre>`,
+                        'success'
+                    );
+                } else if (text.includes('ERROR')) {
+                    if (text.includes('Login incorrect')) {
+                        showResult(
+                            `<h3>❌ Authentication Failed</h3>
+                            <p>Username or password is incorrect.</p>
+                            <p>Please check your credentials.</p>
+                            <pre>${text}</pre>`,
+                            'error'
+                        );
+                    } else {
+                        showResult(
+                            `<h3>❌ ViciDial Error</h3>
+                            <pre>${text}</pre>`,
+                            'error'
+                        );
+                    }
+                } else {
+                    showResult(
+                        `<h3>⚠️ Unexpected Response</h3>
+                        <pre>${text}</pre>`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `<h3>❌ Connection Failed</h3>
+                    <p>Could not connect to the proxy server.</p>
+                    <p>Error: ${error.message}</p>
+                    <p>The proxy might be down or the URL might be incorrect.</p>`,
+                    'error'
+                );
+                console.error('Error:', error);
+            }
+        }
+        
+        function copyProxyUrl() {
+            const proxyUrl = document.getElementById('apiUrl').value;
+            navigator.clipboard.writeText(proxyUrl).then(() => {
+                showResult('✅ Proxy URL copied to clipboard!', 'success');
+            }).catch(err => {
+                showResult('❌ Failed to copy URL', 'error');
+            });
+        }
+        
+        // Test on load
+        window.addEventListener('load', () => {
+            console.log('ViciDial test page loaded');
+            console.log('Proxy URL:', document.getElementById('apiUrl').value);
+        });
+    </script>
+</body>
+</html>

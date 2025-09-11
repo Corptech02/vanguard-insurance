@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check LocalStorage Data</title>
+</head>
+<body>
+    <h1>LocalStorage Data Check</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Check all insurance-related localStorage keys
+        const output = document.getElementById('output');
+        let html = '';
+        
+        // Check clients
+        const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+        html += `<h2>Clients: ${clients.length}</h2>`;
+        if (clients.length > 0) {
+            html += '<ul>';
+            clients.slice(0, 5).forEach(client => {
+                html += `<li>${client.name || 'Unknown'} - ${client.email || 'No email'}</li>`;
+            });
+            if (clients.length > 5) html += `<li>... and ${clients.length - 5} more</li>`;
+            html += '</ul>';
+        }
+        
+        // Check policies
+        const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+        html += `<h2>Policies: ${policies.length}</h2>`;
+        if (policies.length > 0) {
+            let totalPremium = 0;
+            policies.forEach(policy => {
+                totalPremium += parseFloat(policy.premium || policy.monthlyPremium || 0);
+            });
+            html += `<p>Total Premium: $${totalPremium.toFixed(2)}</p>`;
+        }
+        
+        // Check leads
+        const leads = JSON.parse(localStorage.getItem('insurance_leads') || '[]');
+        html += `<h2>Leads: ${leads.length}</h2>`;
+        if (leads.length > 0) {
+            let totalLeadPremium = 0;
+            leads.forEach(lead => {
+                totalLeadPremium += parseFloat(lead.premium || lead.monthlyPremium || 0);
+            });
+            html += `<p>Total Lead Premium: $${totalLeadPremium.toFixed(2)}</p>`;
+        }
+        
+        // Check quotes
+        const quotes = JSON.parse(localStorage.getItem('insurance_quotes') || '[]');
+        html += `<h2>Quotes: ${quotes.length}</h2>`;
+        
+        output.innerHTML = html;
+        
+        // Also log to console
+        console.log('Clients:', clients);
+        console.log('Policies:', policies);
+        console.log('Leads:', leads);
+        console.log('Quotes:', quotes);
+    </script>
+</body>
+</html>

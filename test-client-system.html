@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Client System</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .success { color: green; }
+        .info { color: blue; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h1>Client System Test</h1>
+    
+    <button onclick="checkClients()">Check Current Clients</button>
+    <button onclick="addTestClient()">Add Test Client</button>
+    <button onclick="clearClients()">Clear All Clients</button>
+    <button onclick="window.location.href='index.html'">Go to Main App</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        function checkClients() {
+            const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+            const output = document.getElementById('output');
+            
+            let html = `<h2>Current Clients in localStorage (${clients.length} total)</h2>`;
+            
+            if (clients.length === 0) {
+                html += '<p>No clients found in localStorage["insurance_clients"]</p>';
+            } else {
+                html += '<table>';
+                html += '<tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Type</th><th>Status</th></tr>';
+                clients.forEach(client => {
+                    html += `<tr>
+                        <td>${client.id}</td>
+                        <td>${client.name}</td>
+                        <td>${client.email}</td>
+                        <td>${client.phone}</td>
+                        <td>${client.type || 'N/A'}</td>
+                        <td>${client.status || 'N/A'}</td>
+                    </tr>`;
+                });
+                html += '</table>';
+            }
+            
+            output.innerHTML = html;
+            
+            // Also check old 'clients' key
+            const oldClients = JSON.parse(localStorage.getItem('clients') || '[]');
+            if (oldClients.length > 0) {
+                output.innerHTML += `<p class="info">Note: Found ${oldClients.length} clients in old 'clients' key</p>`;
+            }
+        }
+        
+        function addTestClient() {
+            const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+            
+            const testClient = {
+                id: Date.now(),
+                name: "Test Client " + (clients.length + 1),
+                email: "test" + (clients.length + 1) + "@example.com",
+                phone: "(555) 000-" + String(1000 + clients.length).padStart(4, '0'),
+                address: "123 Test Street",
+                type: "Personal",
+                status: "Active",
+                createdAt: new Date().toISOString(),
+                policies: [],
+                totalPremium: 0
+            };
+            
+            clients.push(testClient);
+            localStorage.setItem('insurance_clients', JSON.stringify(clients));
+            
+            document.getElementById('output').innerHTML = `
+                <p class="success">Added test client: ${testClient.name}</p>
+                <p>Total clients now: ${clients.length}</p>
+            `;
+            
+            setTimeout(checkClients, 1000);
+        }
+        
+        function clearClients() {
+            if (confirm('Are you sure you want to clear all clients?')) {
+                localStorage.setItem('insurance_clients', '[]');
+                localStorage.setItem('clients', '[]'); // Also clear old key
+                document.getElementById('output').innerHTML = '<p class="success">All clients cleared</p>';
+                setTimeout(checkClients, 1000);
+            }
+        }
+        
+        // Check on load
+        checkClients();
+    </script>
+</body>
+</html>

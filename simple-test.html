@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple ViciDial Test</title>
+    <style>
+        body { font-family: Arial; padding: 40px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; }
+        button { background: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin: 10px 0; }
+        button:hover { background: #45a049; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 5px; background: #f9f9f9; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        pre { background: #f5f5f5; padding: 10px; overflow-x: auto; }
+        .config { background: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎧 Simple ViciDial Connection Test</h1>
+        
+        <div class="config">
+            <h3>Settings (Auto-configured):</h3>
+            <p><strong>Proxy URL:</strong> https://d697f9185f47.ngrok-free.app/vicidial/api</p>
+            <p><strong>Username:</strong> 6666</p>
+            <p><strong>Password:</strong> corp06</p>
+        </div>
+        
+        <button onclick="testDirect()">Test Direct Connection</button>
+        <button onclick="testWithIntegration()">Test with Integration Class</button>
+        
+        <div id="result"></div>
+    </div>
+    
+    <script>
+        const PROXY_URL = 'https://102e761ac9d5.ngrok-free.app/vicidial/api';
+        
+        function showResult(html, className = '') {
+            document.getElementById('result').innerHTML = 
+                `<div class="result ${className}">${html}</div>`;
+        }
+        
+        async function testDirect() {
+            showResult('Testing direct connection to ViciDial via proxy...');
+            
+            try {
+                // Build the URL with parameters
+                const params = new URLSearchParams({
+                    source: 'test',
+                    user: '6666',
+                    pass: 'corp06',
+                    function: 'version'
+                });
+                
+                const fullUrl = `${PROXY_URL}?${params.toString()}`;
+                console.log('Fetching:', fullUrl);
+                
+                const response = await fetch(fullUrl);
+                const text = await response.text();
+                
+                console.log('Response:', text);
+                
+                if (text.includes('VERSION')) {
+                    showResult(
+                        `<h3>✅ Success!</h3>
+                        <p>ViciDial API is working correctly.</p>
+                        <pre>${text}</pre>`,
+                        'success'
+                    );
+                } else if (text.includes('ERROR')) {
+                    showResult(
+                        `<h3>❌ Authentication Error</h3>
+                        <p>ViciDial returned an error:</p>
+                        <pre>${text}</pre>`,
+                        'error'
+                    );
+                } else {
+                    showResult(
+                        `<h3>⚠️ Unexpected Response</h3>
+                        <pre>${text}</pre>`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `<h3>❌ Connection Failed</h3>
+                    <p>Error: ${error.message}</p>
+                    <p>Make sure the proxy is running and accessible.</p>`,
+                    'error'
+                );
+                console.error('Error:', error);
+            }
+        }
+        
+        async function testWithIntegration() {
+            showResult('Loading ViciDial Integration class...');
+            
+            // Load the integration script dynamically
+            if (!window.ViciDialIntegration) {
+                const script = document.createElement('script');
+                script.src = 'js/vicidial-integration.js';
+                document.head.appendChild(script);
+                
+                // Wait for script to load
+                await new Promise(resolve => {
+                    script.onload = resolve;
+                    setTimeout(resolve, 2000); // Timeout after 2 seconds
+                });
+            }
+            
+            if (!window.ViciDialIntegration) {
+                showResult('❌ Could not load ViciDialIntegration class', 'error');
+                return;
+            }
+            
+            try {
+                const vici = new ViciDialIntegration();
+                const result = await vici.init({
+                    apiUrl: PROXY_URL,
+                    apiUser: '6666',
+                    apiPass: 'corp06'
+                });
+                
+                if (result.success) {
+                    showResult(
+                        `<h3>✅ Integration Successful!</h3>
+                        <p>${result.message}</p>
+                        <p>The ViciDial integration is ready to use.</p>
+                        <p>You can now import sales leads and access call data.</p>`,
+                        'success'
+                    );
+                } else {
+                    showResult(
+                        `<h3>❌ Integration Failed</h3>
+                        <p>${result.message}</p>`,
+                        'error'
+                    );
+                }
+            } catch (error) {
+                showResult(
+                    `<h3>❌ Integration Error</h3>
+                    <p>${error.message}</p>`,
+                    'error'
+                );
+                console.error('Integration error:', error);
+            }
+        }
+        
+        // Run test automatically on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Click a button to test ViciDial connection.');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug ViciDial Connection</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        .test { margin: 20px 0; padding: 20px; border: 1px solid #ddd; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f5f5f5; padding: 10px; }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Debug ViciDial Connection</h1>
+    
+    <div class="test">
+        <h2>Test 1: Direct Proxy Connection</h2>
+        <button onclick="test1()">Run Test 1</button>
+        <div id="test1-result"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 2: Using ViciDialIntegration Class</h2>
+        <button onclick="test2()">Run Test 2</button>
+        <div id="test2-result"></div>
+    </div>
+    
+    <div class="test">
+        <h2>Test 3: Check Console Errors</h2>
+        <button onclick="test3()">Run Test 3</button>
+        <div id="test3-result"></div>
+    </div>
+    
+    <script src="js/vicidial-integration.js"></script>
+    <script>
+        // Test 1: Direct fetch to proxy
+        async function test1() {
+            const resultDiv = document.getElementById('test1-result');
+            resultDiv.innerHTML = '<p>Testing direct connection to proxy...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5001/vicidial/api?source=test&user=6666&pass=corp06&function=version');
+                const text = await response.text();
+                
+                resultDiv.innerHTML = `
+                    <p class="success">✓ Fetch successful</p>
+                    <p>Status: ${response.status}</p>
+                    <p>Response contains VERSION: ${text.includes('VERSION') ? 'YES' : 'NO'}</p>
+                    <pre>${text}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">✗ Fetch failed</p>
+                    <p>Error: ${error.message}</p>
+                    <p>This might be a CORS issue or the proxy is not running</p>
+                `;
+                console.error('Test 1 error:', error);
+            }
+        }
+        
+        // Test 2: Using the integration class
+        async function test2() {
+            const resultDiv = document.getElementById('test2-result');
+            resultDiv.innerHTML = '<p>Testing ViciDialIntegration class...</p>';
+            
+            try {
+                const vici = new ViciDialIntegration();
+                console.log('Created ViciDialIntegration instance');
+                
+                // Check if init function exists
+                if (typeof vici.init !== 'function') {
+                    throw new Error('init function not found on ViciDialIntegration');
+                }
+                
+                const result = await vici.init({
+                    apiUrl: 'http://localhost:5001/vicidial/api',
+                    apiUser: '6666',
+                    apiPass: 'corp06'
+                });
+                
+                console.log('Init result:', result);
+                
+                resultDiv.innerHTML = `
+                    <p class="${result.success ? 'success' : 'error'}">
+                        ${result.success ? '✓' : '✗'} ${result.message}
+                    </p>
+                    <p>Connection status: ${vici.isConnected}</p>
+                    <pre>${JSON.stringify(result, null, 2)}</pre>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <p class="error">✗ Integration test failed</p>
+                    <p>Error: ${error.message}</p>
+                    <p>Stack: <pre>${error.stack}</pre></p>
+                `;
+                console.error('Test 2 error:', error);
+            }
+        }
+        
+        // Test 3: Check for console errors
+        function test3() {
+            const resultDiv = document.getElementById('test3-result');
+            
+            // Check if ViciDialIntegration is loaded
+            const checks = {
+                'ViciDialIntegration class exists': typeof ViciDialIntegration !== 'undefined',
+                'window.viciDialAPI exists': typeof window.viciDialAPI !== 'undefined',
+                'Fetch API available': typeof fetch !== 'undefined',
+                'URLSearchParams available': typeof URLSearchParams !== 'undefined'
+            };
+            
+            let html = '<h3>Environment Checks:</h3><ul>';
+            for (const [check, result] of Object.entries(checks)) {
+                html += `<li class="${result ? 'success' : 'error'}">
+                    ${result ? '✓' : '✗'} ${check}
+                </li>`;
+            }
+            html += '</ul>';
+            
+            // Try to call testConnection directly
+            if (window.viciDialAPI) {
+                html += '<h3>Testing window.viciDialAPI.testConnection():</h3>';
+                window.viciDialAPI.apiUrl = 'http://localhost:5001/vicidial/api';
+                window.viciDialAPI.apiUser = '6666';
+                window.viciDialAPI.apiPass = 'corp06';
+                
+                window.viciDialAPI.testConnection().then(result => {
+                    document.getElementById('test3-result').innerHTML += 
+                        `<p class="${result ? 'success' : 'error'}">
+                            testConnection returned: ${result}
+                        </p>`;
+                }).catch(error => {
+                    document.getElementById('test3-result').innerHTML += 
+                        `<p class="error">testConnection error: ${error.message}</p>`;
+                });
+            }
+            
+            resultDiv.innerHTML = html;
+        }
+        
+        // Auto-run test 3 on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded, checking environment...');
+            test3();
+        });
+    </script>
+</body>
+</html>

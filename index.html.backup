@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Vanguard Insurance Software - All-in-One Agency Management Platform</title>
+    <link rel="stylesheet" href="css/styles.css?v=27">
+    <link rel="stylesheet" href="css/carrier-profile.css?v=2">
+    <link rel="stylesheet" href="css/policy-modal.css?v=2">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="pdf.min.js"></script>
+    <script>
+        // Set up PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
+        }
+    </script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="navbar">
+            <div class="nav-container">
+                <div class="nav-brand">
+                    <img src="images/vanguard-logo.png" alt="Vanguard Insurance Group" class="logo">
+                    <div class="brand-text">
+                        <h1>Vanguard Software</h1>
+                        <span>Agency Management Platform</span>
+                    </div>
+                </div>
+                <ul class="nav-menu">
+                    <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="nav-link">Tools <i class="fas fa-chevron-down"></i></a>
+                        <div class="dropdown-menu">
+                            <a href="#" onclick="openPhoneTool(); return false;"><i class="fas fa-phone"></i> Phone</a>
+                            <a href="#" onclick="openEmailTool(); return false;"><i class="fas fa-envelope"></i> Email</a>
+                            <a href="#" onclick="openNotepad(); return false;"><i class="fas fa-sticky-note"></i> Notepad</a>
+                        </div>
+                    </li>
+                    <li><a href="#analytics" class="nav-link">Analytics</a></li>
+                    <li><a href="#integrations" class="nav-link">Integrations</a></li>
+                </ul>
+                <div class="nav-actions">
+                    <button class="notification-btn">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge">5</span>
+                    </button>
+                    <div class="user-menu">
+                        <img src="https://ui-avatars.com/api/?name=Admin&background=0066cc&color=fff" alt="User" class="user-avatar">
+                        <span>Admin</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Dashboard -->
+    <main class="main-content">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h3>Main</h3>
+                    <ul>
+                        <li class="active">
+                            <a href="#dashboard" data-tooltip="Dashboard">
+                                <i class="fas fa-home"></i>
+                                <span>Dashboard</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#leads" data-tooltip="Leads">
+                                <i class="fas fa-user-plus"></i>
+                                <span>Leads</span>
+                                <span class="count badge-new">156</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#clients" data-tooltip="Clients">
+                                <i class="fas fa-users"></i>
+                                <span>Clients</span>
+                                <span class="count">2,847</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#policies" data-tooltip="Policies">
+                                <i class="fas fa-file-contract"></i>
+                                <span>Policies</span>
+                                <span class="count">5,234</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#quotes" data-tooltip="Quotes">
+                                <i class="fas fa-calculator"></i>
+                                <span>Quotes</span>
+                                <span class="count">124</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="menu-section">
+                    <h3>Tools</h3>
+                    <ul>
+                        <li>
+                            <a href="#lead-generation" data-tooltip="Lead Generation">
+                                <i class="fas fa-search-location"></i>
+                                <span>Lead Generation</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#rating-engine" data-tooltip="Rating Engine">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Rating Engine</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#automation" data-tooltip="Automation">
+                                <i class="fas fa-robot"></i>
+                                <span>Automation</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#coi" data-tooltip="COI Management">
+                                <i class="fas fa-certificate"></i>
+                                <span>COI Management</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#accounting" data-tooltip="Accounting">
+                                <i class="fas fa-dollar-sign"></i>
+                                <span>Accounting</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#reports" data-tooltip="Reports">
+                                <i class="fas fa-chart-bar"></i>
+                                <span>Reports</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#communications" data-tooltip="Communications">
+                                <i class="fas fa-envelope"></i>
+                                <span>Communications</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="menu-section">
+                    <h3>Administration</h3>
+                    <ul>
+                        <li>
+                            <a href="#carriers" data-tooltip="Carriers">
+                                <i class="fas fa-building"></i>
+                                <span>Carriers</span>
+                                <span class="count">47</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#producers" data-tooltip="Producers">
+                                <i class="fas fa-user-tie"></i>
+                                <span>Producers</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#settings" data-tooltip="Settings">
+                                <i class="fas fa-cog"></i>
+                                <span>Settings</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Dashboard Content -->
+        <section class="dashboard-content">
+            <!-- Stats Overview -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Active Clients</h3>
+                        <p class="stat-number stat-value">0</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 0% from last month
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Active Policies</h3>
+                        <p class="stat-number stat-value">0</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 0% from last month
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon purple">
+                        <i class="fas fa-dollar-sign"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Monthly Premium</h3>
+                        <p class="stat-number stat-value">$0</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 0% from last month
+                        </span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="stat-details">
+                        <h3>Monthly Lead Premium</h3>
+                        <p class="stat-number stat-value">$0</p>
+                        <span class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i> 0% from last month
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <h2>Quick Actions</h2>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showNewQuote()">
+                        <i class="fas fa-plus-circle"></i>
+                        <span>New Quote</span>
+                    </button>
+                    <button class="action-btn" onclick="showNewClient()">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Add Client</span>
+                    </button>
+                    <button class="action-btn" onclick="showRatingEngine()">
+                        <i class="fas fa-calculator"></i>
+                        <span>Compare Rates</span>
+                    </button>
+                    <button class="action-btn" onclick="showRenewalsList()">
+                        <i class="fas fa-sync"></i>
+                        <span>Renewals</span>
+                    </button>
+                    <button class="action-btn" onclick="showClaims()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Claims</span>
+                    </button>
+                    <button class="action-btn" onclick="showReports()">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Reports</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Main Sections -->
+            <div class="dashboard-sections">
+                <!-- Recent Activities -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>Recent Activities</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="activities-list">
+                        <!-- Activities will be populated dynamically by recent-activities.js -->
+                    </div>
+                </div>
+
+                <!-- Upcoming Renewals -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h2>Upcoming Renewals</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <div class="renewals-table">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Client</th>
+                                    <th>Policy Type</th>
+                                    <th>Expiry Date</th>
+                                    <th>Premium</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Robert Wilson</td>
+                                    <td><span class="policy-badge auto">Auto</span></td>
+                                    <td>Dec 15, 2024</td>
+                                    <td>$1,800</td>
+                                    <td>
+                                        <button class="btn-small btn-primary">Renew</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Lisa Anderson</td>
+                                    <td><span class="policy-badge home">Home</span></td>
+                                    <td>Dec 18, 2024</td>
+                                    <td>$2,200</td>
+                                    <td>
+                                        <button class="btn-small btn-primary">Renew</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tech Solutions Inc.</td>
+                                    <td><span class="policy-badge commercial">Commercial</span></td>
+                                    <td>Dec 20, 2024</td>
+                                    <td>$8,500</td>
+                                    <td>
+                                        <button class="btn-small btn-primary">Renew</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <div class="chart-card">
+                    <h3>Premium Growth</h3>
+                    <canvas id="premiumChart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Policy Distribution</h3>
+                    <canvas id="policyChart"></canvas>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Rating Engine Modal -->
+    <div id="ratingModal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2>Comparative Rating Engine</h2>
+                <button class="close-btn" onclick="closeModal('ratingModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="rating-form">
+                    <h3>Get Instant Quotes from Multiple Carriers</h3>
+                    <form id="ratingForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Insurance Type</label>
+                                <select id="insuranceType">
+                                    <option>Auto Insurance</option>
+                                    <option>Homeowners Insurance</option>
+                                    <option>Commercial Auto</option>
+                                    <option>Commercial Property</option>
+                                    <option>General Liability</option>
+                                    <option>Life Insurance</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Coverage Amount</label>
+                                <input type="text" placeholder="$100,000">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>Client Name</label>
+                                <input type="text" placeholder="Enter client name">
+                            </div>
+                            <div class="form-group">
+                                <label>Effective Date</label>
+                                <input type="date">
+                            </div>
+                        </div>
+                        <button type="button" class="btn-primary" onclick="getQuotes()">
+                            <i class="fas fa-search"></i> Get Quotes
+                        </button>
+                    </form>
+                </div>
+                
+                <div id="quotesResults" class="quotes-results" style="display:none;">
+                    <h3>Available Quotes</h3>
+                    <div class="quotes-grid">
+                        <div class="quote-card">
+                            <div class="carrier-logo">
+                                <img src="https://via.placeholder.com/100x40" alt="Carrier A">
+                            </div>
+                            <div class="quote-details">
+                                <h4>Progressive</h4>
+                                <p class="quote-price">$1,200<span>/year</span></p>
+                                <ul class="coverage-list">
+                                    <li><i class="fas fa-check"></i> Comprehensive Coverage</li>
+                                    <li><i class="fas fa-check"></i> $500 Deductible</li>
+                                    <li><i class="fas fa-check"></i> Roadside Assistance</li>
+                                </ul>
+                                <button class="btn-success">Select Quote</button>
+                            </div>
+                        </div>
+                        <div class="quote-card">
+                            <div class="carrier-logo">
+                                <img src="https://via.placeholder.com/100x40" alt="Carrier B">
+                            </div>
+                            <div class="quote-details">
+                                <h4>State Farm</h4>
+                                <p class="quote-price">$1,350<span>/year</span></p>
+                                <ul class="coverage-list">
+                                    <li><i class="fas fa-check"></i> Premium Coverage</li>
+                                    <li><i class="fas fa-check"></i> $250 Deductible</li>
+                                    <li><i class="fas fa-check"></i> Rental Car Coverage</li>
+                                </ul>
+                                <button class="btn-success">Select Quote</button>
+                            </div>
+                        </div>
+                        <div class="quote-card">
+                            <div class="carrier-logo">
+                                <img src="https://via.placeholder.com/100x40" alt="Carrier C">
+                            </div>
+                            <div class="quote-details">
+                                <h4>Allstate</h4>
+                                <p class="quote-price">$1,150<span>/year</span></p>
+                                <ul class="coverage-list">
+                                    <li><i class="fas fa-check"></i> Basic Coverage</li>
+                                    <li><i class="fas fa-check"></i> $1000 Deductible</li>
+                                    <li><i class="fas fa-check"></i> Liability Only</li>
+                                </ul>
+                                <button class="btn-success">Select Quote</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Client Modal -->
+    <div id="clientModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Client</h2>
+                <button class="close-btn" onclick="closeModal('clientModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="newClientForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>First Name</label>
+                            <input type="text" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Last Name</label>
+                            <input type="text" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Phone</label>
+                            <input type="tel" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Address</label>
+                        <input type="text" placeholder="Street Address">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text">
+                        </div>
+                        <div class="form-group">
+                            <label>State</label>
+                            <select>
+                                <option>Select State</option>
+                                <option>NY</option>
+                                <option>CA</option>
+                                <option>TX</option>
+                                <option>FL</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>ZIP</label>
+                            <input type="text">
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="closeModal('clientModal')">Cancel</button>
+                        <button type="submit" class="btn-primary">Add Client</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Automation Center -->
+    <div class="automation-panel" id="automationPanel" style="display:none;">
+        <div class="panel-header">
+            <h2>Automation Center</h2>
+            <button onclick="hidePanel('automationPanel')" class="close-panel">&times;</button>
+        </div>
+        <div class="panel-content">
+            <div class="automation-stats">
+                <div class="auto-stat">
+                    <i class="fas fa-robot"></i>
+                    <div>
+                        <h4>Active Workflows</h4>
+                        <p>24</p>
+                    </div>
+                </div>
+                <div class="auto-stat">
+                    <i class="fas fa-clock"></i>
+                    <div>
+                        <h4>Time Saved</h4>
+                        <p>156 hrs/month</p>
+                    </div>
+                </div>
+                <div class="auto-stat">
+                    <i class="fas fa-check-circle"></i>
+                    <div>
+                        <h4>Tasks Completed</h4>
+                        <p>1,247</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="workflows-list">
+                <h3>Automated Workflows</h3>
+                <div class="workflow-item">
+                    <div class="workflow-info">
+                        <i class="fas fa-envelope"></i>
+                        <div>
+                            <h4>Welcome Email Series</h4>
+                            <p>Sends 5 emails to new clients over 30 days</p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="workflow-item">
+                    <div class="workflow-info">
+                        <i class="fas fa-bell"></i>
+                        <div>
+                            <h4>Renewal Reminders</h4>
+                            <p>Auto-notify clients 60, 30, and 7 days before renewal</p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="workflow-item">
+                    <div class="workflow-info">
+                        <i class="fas fa-file-invoice"></i>
+                        <div>
+                            <h4>Document Generation</h4>
+                            <p>Auto-create certificates and ID cards</p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="workflow-item">
+                    <div class="workflow-info">
+                        <i class="fas fa-chart-line"></i>
+                        <div>
+                            <h4>Lead Scoring</h4>
+                            <p>Automatically score and prioritize new leads</p>
+                        </div>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <button class="btn-primary full-width">
+                <i class="fas fa-plus"></i> Create New Workflow
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/api-service.js?v=20"></script>
+    <script src="js/integrations.js?v=20"></script>
+    <script src="js/app.js?v=20"></script>
+    <script src="js/policy-modal.js?v=20"></script>
+    <script src="js/carrier-profile-fixed.js"></script>
+    <script src="js/database-connector.js?v=20"></script>
+    <script src="vicidial-config.js"></script>
+    <script src="js/vicidial-integration.js"></script>
+    <script src="js/tool-windows.js"></script>
+    <script src="js/click-to-dial-email.js"></script>
+    <script src="js/integrations-config.js"></script>
+    <script src="js/dashboard-stats.js?v=20"></script>
+    <script src="js/recent-activities.js?v=20"></script>
+</body>
+</html>

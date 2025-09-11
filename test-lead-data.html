@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Lead Data</title>
+</head>
+<body>
+    <h1>Lead Data Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        // Check what's in localStorage
+        const leads = JSON.parse(localStorage.getItem('leads') || '[]');
+        const output = document.getElementById('output');
+        
+        output.innerHTML = `
+            <h2>Total Leads: ${leads.length}</h2>
+            <h3>Lead Details:</h3>
+            <pre>${JSON.stringify(leads.map(l => ({
+                id: l.id,
+                name: l.name,
+                product: l.product,
+                vehicles: l.vehicles ? l.vehicles.length : 0,
+                trailers: l.trailers ? l.trailers.length : 0,
+                drivers: l.drivers ? l.drivers.length : 0,
+                hasTranscript: !!l.transcriptText,
+                radiusOfOperation: l.radiusOfOperation,
+                commodityHauled: l.commodityHauled
+            })), null, 2)}</pre>
+            
+            <h3>First Lead Full Data:</h3>
+            <pre>${JSON.stringify(leads[0], null, 2)}</pre>
+        `;
+        
+        // Test the showLeadProfile function
+        if (window.showLeadProfile) {
+            output.innerHTML += '<p style="color: green;">✓ showLeadProfile function is available</p>';
+        } else {
+            output.innerHTML += '<p style="color: red;">✗ showLeadProfile function is NOT available</p>';
+        }
+    </script>
+</body>
+</html>
