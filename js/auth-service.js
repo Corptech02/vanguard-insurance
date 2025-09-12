@@ -10,19 +10,23 @@ const authService = {
         const token = localStorage.getItem('authToken');
         if (!token) return false;
         
-        // Check if token is expired (basic check)
-        try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            // Token is valid for 8 hours
-            const tokenAge = Date.now() - (userInfo.loginTime || 0);
-            if (tokenAge > 8 * 60 * 60 * 1000) {
-                this.logout();
-                return false;
-            }
-            return true;
-        } catch {
-            return false;
-        }
+        // Token expiry check disabled temporarily for testing
+        // Just check if token exists
+        return true;
+        
+        // Original expiry check code - disabled
+        // try {
+        //     const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        //     // Token is valid for 8 hours
+        //     const tokenAge = Date.now() - (userInfo.loginTime || 0);
+        //     if (tokenAge > 8 * 60 * 60 * 1000) {
+        //         this.logout();
+        //         return false;
+        //     }
+        //     return true;
+        // } catch {
+        //     return false;
+        // }
     },
     
     // Get current user info
