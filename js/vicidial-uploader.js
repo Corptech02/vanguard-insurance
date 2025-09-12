@@ -103,10 +103,15 @@ const vicidialUploader = {
             console.log('Overwriting Vicidial list:', listId, 'with criteria:', criteria);
             
             // Build params ensuring no undefined values
+            // Handle multiple insurance companies by joining them with comma
+            const insuranceCompaniesStr = criteria.insuranceCompanies 
+                ? criteria.insuranceCompanies.join(',') 
+                : (criteria.insuranceCompany || '');
+            
             const params = new URLSearchParams({
                 list_id: listId,
                 state: criteria.state || '',
-                insurance_company: criteria.insuranceCompany || '',
+                insurance_company: insuranceCompaniesStr,  // Pass comma-separated companies
                 days_until_expiry: String(criteria.daysUntilExpiry || 30),
                 limit: String(criteria.limit || 100)
             });
@@ -184,54 +189,19 @@ const vicidialUploader = {
                             </div>
                         </div>
                         
-                        <!-- Upload Form -->
-                        <form id="vicidialUploadForm">
-                            <div class="form-section">
-                                <h3>Lead Selection Criteria</h3>
-                                
-                                <div class="form-row">
-                                    <div class="form-group">
-                                        <label>State</label>
-                                        <select id="vicidialState" class="form-control">
-                                            <option value="">All States</option>
-                                            <option value="OH">Ohio</option>
-                                            <option value="PA">Pennsylvania</option>
-                                            <option value="FL">Florida</option>
-                                            <option value="TX">Texas</option>
-                                            <option value="CA">California</option>
-                                            <option value="IL">Illinois</option>
-                                            <option value="NY">New York</option>
-                                            <option value="GA">Georgia</option>
-                                            <option value="NC">North Carolina</option>
-                                            <option value="MI">Michigan</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div class="form-group">
-                                        <label>Insurance Company</label>
-                                        <select id="vicidialInsuranceCompany" class="form-control">
-                                            <option value="">All Companies</option>
-                                            <option value="Progressive Commercial">Progressive Commercial</option>
-                                            <option value="GEICO Commercial">GEICO Commercial</option>
-                                            <option value="Great West Casualty Company">Great West Casualty Company</option>
-                                            <option value="Canal Insurance Company">Canal Insurance Company</option>
-                                            <option value="Acuity">Acuity</option>
-                                            <option value="Carolina Casualty">Carolina Casualty</option>
-                                            <option value="State Farm">State Farm</option>
-                                            <option value="Allstate">Allstate</option>
-                                            <option value="Nationwide">Nationwide</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                <div class="form-row">
-                                    <div class="form-group" style="width: 100%;">
-                                        <label>Insurance Expiring Within (Days)</label>
-                                        <input type="number" id="vicidialExpiryDays" 
-                                               class="form-control" value="30" min="1" max="365">
-                                    </div>
-                                </div>
+                        <!-- Lead Criteria Display -->
+                        <div class="form-section" style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                            <h3><i class="fas fa-filter"></i> Using Generated Lead Criteria</h3>
+                            <div id="criteriaDisplay" style="margin-top: 10px;">
+                                <p><strong>State:</strong> <span id="displayState">Loading...</span></p>
+                                <p><strong>Insurance Companies:</strong> <span id="displayCompanies">Loading...</span></p>
+                                <p><strong>Days Until Expiry:</strong> <span id="displayDays">Loading...</span></p>
                             </div>
+                            <div style="margin-top: 10px; padding: 10px; background: #e7f3ff; border-left: 4px solid #007bff; border-radius: 4px;">
+                                <i class="fas fa-info-circle" style="color: #007bff;"></i>
+                                These are the exact criteria used when you generated the leads. All matching leads will be uploaded to the selected Vicidial list.
+                            </div>
+                        </div>
                             
                             <!-- Action Buttons -->
                             <div class="modal-footer">
@@ -259,25 +229,28 @@ const vicidialUploader = {
         // Show modal
         document.getElementById('vicidialUploadModal').style.display = 'block';
         
-        // Pre-fill form if criteria provided
+        // Store the criteria for later use
+        this.uploadCriteria = criteria;
+        
+        // Display the criteria if provided
         if (criteria) {
             setTimeout(() => {
-                if (criteria.state && document.getElementById('vicidialState')) {
-                    document.getElementById('vicidialState').value = criteria.state;
+                const stateDisplay = document.getElementById('displayState');
+                const companiesDisplay = document.getElementById('displayCompanies');
+                const daysDisplay = document.getElementById('displayDays');
+                
+                if (stateDisplay) {
+                    stateDisplay.textContent = criteria.state || 'All States';
                 }
-                if (criteria.insuranceCompany && document.getElementById('vicidialInsuranceCompany')) {
-                    // Try to find matching option
-                    const insuranceSelect = document.getElementById('vicidialInsuranceCompany');
-                    const options = Array.from(insuranceSelect.options);
-                    const matchingOption = options.find(opt => 
-                        opt.value.toLowerCase().includes(criteria.insuranceCompany.toLowerCase().split(' ')[0])
-                    );
-                    if (matchingOption) {
-                        insuranceSelect.value = matchingOption.value;
+                if (companiesDisplay) {
+                    if (criteria.insuranceCompanies && criteria.insuranceCompanies.length > 0) {
+                        companiesDisplay.textContent = criteria.insuranceCompanies.join(', ');
+                    } else {
+                        companiesDisplay.textContent = 'All Companies';
                     }
                 }
-                if (criteria.daysUntilExpiry && document.getElementById('vicidialExpiryDays')) {
-                    document.getElementById('vicidialExpiryDays').value = criteria.daysUntilExpiry;
+                if (daysDisplay) {
+                    daysDisplay.textContent = criteria.daysUntilExpiry || 30;
                 }
             }, 100);
         }
@@ -413,11 +386,11 @@ const vicidialUploader = {
         btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Overwriting list...';
         
         try {
-            // Get form values
+            // Use the stored criteria from generation (with all insurance companies)
             const criteria = {
-                state: document.getElementById('vicidialState').value,
-                insuranceCompany: document.getElementById('vicidialInsuranceCompany').value,
-                daysUntilExpiry: parseInt(document.getElementById('vicidialExpiryDays').value),
+                state: this.uploadCriteria?.state || '',
+                insuranceCompanies: this.uploadCriteria?.insuranceCompanies || [],  // Pass ALL companies
+                daysUntilExpiry: this.uploadCriteria?.daysUntilExpiry || 30,
                 limit: 5000  // Max 5000 leads per upload for Vicidial stability
             };
             

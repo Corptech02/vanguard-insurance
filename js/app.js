@@ -11491,6 +11491,13 @@ async function generateLeadsFromForm() {
         // Call real API
         const data = await apiService.generateLeads(criteria);
         
+        // Store the criteria for Vicidial upload (with ALL insurance companies)
+        lastGeneratedCriteria = {
+            state: state,
+            insuranceCompanies: insuranceCompanies,  // Pass ALL selected companies
+            daysUntilExpiry: parseInt(expiry) || 30
+        };
+        
         // Store generated leads data for export - use data.leads not data.carriers
         generatedLeadsData = (data.leads || []).map(carrier => ({
             usdot_number: carrier.usdotNumber || carrier.usdot_number || carrier.dot_number,
@@ -12435,44 +12442,20 @@ function prepareSMSBlast(leads) {
 }
 
 
+// Store the last generated lead criteria
+let lastGeneratedCriteria = null;
+
 // Function to pass lead generation criteria to Vicidial uploader
 function uploadToVicidialWithCriteria() {
-    // Get current form values
-    const state = document.getElementById('genState').value;
-    const expiry = document.getElementById('genExpiry').value;
+    // Use the stored criteria from the last generation
+    if (!lastGeneratedCriteria) {
+        alert('Please generate leads first before uploading to Vicidial');
+        return;
+    }
     
-    // Get selected insurance companies
-    const insuranceCheckboxes = document.querySelectorAll('input[name="insurance"]:checked');
-    const selectedInsurance = Array.from(insuranceCheckboxes).map(cb => cb.value);
-    
-    // Map the insurance companies to their actual names
-    const insuranceCompanyMap = {
-        'PROGRESSIVE': 'Progressive Commercial',
-        'GEICO': 'GEICO Commercial',
-        'GREAT_WEST': 'Great West Casualty Company',
-        'CANAL': 'Canal Insurance Company',
-        'ACUITY': 'Acuity',
-        'CAROLINA': 'Carolina Casualty',
-        'STATE_FARM': 'State Farm',
-        'ALLSTATE': 'Allstate',
-        'NATIONWIDE': 'Nationwide'
-    };
-    
-    // Map to actual names and join (use first one if multiple selected)
-    const insuranceCompany = selectedInsurance.length > 0 
-        ? insuranceCompanyMap[selectedInsurance[0]] || selectedInsurance[0]
-        : '';
-    
-    // Create criteria object to pass
-    const criteria = {
-        state: state,
-        insuranceCompany: insuranceCompany,
-        daysUntilExpiry: expiry || 30
-    };
-    
-    // Call vicidialUploader with criteria
+    // Call vicidialUploader with the exact criteria used for generation
     if (window.vicidialUploader) {
-        window.vicidialUploader.showUploadDialog(criteria);
+        window.vicidialUploader.showUploadDialog(lastGeneratedCriteria);
     } else {
         alert('Vicidial uploader not loaded');
     }
