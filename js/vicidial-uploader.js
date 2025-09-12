@@ -9,9 +9,20 @@ const vicidialUploader = {
             const response = await fetch(`${API_URL}/api/vicidial/test`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 }
             });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error('Non-JSON response from Vicidial test endpoint');
+                return {
+                    connected: false,
+                    error: 'Invalid response from server (expected JSON)'
+                };
+            }
             
             const data = await response.json();
             return data;
@@ -42,7 +53,8 @@ const vicidialUploader = {
             const response = await fetch(`${API_URL}/api/vicidial/upload?${params}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 }
             });
             
@@ -65,9 +77,17 @@ const vicidialUploader = {
             const response = await fetch(`${API_URL}/api/vicidial/lists`, {
                 method: 'GET',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 }
             });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get("content-type");
+            if (!contentType || !contentType.includes("application/json")) {
+                console.error('Non-JSON response from Vicidial lists endpoint');
+                return [];
+            }
             
             const data = await response.json();
             return data.lists || [];
@@ -97,7 +117,8 @@ const vicidialUploader = {
             const response = await fetch(`${API_URL}/api/vicidial/overwrite?${params}`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
                 }
             });
             
