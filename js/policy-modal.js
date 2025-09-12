@@ -669,6 +669,8 @@ function addVehicle() {
             <input type="text" class="form-control" placeholder="Make">
             <input type="text" class="form-control" placeholder="Model">
             <input type="text" class="form-control" placeholder="VIN">
+            <input type="number" class="form-control" placeholder="Value ($)" step="1000">
+            <input type="number" class="form-control" placeholder="Deductible ($)" step="250">
             <select class="form-control">
                 <option>Comprehensive & Collision</option>
                 <option>Liability Only</option>
@@ -696,6 +698,8 @@ function addTrailer() {
             <input type="text" class="form-control" placeholder="Type (Flatbed, Reefer, etc.)">
             <input type="text" class="form-control" placeholder="VIN">
             <input type="text" class="form-control" placeholder="Length">
+            <input type="number" class="form-control" placeholder="Value ($)" step="1000">
+            <input type="number" class="form-control" placeholder="Deductible ($)" step="250">
             <button type="button" class="btn-danger" onclick="this.parentElement.parentElement.remove()">
                 <i class="fas fa-trash"></i>
             </button>

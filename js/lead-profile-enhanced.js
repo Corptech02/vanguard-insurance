@@ -130,7 +130,8 @@ function showLeadProfile(leadId) {
                                             <input type="text" placeholder="Make" value="${vehicle.make || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'make', this.value)">
                                             <input type="text" placeholder="Model" value="${vehicle.model || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'model', this.value)">
                                             <input type="text" placeholder="VIN" value="${vehicle.vin || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'vin', this.value)">
-                                            <input type="text" placeholder="Value" value="${vehicle.value || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'value', this.value)">
+                                            <input type="text" placeholder="Value ($)" value="${vehicle.value || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'value', this.value)">
+                                            <input type="text" placeholder="Deductible ($)" value="${vehicle.deductible || ''}" onchange="updateVehicle(${leadId}, ${idx}, 'deductible', this.value)">
                                             <select onchange="updateVehicle(${leadId}, ${idx}, 'type', this.value)">
                                                 <option value="">Select Type</option>
                                                 <option value="Box Truck" ${vehicle.type === 'Box Truck' ? 'selected' : ''}>Box Truck</option>
@@ -169,7 +170,8 @@ function showLeadProfile(leadId) {
                                             <input type="text" placeholder="Type" value="${trailer.type || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'type', this.value)">
                                             <input type="text" placeholder="VIN" value="${trailer.vin || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'vin', this.value)">
                                             <input type="text" placeholder="Length" value="${trailer.length || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'length', this.value)">
-                                            <input type="text" placeholder="Value" value="${trailer.value || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'value', this.value)">
+                                            <input type="text" placeholder="Value ($)" value="${trailer.value || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'value', this.value)">
+                                            <input type="text" placeholder="Deductible ($)" value="${trailer.deductible || ''}" onchange="updateTrailer(${leadId}, ${idx}, 'deductible', this.value)">
                                         </div>
                                     </div>
                                 `).join('') : '<p class="no-data">No trailers added yet</p>'}
@@ -518,6 +520,7 @@ function addVehicle(leadId) {
             model: '',
             vin: '',
             value: '',
+            deductible: '',
             type: ''
         });
         localStorage.setItem('leads', JSON.stringify(leads));
@@ -554,7 +557,8 @@ function addTrailer(leadId) {
             make: '',
             type: '',
             vin: '',
-            value: ''
+            value: '',
+            deductible: ''
         });
         localStorage.setItem('leads', JSON.stringify(leads));
         showLeadProfile(leadId); // Refresh the modal
