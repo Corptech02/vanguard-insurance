@@ -171,10 +171,10 @@ const authService = {
         const currentPage = window.location.pathname.split('/').pop() || 'index.html';
         
         if (!publicPages.includes(currentPage)) {
-            // Require authentication for all other pages
-            if (!this.requireAuth()) {
-                return false;
-            }
+            // Temporarily disabled - uncomment to enable auth requirement
+            // if (!this.requireAuth()) {
+            //     return false;
+            // }
             
             // Display user info
             this.displayUserInfo();
