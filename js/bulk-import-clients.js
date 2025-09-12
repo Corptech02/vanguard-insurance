@@ -5,7 +5,7 @@
     
     const newClients = [
     {
-        "id": "client_1757692118009_3869412",
+        "id": "client_3869412",
         "name": "DU ROAD TRUCKING LLC",
         "contactName": "HANIFF HOLNESS",
         "phone": "(513) 410-7587",
@@ -40,7 +40,7 @@
         "notes": "Notes: $6804.00"
     },
     {
-        "id": "client_1757692118010_905413",
+        "id": "client_905413",
         "name": "A-VINO LTD",
         "contactName": "RANDAL ANZEVINO",
         "phone": "(330) 519-4908",
@@ -75,7 +75,7 @@
         "notes": "Notes: NO | Coverage Amount: $15000.00 | Down Payment: $1479.00"
     },
     {
-        "id": "client_1757692118010_",
+        "id": "client_lee_carnes_1",
         "name": "LEE CARNES",
         "contactName": "LEE CARNES",
         "phone": "",
@@ -95,7 +95,7 @@
         "notes": ""
     },
     {
-        "id": "client_1757692118010_1973092",
+        "id": "client_1973092",
         "name": "POWER HOUSE AUTO LTD",
         "contactName": "DAVID KIRKBRIDE",
         "phone": "(740) 504-1703",
@@ -137,7 +137,7 @@
         "notes": "Notes: yes | Down Payment: $0"
     },
     {
-        "id": "client_1757692118010_2157082",
+        "id": "client_2157082",
         "name": "SKYLINE TRUCKLINES LLC",
         "contactName": "SAVPREET PANDHER",
         "phone": "(510) 999-1040",
@@ -157,7 +157,7 @@
         "notes": "Notes: MOVED FROM US | Coverage Amount: $31425"
     },
     {
-        "id": "client_1757692118010_3593868",
+        "id": "client_3593868",
         "name": "MJG TRANSPORT LLC",
         "contactName": "MICHAEL N. GREENE",
         "phone": "(216) 287-8483",
@@ -192,7 +192,7 @@
         "notes": "Notes: RENEWING | Coverage Amount: $3039.00 | Down Payment: $502.80"
     },
     {
-        "id": "client_1757692118010_3721334",
+        "id": "client_3721334",
         "name": "ADI EXPRESS",
         "contactName": "ADAM ISAAK",
         "phone": "904-370-9668",
@@ -227,7 +227,7 @@
         "notes": "Notes: $18777.00"
     },
     {
-        "id": "client_1757692118011_2593909",
+        "id": "client_2593909",
         "name": "HOOPER TRUCKING LLC",
         "contactName": "WILLIAM (bill) D HOOPER",
         "phone": "(419) 310-3114",
@@ -262,7 +262,7 @@
         "notes": "Notes: YES | Coverage Amount: $6000.00 | Down Payment: try next year"
     },
     {
-        "id": "client_1757692118011_2153661",
+        "id": "client_2153661",
         "name": "MOHAMED SOW DBA BEDA TRUCKING",
         "contactName": "MOHAMED SOW",
         "phone": "614-352-9081",
@@ -297,7 +297,7 @@
         "notes": "Down Payment: $5732.50"
     },
     {
-        "id": "client_1757692118011_3822818",
+        "id": "client_3822818",
         "name": "FREDDYKAY LOGISTICS",
         "contactName": "FREDRICK KORANKYE",
         "phone": "(614) 377-8289",
@@ -353,7 +353,7 @@
         "notes": "Coverage Amount: $22871.00 | Down Payment: $19731.00"
     },
     {
-        "id": "client_1757692118011_3623674",
+        "id": "client_3623674",
         "name": "APPROVED FREIGHT LLC",
         "contactName": "STEPHANIE SHOMON",
         "phone": "216-457-5789",
@@ -409,7 +409,7 @@
         "notes": "Coverage Amount: $18816.00 | Down Payment: $12840.00"
     },
     {
-        "id": "client_1757692118011_3486350",
+        "id": "client_3486350",
         "name": "SULEY TRANSPORTATION",
         "contactName": "SULIEMAN HIIR",
         "phone": "(614) 202-4375",
@@ -465,7 +465,7 @@
         "notes": "Coverage Amount: $10705.00"
     },
     {
-        "id": "client_1757692118011_",
+        "id": "client_lee_carnes_2",
         "name": "LEE CARNES",
         "contactName": "LEE CARNES",
         "phone": "",
@@ -500,7 +500,7 @@
         "notes": ""
     },
     {
-        "id": "client_1757692118012_1897640",
+        "id": "client_1897640",
         "name": "E AND V SERVICES INC",
         "contactName": "ANDRIUS DUDAITIS",
         "phone": "(216) 338-3240",
@@ -554,7 +554,7 @@
         "notes": "Notes: NO"
     },
     {
-        "id": "client_1757692118012_1086431",
+        "id": "client_1086431",
         "name": "AL'S TOWING LLC",
         "contactName": "RICK LANGLEY",
         "phone": "(614) 678-6114",
@@ -608,7 +608,7 @@
         "notes": ""
     },
     {
-        "id": "client_1757692118012_3843764",
+        "id": "client_3843764",
         "name": "SAMI TRANS LLC",
         "contactName": "AZZEDINE SAMI",
         "phone": "(614) 592-4732",
@@ -643,7 +643,7 @@
         "notes": "Notes: YES AOR declined need 2 yrs cdl | Coverage Amount: $9907.00"
     },
     {
-        "id": "client_1757692118012_3289413",
+        "id": "client_3289413",
         "name": "SJW FARMS LLC",
         "contactName": "SHAWN JACOB WILDERMUTH",
         "phone": "(937) 539-2492",
@@ -697,7 +697,7 @@
         "notes": "Down Payment: $1224.00"
     },
     {
-        "id": "client_1757692118012_3508128",
+        "id": "client_3508128",
         "name": "THR TRANSPORT LLC",
         "contactName": "RAVSHAN MAMATOV",
         "phone": "(206) 290-6544",
@@ -746,7 +746,7 @@
         "notes": "Notes: NO | Coverage Amount: $10000 | Down Payment: $9459.00"
     },
     {
-        "id": "client_1757692118013_3856181",
+        "id": "client_3856181",
         "name": "ADAM 1 LOGISTICS LLC",
         "contactName": "MOHAMED ELKOLIBY ELBASET",
         "phone": "(718) 757-8632",
@@ -807,7 +807,7 @@
         "notes": "Down Payment: $2875.20"
     },
     {
-        "id": "client_1757692118013_",
+        "id": "client_rivera",
         "name": "RIVERA TRUCKING LLC",
         "contactName": "",
         "phone": "",
@@ -856,7 +856,7 @@
         "notes": "Notes: $6805.00 | Coverage Amount: OH | Down Payment: $6805.00"
     },
     {
-        "id": "client_1757692118013_3514305",
+        "id": "client_3514305",
         "name": "SLAMMIN TRANSPORT LLC",
         "contactName": "FREDERICK HARRISON",
         "phone": "(614) 425-1897",
