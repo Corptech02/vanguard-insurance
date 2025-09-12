@@ -2684,6 +2684,12 @@ function loadLeadsView() {
     }, 500);
     
     try {
+        // Run deduplication first to clean up any duplicates
+        if (window.deduplicateData) {
+            console.log('Running deduplication before loading leads...');
+            window.deduplicateData();
+        }
+        
         // Get leads from localStorage with sample data
         let leads = JSON.parse(localStorage.getItem('leads') || '[]');
         if (leads.length === 0) {
@@ -3587,6 +3593,8 @@ function confirmConvertLead(event, leadId) {
         leads[leadIndex].converted = true;
         leads[leadIndex].convertedDate = new Date().toISOString();
         leads[leadIndex].clientId = newClient.id;
+        leads[leadIndex].stage = 'converted';  // Set stage to converted
+        leads[leadIndex].status = 'converted';  // Also set status for backward compatibility
         localStorage.setItem('leads', JSON.stringify(leads));
     }
     
