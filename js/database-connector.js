@@ -47,10 +47,15 @@ window.addEventListener('DOMContentLoaded', function() {
             
             console.log('Sending request to API:', searchBody);
             
-            // Call API through the same server (uses proxy to reach real database)
+            // Call API through the backend server
             let response;
             try {
-                response = await fetch('/api/search', {
+                // Use the actual backend server URL
+                const API_URL = window.location.hostname === 'localhost' 
+                    ? 'http://localhost:8897/api/search'
+                    : 'http://72.23.167.167:8897/api/search';
+                    
+                response = await fetch(API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

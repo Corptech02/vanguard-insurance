@@ -5,7 +5,8 @@ const vicidialUploader = {
     // Test connection to Vicidial
     testConnection: async function() {
         try {
-            const response = await fetch('/api/vicidial/test', {
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'http://72.23.167.167:8897';
+            const response = await fetch(`${API_URL}/api/vicidial/test`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -37,7 +38,8 @@ const vicidialUploader = {
                 campaign_id: criteria.campaignId || 'TEST'
             });
             
-            const response = await fetch(`/api/vicidial/upload?${params}`, {
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'http://72.23.167.167:8897';
+            const response = await fetch(`${API_URL}/api/vicidial/upload?${params}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -59,7 +61,8 @@ const vicidialUploader = {
     // Get existing Vicidial lists
     getVicidialLists: async function() {
         try {
-            const response = await fetch('/api/vicidial/lists', {
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'http://72.23.167.167:8897';
+            const response = await fetch(`${API_URL}/api/vicidial/lists`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json'
@@ -90,7 +93,8 @@ const vicidialUploader = {
             
             console.log('Request URL:', `/api/vicidial/overwrite?${params.toString()}`);
             
-            const response = await fetch(`/api/vicidial/overwrite?${params}`, {
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'http://72.23.167.167:8897';
+            const response = await fetch(`${API_URL}/api/vicidial/overwrite?${params}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -1,5 +1,7 @@
 // API Service for connecting to FMCSA Database
-const API_BASE_URL = 'http://localhost:8894';
+const API_BASE_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:8897'
+    : 'http://72.23.167.167:8897';
 
 const apiService = {
     // Search carriers with filters
@@ -93,9 +95,8 @@ const apiService = {
                 params.append('insurance_companies', criteria.insuranceCompanies.join(','));
             }
             
-            // Always use the proxied API endpoint through the same server
-            // This works both locally and through ngrok
-            const response = await fetch(`/api/leads/expiring-insurance?${params}`, {
+            // Always use the backend server API endpoint
+            const response = await fetch(`${API_BASE_URL}/api/leads/expiring-insurance?${params}`, {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
