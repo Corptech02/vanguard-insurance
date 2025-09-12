@@ -142,28 +142,86 @@ const authService = {
             el.textContent = user.role;
         });
         
-        // Add logout button if not exists
-        if (!document.getElementById('logoutBtn')) {
-            const navbar = document.querySelector('.navbar');
-            if (navbar) {
-                const logoutBtn = document.createElement('button');
-                logoutBtn.id = 'logoutBtn';
-                logoutBtn.className = 'logout-btn';
-                logoutBtn.innerHTML = `<i class="fas fa-sign-out-alt"></i> Logout (${user.username})`;
-                logoutBtn.style.cssText = `
+        // Update the existing user menu instead of adding a new button
+        const userMenu = document.querySelector('.user-menu');
+        if (userMenu) {
+            // Update the user menu with actual user info
+            userMenu.innerHTML = `
+                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || user.username)}&background=0066cc&color=fff" alt="User" class="user-avatar">
+                <span>${user.full_name || user.username}</span>
+                <i class="fas fa-chevron-down"></i>
+            `;
+            
+            // Create dropdown menu if it doesn't exist
+            if (!userMenu.querySelector('.user-dropdown')) {
+                const dropdown = document.createElement('div');
+                dropdown.className = 'user-dropdown';
+                dropdown.style.cssText = `
+                    display: none;
                     position: absolute;
-                    right: 20px;
-                    top: 15px;
-                    padding: 8px 16px;
-                    background: #dc3545;
-                    color: white;
-                    border: none;
+                    top: 100%;
+                    right: 0;
+                    background: white;
+                    border: 1px solid #ddd;
                     border-radius: 5px;
-                    cursor: pointer;
-                    font-size: 14px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    min-width: 200px;
+                    z-index: 1000;
+                    margin-top: 5px;
                 `;
-                logoutBtn.onclick = () => this.logout();
-                navbar.appendChild(logoutBtn);
+                
+                dropdown.innerHTML = `
+                    <div style="padding: 15px; border-bottom: 1px solid #eee;">
+                        <div style="font-weight: 600; color: #333;">${user.full_name || user.username}</div>
+                        <div style="font-size: 12px; color: #666; margin-top: 5px;">Role: ${user.role}</div>
+                        <div style="font-size: 12px; color: #666;">${user.email || ''}</div>
+                    </div>
+                    <div style="padding: 10px;">
+                        <button id="profileBtn" style="width: 100%; padding: 8px; background: none; border: none; text-align: left; cursor: pointer; hover: background: #f5f5f5;">
+                            <i class="fas fa-user"></i> View Profile
+                        </button>
+                        <button id="settingsBtn" style="width: 100%; padding: 8px; background: none; border: none; text-align: left; cursor: pointer;">
+                            <i class="fas fa-cog"></i> Settings
+                        </button>
+                        <hr style="margin: 10px 0; border: none; border-top: 1px solid #eee;">
+                        <button id="logoutBtn" style="width: 100%; padding: 8px; background: none; border: none; text-align: left; cursor: pointer; color: #dc3545;">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                    </div>
+                `;
+                
+                userMenu.appendChild(dropdown);
+                userMenu.style.position = 'relative';
+                userMenu.style.cursor = 'pointer';
+                
+                // Toggle dropdown on click
+                userMenu.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isVisible = dropdown.style.display === 'block';
+                    dropdown.style.display = isVisible ? 'none' : 'block';
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', () => {
+                    dropdown.style.display = 'none';
+                });
+                
+                // Add logout functionality
+                dropdown.querySelector('#logoutBtn').onclick = (e) => {
+                    e.stopPropagation();
+                    this.logout();
+                };
+                
+                // Profile and settings placeholders
+                dropdown.querySelector('#profileBtn').onclick = (e) => {
+                    e.stopPropagation();
+                    alert(`User Profile:\n\nUsername: ${user.username}\nName: ${user.full_name || 'Not set'}\nEmail: ${user.email || 'Not set'}\nRole: ${user.role}\nDepartment: ${user.department || 'Not set'}`);
+                };
+                
+                dropdown.querySelector('#settingsBtn').onclick = (e) => {
+                    e.stopPropagation();
+                    alert('Settings page coming soon!');
+                };
             }
         }
     },
