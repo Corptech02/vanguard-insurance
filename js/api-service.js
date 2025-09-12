@@ -1,7 +1,7 @@
 // API Service for connecting to FMCSA Database
 const API_BASE_URL = window.location.hostname === 'localhost' 
     ? 'http://localhost:8897'
-    : 'http://72.23.167.167:8897';
+    : 'https://0ef6f73c45be.ngrok-free.app';
 
 const apiService = {
     // Search carriers with filters

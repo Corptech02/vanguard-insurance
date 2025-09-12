@@ -53,7 +53,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 // Use the actual backend server URL
                 const API_URL = window.location.hostname === 'localhost' 
                     ? 'http://localhost:8897/api/search'
-                    : 'http://72.23.167.167:8897/api/search';
+                    : 'https://0ef6f73c45be.ngrok-free.app/api/search';
                     
                 response = await fetch(API_URL, {
                     method: 'POST',
