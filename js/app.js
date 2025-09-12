@@ -8503,6 +8503,7 @@ function generateClientPoliciesList(policies) {
                 <div class="policy-actions">
                     <button class="btn-small" onclick="viewPolicy('${policy.id || policy.policyNumber}')">View Details</button>
                     <button class="btn-small" onclick="renewPolicy('${policy.id || policy.policyNumber}')">Renew</button>
+                    <button class="btn-small" onclick="confirmDeletePolicy('${policy.id || policy.policyNumber}', '${policy.policyNumber}')" style="background: #dc2626; color: white;">Delete</button>
                 </div>
             </div>
         `;
@@ -8738,6 +8739,100 @@ function renewPolicy(policyId) {
     showNotification('Policy renewal feature coming soon!', 'info');
 }
 
+// Policy Delete Functions
+function confirmDeletePolicy(policyId, policyNumber) {
+    // Create confirmation modal
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay active';
+    modal.id = 'deleteConfirmModal';
+    modal.innerHTML = `
+        <div class="modal-container" style="max-width: 500px;">
+            <div class="modal-header" style="background: #dc2626;">
+                <h2 style="color: white;">Confirm Delete</h2>
+                <button class="close-btn" onclick="document.getElementById('deleteConfirmModal').remove()" style="color: white;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 30px;">
+                <div style="text-align: center;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #dc2626; margin-bottom: 20px;"></i>
+                    <h3 style="margin-bottom: 10px;">Are you sure you want to delete this policy?</h3>
+                    <p style="color: #6b7280; margin-bottom: 20px;">Policy Number: <strong>${policyNumber}</strong></p>
+                    <p style="color: #dc2626; font-weight: 500;">This action cannot be undone!</p>
+                </div>
+            </div>
+            <div class="modal-footer" style="display: flex; gap: 10px; justify-content: center; padding: 20px;">
+                <button class="btn-secondary" onclick="document.getElementById('deleteConfirmModal').remove()">
+                    Cancel
+                </button>
+                <button class="btn-primary" onclick="deletePolicy('${policyId}')" style="background: #dc2626; border-color: #dc2626;">
+                    <i class="fas fa-trash"></i> Delete Policy
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function deletePolicy(policyId) {
+    // Remove the confirmation modal
+    const modal = document.getElementById('deleteConfirmModal');
+    if (modal) modal.remove();
+    
+    // Get policies from localStorage
+    let policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    
+    // Convert policyId to string for comparison
+    const idStr = String(policyId);
+    
+    // Filter out the policy to delete
+    const initialCount = policies.length;
+    policies = policies.filter(p => {
+        // Check various ID formats
+        if (String(p.id) === idStr) return false;
+        if (p.policyNumber === idStr) return false;
+        if (p.policyNumber && p.policyNumber.includes(idStr)) return false;
+        if (p.policyNumber && p.policyNumber.endsWith(idStr)) return false;
+        return true;
+    });
+    
+    // Check if a policy was actually deleted
+    if (policies.length === initialCount) {
+        showNotification('Policy not found', 'error');
+        return;
+    }
+    
+    // Save updated policies
+    localStorage.setItem('insurance_policies', JSON.stringify(policies));
+    
+    // Also update clients' policies arrays if needed
+    const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+    clients.forEach(client => {
+        if (client.policies && Array.isArray(client.policies)) {
+            client.policies = client.policies.filter(p => {
+                if (String(p.id) === idStr) return false;
+                if (p.policyNumber === idStr) return false;
+                return true;
+            });
+        }
+    });
+    localStorage.setItem('insurance_clients', JSON.stringify(clients));
+    
+    // Show success notification
+    showNotification('Policy deleted successfully', 'success');
+    
+    // Refresh the current view
+    const clientProfileElement = document.querySelector('.client-profile');
+    if (clientProfileElement) {
+        // If we're in a client profile view, refresh it
+        const clientId = clientProfileElement.dataset.clientId;
+        if (clientId) {
+            viewClient(clientId);
+        }
+    } else if (window.location.hash === '#policies') {
+        // If we're in the policies view, refresh it
+        loadPoliciesView();
+    }
+}
+
 // Client Management Functions
 function viewClient(id) {
     console.log('Viewing client:', id);
@@ -8938,6 +9033,7 @@ function viewClient(id) {
                             <div class="policy-actions">
                                 <button class="btn-small">View Details</button>
                                 <button class="btn-small">Renew</button>
+                                <button class="btn-small" style="background: #dc2626; color: white;">Delete</button>
                             </div>
                         </div>` : ''}
                     </div>
