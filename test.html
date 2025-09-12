@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Vanguard API Test</title>
+    <style>
+        body { font-family: Arial; padding: 20px; }
+        button { padding: 10px 20px; margin: 10px; cursor: pointer; }
+        .success { color: green; }
+        .error { color: red; }
+        pre { background: #f4f4f4; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>Test Vanguard Database Connection</h1>
+    <p>This tests if GitHub Pages can connect to your database through ngrok</p>
+    
+    <button onclick="testDirect()">Test Direct API</button>
+    <button onclick="testSearch()">Test Search</button>
+    <button onclick="testLeads()">Test Lead Generation</button>
+    
+    <div id="status"></div>
+    <div id="results"></div>
+
+    <script>
+    // Use the ngrok URL
+    const API_URL = 'https://0ef6f73c45be.ngrok-free.app';
+    
+    async function testDirect() {
+        document.getElementById('status').innerHTML = '⏳ Testing direct connection...';
+        try {
+            const response = await fetch(`${API_URL}/api/stats/summary`, {
+                headers: {
+                    'ngrok-skip-browser-warning': '69420'
+                }
+            });
+            const data = await response.json();
+            document.getElementById('status').innerHTML = '<span class="success">✅ Direct connection works!</span>';
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        } catch (error) {
+            document.getElementById('status').innerHTML = `<span class="error">❌ Failed: ${error.message}</span>`;
+        }
+    }
+    
+    async function testSearch() {
+        document.getElementById('status').innerHTML = '⏳ Testing carrier search...';
+        try {
+            const response = await fetch(`${API_URL}/api/search`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': '69420'
+                },
+                body: JSON.stringify({
+                    page: 1,
+                    per_page: 3,
+                    state: 'OH'
+                })
+            });
+            const data = await response.json();
+            document.getElementById('status').innerHTML = `<span class="success">✅ Search works! Found ${data.total} carriers</span>`;
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(data.results, null, 2)}</pre>`;
+        } catch (error) {
+            document.getElementById('status').innerHTML = `<span class="error">❌ Search failed: ${error.message}</span>`;
+        }
+    }
+    
+    async function testLeads() {
+        document.getElementById('status').innerHTML = '⏳ Testing lead generation...';
+        try {
+            const response = await fetch(`${API_URL}/api/leads/expiring-insurance?state=OH&days=30&limit=3`, {
+                headers: {
+                    'ngrok-skip-browser-warning': '69420'
+                }
+            });
+            const data = await response.json();
+            const leads = Array.isArray(data) ? data : data.leads;
+            document.getElementById('status').innerHTML = `<span class="success">✅ Lead gen works! Found ${leads.length} leads</span>`;
+            document.getElementById('results').innerHTML = `<pre>${JSON.stringify(leads, null, 2)}</pre>`;
+        } catch (error) {
+            document.getElementById('status').innerHTML = `<span class="error">❌ Lead gen failed: ${error.message}</span>`;
+        }
+    }
+    </script>
+</body>
+</html>
