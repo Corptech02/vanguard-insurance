@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanguard Insurance - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .login-container {
+            max-width: 400px;
+            margin: 100px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: #333;
+        }
+        .form-group input {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+        .login-btn {
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .login-btn:hover {
+            background: #0056b3;
+        }
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+        }
+        .register-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .error-message {
+            color: #dc3545;
+            padding: 10px;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none;
+        }
+        .logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo h1 {
+            color: #007bff;
+            font-size: 32px;
+            margin: 0;
+        }
+        .logo p {
+            color: #666;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <h1>🛡️ Vanguard</h1>
+            <p>Insurance Management System</p>
+        </div>
+        
+        <div id="errorMessage" class="error-message"></div>
+        
+        <form id="loginForm" class="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username">
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password">
+            </div>
+            
+            <button type="submit" class="login-btn">Login</button>
+        </form>
+        
+        <div class="register-link">
+            Don't have an account? <a href="register.html">Register here</a>
+        </div>
+        
+        <div class="register-link" style="margin-top: 10px; font-size: 12px; color: #999;">
+            Default admin: admin / admin123
+        </div>
+    </div>
+
+    <script>
+        // Check if already logged in
+        const token = localStorage.getItem('authToken');
+        if (token) {
+            window.location.href = 'index.html';
+        }
+
+        // Get API URL based on environment
+        const AUTH_API_URL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:8881'
+            : 'https://0ef6f73c45be.ngrok-free.app/auth';  // Will need separate ngrok for auth
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('errorMessage');
+            
+            errorDiv.style.display = 'none';
+            
+            try {
+                // Create form data for OAuth2
+                const formData = new FormData();
+                formData.append('username', username);
+                formData.append('password', password);
+                
+                const response = await fetch(`${AUTH_API_URL}/token`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Login failed');
+                }
+                
+                const data = await response.json();
+                
+                // Store token and user info
+                localStorage.setItem('authToken', data.access_token);
+                localStorage.setItem('userInfo', JSON.stringify(data.user_info));
+                
+                // Redirect to main app
+                window.location.href = 'index.html';
+                
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>
