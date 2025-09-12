@@ -82,13 +82,13 @@ window.generateClientRows = function() {
                 <td><span class="status ${statusClass}">${status}</span></td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon" onclick="viewClient(${client.id})" title="View Profile">
+                        <button class="btn-icon" onclick="viewClient('${client.id}')" title="View Profile">
                             <i class="fas fa-eye"></i>
                         </button>
-                        <button class="btn-icon" onclick="editClient(${client.id})" title="Edit Client">
+                        <button class="btn-icon" onclick="editClient('${client.id}')" title="Edit Client">
                             <i class="fas fa-edit"></i>
                         </button>
-                        <button class="btn-icon" onclick="deleteClient(${client.id})" title="Delete Client">
+                        <button class="btn-icon" onclick="deleteClient('${client.id}')" title="Delete Client">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -240,10 +240,10 @@ function showClientProfileView(client) {
                     <h1>Client Profile</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-secondary" onclick="editClient(${client.id})">
+                    <button class="btn-secondary" onclick="editClient('${client.id}')">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="btn-primary" onclick="addPolicyToClient(${client.id})">
+                    <button class="btn-primary" onclick="addPolicyToClient('${client.id}')">
                         <i class="fas fa-file-contract"></i> Add Policy
                     </button>
                 </div>
@@ -339,7 +339,7 @@ function showClientProfileView(client) {
                         <div style="text-align: center; padding: 40px; color: #9ca3af;">
                             <i class="fas fa-file-contract" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
                             <p>No policies found for this client</p>
-                            <button class="btn-primary" style="margin-top: 10px;" onclick="addPolicyToClient(${client.id})">
+                            <button class="btn-primary" style="margin-top: 10px;" onclick="addPolicyToClient('${client.id}')">
                                 <i class="fas fa-plus"></i> Add First Policy
                             </button>
                         </div>

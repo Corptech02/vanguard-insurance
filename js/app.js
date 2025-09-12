@@ -4475,10 +4475,10 @@ function generateClientRows() {
                 <td><span class="status-badge ${status.toLowerCase()}">${status}</span></td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn-icon" onclick="viewClient(${client.id})" title="View Client"><i class="fas fa-eye"></i></button>
-                        <button class="btn-icon" onclick="editClient(${client.id})" title="Edit Client"><i class="fas fa-edit"></i></button>
-                        <button class="btn-icon" onclick="emailClient(${client.id})" title="Email Client"><i class="fas fa-envelope"></i></button>
-                        <button class="btn-icon" onclick="deleteClient(${client.id})" title="Delete Client" style="color: #dc2626;"><i class="fas fa-trash"></i></button>
+                        <button class="btn-icon" onclick="viewClient('${client.id}')" title="View Client"><i class="fas fa-eye"></i></button>
+                        <button class="btn-icon" onclick="editClient('${client.id}')" title="Edit Client"><i class="fas fa-edit"></i></button>
+                        <button class="btn-icon" onclick="emailClient('${client.id}')" title="Email Client"><i class="fas fa-envelope"></i></button>
+                        <button class="btn-icon" onclick="deleteClient('${client.id}')" title="Delete Client" style="color: #dc2626;"><i class="fas fa-trash"></i></button>
                     </div>
                 </td>
             </tr>
@@ -8839,10 +8839,10 @@ function viewClient(id) {
                     <h1>Client Profile</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-secondary" onclick="editClient(${id})">
+                    <button class="btn-secondary" onclick="editClient('${id}')">
                         <i class="fas fa-edit"></i> Edit
                     </button>
-                    <button class="btn-secondary" onclick="addPolicyToClient(${id})">
+                    <button class="btn-secondary" onclick="addPolicyToClient('${id}')">
                         <i class="fas fa-file-contract"></i> Add Policy
                     </button>
                     <button class="btn-primary" onclick="showNewQuote()">
@@ -8918,7 +8918,7 @@ function viewClient(id) {
                 <div class="profile-card">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                         <h3 style="margin: 0;">Active Policies</h3>
-                        <button class="btn-primary" onclick="addPolicyToClient(${id})" style="padding: 8px 16px; font-size: 14px;">
+                        <button class="btn-primary" onclick="addPolicyToClient('${id}')" style="padding: 8px 16px; font-size: 14px;">
                             <i class="fas fa-plus"></i> Add Policy
                         </button>
                     </div>
