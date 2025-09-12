@@ -454,53 +454,153 @@ function generateTabContent(tabId, policyType) {
             if (policyType === 'commercial-auto') {
                 return `
                     <div class="form-section">
-                        <h3>Commercial Auto Coverage</h3>
+                        <h3>Primary Liability Coverage</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Combined Single Limit</label>
-                                <input type="text" class="form-control" placeholder="$1,000,000" id="coverage-csl">
+                                <label>Liability Limits</label>
+                                <select class="form-control" id="coverage-liability-limits">
+                                    <option value="">Select Liability Limits</option>
+                                    <option value="750000">$750,000 CSL</option>
+                                    <option value="1000000">$1,000,000 CSL</option>
+                                    <option value="2000000">$2,000,000 CSL</option>
+                                    <option value="5000000">$5,000,000 CSL</option>
+                                    <option value="100/300/100">$100K/$300K/$100K Split Limit</option>
+                                    <option value="250/500/250">$250K/$500K/$250K Split Limit</option>
+                                    <option value="500/1000/500">$500K/$1M/$500K Split Limit</option>
+                                    <option value="1000/2000/1000">$1M/$2M/$1M Split Limit</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label>Bodily Injury (Per Person)</label>
-                                <input type="text" class="form-control" placeholder="$500,000" id="coverage-bi-person">
+                                <label>General Aggregate</label>
+                                <select class="form-control" id="coverage-general-aggregate">
+                                    <option value="">Select Aggregate Limit</option>
+                                    <option value="1000000">$1,000,000</option>
+                                    <option value="2000000">$2,000,000</option>
+                                    <option value="3000000">$3,000,000</option>
+                                    <option value="4000000">$4,000,000</option>
+                                    <option value="5000000">$5,000,000</option>
+                                    <option value="10000000">$10,000,000</option>
+                                </select>
                             </div>
-                            <div class="form-group">
-                                <label>Bodily Injury (Per Accident)</label>
-                                <input type="text" class="form-control" placeholder="$1,000,000" id="coverage-bi-accident">
-                            </div>
-                            <div class="form-group">
-                                <label>Property Damage</label>
-                                <input type="text" class="form-control" placeholder="$1,000,000" id="coverage-pd">
-                            </div>
-                            <div class="form-group">
-                                <label>Medical Payments</label>
-                                <input type="text" class="form-control" placeholder="$5,000" id="coverage-medical">
-                            </div>
-                            <div class="form-group">
-                                <label>Uninsured Motorist</label>
-                                <input type="text" class="form-control" placeholder="$1,000,000" id="coverage-um">
-                            </div>
-                            <div class="form-group">
-                                <label>Underinsured Motorist</label>
-                                <input type="text" class="form-control" placeholder="$1,000,000" id="coverage-uim">
-                            </div>
+                        </div>
+                        
+                        <h3>Physical Damage Coverage</h3>
+                        <div class="form-grid">
                             <div class="form-group">
                                 <label>Comprehensive Deductible</label>
-                                <input type="text" class="form-control" placeholder="$1,000" id="coverage-comp-deduct">
+                                <select class="form-control" id="coverage-comp-deduct">
+                                    <option value="">Select Deductible</option>
+                                    <option value="0">$0</option>
+                                    <option value="250">$250</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                    <option value="2500">$2,500</option>
+                                    <option value="5000">$5,000</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Collision Deductible</label>
-                                <input type="text" class="form-control" placeholder="$1,000" id="coverage-coll-deduct">
+                                <select class="form-control" id="coverage-coll-deduct">
+                                    <option value="">Select Deductible</option>
+                                    <option value="0">$0</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                    <option value="2500">$2,500</option>
+                                    <option value="5000">$5,000</option>
+                                    <option value="10000">$10,000</option>
+                                </select>
                             </div>
                         </div>
-                        <h3>Additional Commercial Coverages</h3>
+                        
+                        <h3>Cargo Coverage</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Cargo Limit</label>
+                                <select class="form-control" id="coverage-cargo-limit">
+                                    <option value="">Select Cargo Limit</option>
+                                    <option value="0">No Cargo Coverage</option>
+                                    <option value="10000">$10,000</option>
+                                    <option value="25000">$25,000</option>
+                                    <option value="50000">$50,000</option>
+                                    <option value="100000">$100,000</option>
+                                    <option value="150000">$150,000</option>
+                                    <option value="200000">$200,000</option>
+                                    <option value="250000">$250,000</option>
+                                    <option value="500000">$500,000</option>
+                                    <option value="1000000">$1,000,000</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Cargo Deductible</label>
+                                <select class="form-control" id="coverage-cargo-deduct">
+                                    <option value="">Select Deductible</option>
+                                    <option value="0">$0</option>
+                                    <option value="1000">$1,000</option>
+                                    <option value="2500">$2,500</option>
+                                    <option value="5000">$5,000</option>
+                                    <option value="10000">$10,000</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <h3>Other Coverages</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Medical Payments</label>
+                                <select class="form-control" id="coverage-medical">
+                                    <option value="">Select Limit</option>
+                                    <option value="0">No Coverage</option>
+                                    <option value="1000">$1,000</option>
+                                    <option value="2500">$2,500</option>
+                                    <option value="5000">$5,000</option>
+                                    <option value="10000">$10,000</option>
+                                    <option value="25000">$25,000</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Uninsured/Underinsured Motorist</label>
+                                <select class="form-control" id="coverage-um-uim">
+                                    <option value="">Select Limit</option>
+                                    <option value="0">Rejected</option>
+                                    <option value="25/50">$25K/$50K</option>
+                                    <option value="50/100">$50K/$100K</option>
+                                    <option value="100/300">$100K/$300K</option>
+                                    <option value="250/500">$250K/$500K</option>
+                                    <option value="500/1000">$500K/$1M</option>
+                                    <option value="1000000">$1,000,000 CSL</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Trailer Interchange Limit</label>
+                                <select class="form-control" id="coverage-trailer-interchange">
+                                    <option value="">Select Limit</option>
+                                    <option value="0">No Coverage</option>
+                                    <option value="25000">$25,000</option>
+                                    <option value="50000">$50,000</option>
+                                    <option value="75000">$75,000</option>
+                                    <option value="100000">$100,000</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Non-Trucking Liability</label>
+                                <select class="form-control" id="coverage-non-trucking">
+                                    <option value="">Select Limit</option>
+                                    <option value="0">No Coverage</option>
+                                    <option value="30/60/25">$30K/$60K/$25K</option>
+                                    <option value="100/300/100">$100K/$300K/$100K</option>
+                                    <option value="1000000">$1,000,000 CSL</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <h3>Additional Coverages</h3>
                         <div class="checkbox-group">
-                            <label><input type="checkbox" id="coverage-cargo"> Motor Truck Cargo</label>
-                            <label><input type="checkbox" id="coverage-trailer"> Trailer Interchange</label>
-                            <label><input type="checkbox" id="coverage-hired"> Hired Auto</label>
-                            <label><input type="checkbox" id="coverage-non-owned"> Non-Owned Auto</label>
+                            <label><input type="checkbox" id="coverage-hired"> Hired Auto Physical Damage</label>
+                            <label><input type="checkbox" id="coverage-non-owned"> Non-Owned Auto Liability</label>
                             <label><input type="checkbox" id="coverage-towing"> Towing & Labor</label>
                             <label><input type="checkbox" id="coverage-rental"> Rental Reimbursement</label>
+                            <label><input type="checkbox" id="coverage-reefer"> Reefer Breakdown</label>
+                            <label><input type="checkbox" id="coverage-general-liability"> General Liability</label>
                         </div>
                     </div>
                 `;
@@ -510,12 +610,45 @@ function generateTabContent(tabId, policyType) {
                         <h3>Coverage Limits</h3>
                         <div class="form-grid">
                             <div class="form-group">
-                                <label>Coverage Limit</label>
-                                <input type="text" class="form-control" id="coverage-limit">
+                                <label>Liability Limits</label>
+                                <select class="form-control" id="coverage-liability">
+                                    <option value="">Select Limits</option>
+                                    <option value="25/50/25">$25K/$50K/$25K (State Minimum)</option>
+                                    <option value="50/100/50">$50K/$100K/$50K</option>
+                                    <option value="100/300/100">$100K/$300K/$100K</option>
+                                    <option value="250/500/250">$250K/$500K/$250K</option>
+                                    <option value="500/1000/500">$500K/$1M/$500K</option>
+                                </select>
                             </div>
                             <div class="form-group">
-                                <label>Deductible</label>
-                                <input type="text" class="form-control" id="coverage-deductible">
+                                <label>Comprehensive Deductible</label>
+                                <select class="form-control" id="coverage-comp-deduct-personal">
+                                    <option value="">Select Deductible</option>
+                                    <option value="0">$0</option>
+                                    <option value="250">$250</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Collision Deductible</label>
+                                <select class="form-control" id="coverage-coll-deduct-personal">
+                                    <option value="">Select Deductible</option>
+                                    <option value="250">$250</option>
+                                    <option value="500">$500</option>
+                                    <option value="1000">$1,000</option>
+                                    <option value="2500">$2,500</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Uninsured/Underinsured Motorist</label>
+                                <select class="form-control" id="coverage-um-uim-personal">
+                                    <option value="">Select Limit</option>
+                                    <option value="0">Rejected</option>
+                                    <option value="25/50">$25K/$50K</option>
+                                    <option value="100/300">$100K/$300K</option>
+                                    <option value="250/500">$250K/$500K</option>
+                                </select>
                             </div>
                         </div>
                     </div>
