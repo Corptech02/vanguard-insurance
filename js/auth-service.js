@@ -176,16 +176,18 @@ const authService = {
             //     return false;
             // }
             
-            // Display user info
-            this.displayUserInfo();
+            // Display user info if authenticated
+            if (this.isAuthenticated()) {
+                this.displayUserInfo();
+            }
             
-            // Setup periodic token check
-            setInterval(() => {
-                if (!this.isAuthenticated()) {
-                    alert('Your session has expired. Please login again.');
-                    this.logout();
-                }
-            }, 60000); // Check every minute
+            // Setup periodic token check - disabled for now
+            // setInterval(() => {
+            //     if (!this.isAuthenticated()) {
+            //         alert('Your session has expired. Please login again.');
+            //         this.logout();
+            //     }
+            // }, 60000); // Check every minute
         }
         
         return true;

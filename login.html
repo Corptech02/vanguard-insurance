@@ -155,9 +155,13 @@
                 
                 const data = await response.json();
                 
-                // Store token and user info
+                // Store token and user info with login time
                 localStorage.setItem('authToken', data.access_token);
-                localStorage.setItem('userInfo', JSON.stringify(data.user_info));
+                const userInfo = {
+                    ...data.user_info,
+                    loginTime: Date.now()
+                };
+                localStorage.setItem('userInfo', JSON.stringify(userInfo));
                 
                 // Redirect to main app
                 window.location.href = 'index.html';
