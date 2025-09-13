@@ -1047,14 +1047,100 @@ function savePolicy() {
                     }
                     
                     // Store financial data at root level too
-                    if (tabId === 'financial' && label === 'Premium') {
-                        policyData.premium = input.value;
-                    }
-                    if (tabId === 'financial' && label === 'Monthly Premium') {
-                        policyData.monthlyPremium = input.value;
+                    if (tabId === 'financial') {
+                        if (label === 'Annual Premium') {
+                            policyData.premium = input.value;
+                            policyData.annualPremium = input.value;
+                            // Also ensure it's in the financial object
+                            if (!policyData.financial) policyData.financial = {};
+                            policyData.financial['Annual Premium'] = input.value;
+                        }
+                        if (label === 'Premium') {
+                            policyData.premium = input.value;
+                        }
+                        if (label === 'Monthly Premium') {
+                            policyData.monthlyPremium = input.value;
+                        }
                     }
                 }
             });
+        });
+        
+        // Collect vehicle and trailer data
+        policyData.vehicles = [];
+        
+        // Collect vehicles
+        const vehicleEntries = document.querySelectorAll('.vehicle-entry');
+        vehicleEntries.forEach(entry => {
+            const vehicle = {};
+            const inputs = entry.querySelectorAll('input, select');
+            
+            inputs.forEach(field => {
+                if (field.value) {
+                    // Map placeholders to proper field names
+                    let fieldName = field.placeholder || '';
+                    
+                    if (fieldName.includes('Year')) fieldName = 'Year';
+                    else if (fieldName.includes('Make')) fieldName = 'Make';
+                    else if (fieldName.includes('Model')) fieldName = 'Model';
+                    else if (fieldName.includes('VIN')) fieldName = 'VIN';
+                    else if (fieldName.includes('Value')) fieldName = 'Value';
+                    else if (fieldName.includes('Deductible')) fieldName = 'Deductible';
+                    else if (field.tagName === 'SELECT') fieldName = 'Coverage';
+                    
+                    vehicle[fieldName] = field.value;
+                }
+            });
+            
+            if (Object.keys(vehicle).length > 0) {
+                vehicle.Type = 'Vehicle';
+                policyData.vehicles.push(vehicle);
+            }
+        });
+        
+        // Collect trailers
+        const trailerEntries = document.querySelectorAll('.trailer-entry');
+        trailerEntries.forEach(entry => {
+            const trailer = {};
+            const inputs = entry.querySelectorAll('input');
+            
+            inputs.forEach(field => {
+                if (field.value) {
+                    // Map placeholders to proper field names
+                    let fieldName = field.placeholder || '';
+                    
+                    if (fieldName.includes('Year')) fieldName = 'Year';
+                    else if (fieldName.includes('Make')) fieldName = 'Make';
+                    else if (fieldName.includes('Type')) fieldName = 'Trailer Type';
+                    else if (fieldName.includes('VIN')) fieldName = 'VIN';
+                    else if (fieldName.includes('Length')) fieldName = 'Length';
+                    else if (fieldName.includes('Value')) fieldName = 'Value';
+                    else if (fieldName.includes('Deductible')) fieldName = 'Deductible';
+                    
+                    trailer[fieldName] = field.value;
+                }
+            });
+            
+            if (Object.keys(trailer).length > 0) {
+                trailer.Type = 'Trailer';
+                policyData.vehicles.push(trailer);
+            }
+        });
+        
+        // Collect drivers data
+        policyData.drivers = [];
+        const driverEntries = document.querySelectorAll('.driver-entry');
+        driverEntries.forEach(entry => {
+            const driver = {};
+            entry.querySelectorAll('input, select').forEach(field => {
+                if (field.value) {
+                    const fieldName = field.placeholder || 'unknown';
+                    driver[fieldName] = field.value;
+                }
+            });
+            if (Object.keys(driver).length > 0) {
+                policyData.drivers.push(driver);
+            }
         });
         
         // Ensure policyType is not lost - use initial type if current is empty
@@ -1064,6 +1150,7 @@ function savePolicy() {
         
         console.log('Policy data collected:', policyData);
         console.log('Policy type being saved:', policyData.policyType);
+        console.log('Vehicles being saved:', policyData.vehicles);
         
         // Store in localStorage (or send to backend) - use insurance_policies
         let policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
@@ -1199,11 +1286,20 @@ function savePolicyDraft() {
                     }
                     
                     // Store financial data at root level too
-                    if (tabId === 'financial' && label === 'Premium') {
-                        policyData.premium = input.value;
-                    }
-                    if (tabId === 'financial' && label === 'Monthly Premium') {
-                        policyData.monthlyPremium = input.value;
+                    if (tabId === 'financial') {
+                        if (label === 'Annual Premium') {
+                            policyData.premium = input.value;
+                            policyData.annualPremium = input.value;
+                            // Also ensure it's in the financial object
+                            if (!policyData.financial) policyData.financial = {};
+                            policyData.financial['Annual Premium'] = input.value;
+                        }
+                        if (label === 'Premium') {
+                            policyData.premium = input.value;
+                        }
+                        if (label === 'Monthly Premium') {
+                            policyData.monthlyPremium = input.value;
+                        }
                     }
                 }
             });
@@ -1418,33 +1514,74 @@ function populatePolicyForm(policyData) {
         });
     });
     
-    // Handle special cases for vehicles
+    // Handle special cases for vehicles and trailers
     if (policyData.vehicles && Array.isArray(policyData.vehicles)) {
         const vehiclesList = document.getElementById('vehiclesList');
-        if (vehiclesList) {
+        const trailersList = document.getElementById('trailersList');
+        
+        // Separate vehicles and trailers
+        const vehicles = policyData.vehicles.filter(v => v.Type !== 'Trailer');
+        const trailers = policyData.vehicles.filter(v => v.Type === 'Trailer');
+        
+        // Populate vehicles
+        if (vehiclesList && vehicles.length > 0) {
             vehiclesList.innerHTML = ''; // Clear existing
-            policyData.vehicles.forEach((vehicle, index) => {
+            vehicles.forEach((vehicle, index) => {
                 addVehicle();
                 // Populate the newly added vehicle fields
                 const vehicleEntry = vehiclesList.lastElementChild;
                 const inputs = vehicleEntry.querySelectorAll('input, select');
                 
-                // Map vehicle data to fields
-                const vehicleFields = [
-                    vehicle.year || vehicle.Year,
-                    vehicle.make || vehicle.Make,
-                    vehicle.model || vehicle.Model,
-                    vehicle.vin || vehicle.VIN || vehicle.Vin,
-                    vehicle.coverage || vehicle.Coverage || vehicle.coverageType,
-                    vehicle.garageZip || vehicle.GarageZip || vehicle['Garage ZIP'],
-                    vehicle.radius || vehicle.Radius || vehicle.operatingRadius,
-                    vehicle.gvw || vehicle.GVW || vehicle.gvwr,
-                    vehicle.vehicleType || vehicle.VehicleType || vehicle.type
-                ];
+                // Map fields based on their placeholder
+                inputs.forEach((input) => {
+                    const placeholder = input.placeholder || '';
+                    
+                    if (placeholder.includes('Year') && vehicle.Year) {
+                        input.value = vehicle.Year;
+                    } else if (placeholder.includes('Make') && vehicle.Make) {
+                        input.value = vehicle.Make;
+                    } else if (placeholder.includes('Model') && vehicle.Model) {
+                        input.value = vehicle.Model;
+                    } else if (placeholder.includes('VIN') && vehicle.VIN) {
+                        input.value = vehicle.VIN;
+                    } else if (placeholder.includes('Value') && vehicle.Value) {
+                        input.value = vehicle.Value;
+                    } else if (placeholder.includes('Deductible') && vehicle.Deductible) {
+                        input.value = vehicle.Deductible;
+                    } else if (input.tagName === 'SELECT' && vehicle.Coverage) {
+                        input.value = vehicle.Coverage;
+                    }
+                });
+            });
+        }
+        
+        // Populate trailers
+        if (trailersList && trailers.length > 0) {
+            trailersList.innerHTML = ''; // Clear existing
+            trailers.forEach((trailer, index) => {
+                addTrailer();
+                // Populate the newly added trailer fields
+                const trailerEntry = trailersList.lastElementChild;
+                const inputs = trailerEntry.querySelectorAll('input');
                 
-                inputs.forEach((input, i) => {
-                    if (vehicleFields[i]) {
-                        input.value = vehicleFields[i];
+                // Map fields based on their placeholder
+                inputs.forEach((input) => {
+                    const placeholder = input.placeholder || '';
+                    
+                    if (placeholder.includes('Year') && trailer.Year) {
+                        input.value = trailer.Year;
+                    } else if (placeholder.includes('Make') && trailer.Make) {
+                        input.value = trailer.Make;
+                    } else if (placeholder.includes('Type') && trailer['Trailer Type']) {
+                        input.value = trailer['Trailer Type'];
+                    } else if (placeholder.includes('VIN') && trailer.VIN) {
+                        input.value = trailer.VIN;
+                    } else if (placeholder.includes('Length') && trailer.Length) {
+                        input.value = trailer.Length;
+                    } else if (placeholder.includes('Value') && trailer.Value) {
+                        input.value = trailer.Value;
+                    } else if (placeholder.includes('Deductible') && trailer.Deductible) {
+                        input.value = trailer.Deductible;
                     }
                 });
             });

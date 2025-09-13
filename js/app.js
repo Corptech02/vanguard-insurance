@@ -920,6 +920,31 @@ function formatRelativeDate(dateString) {
     }
 }
 
+// Format Premium Value Helper
+function formatPremiumValue(value) {
+    if (!value && value !== 0) return '0';
+    
+    // If it's already a number, format it
+    if (typeof value === 'number') {
+        return value.toLocaleString();
+    }
+    
+    // If it's a string, clean it and parse it
+    if (typeof value === 'string') {
+        // Remove dollar signs, commas, and spaces
+        const cleanValue = value.replace(/[$,\s]/g, '');
+        const numValue = parseFloat(cleanValue);
+        
+        // Check if parsing was successful
+        if (!isNaN(numValue)) {
+            return numValue.toLocaleString();
+        }
+    }
+    
+    // Default return
+    return '0';
+}
+
 // Format Date Helper for displaying dates in tables
 function formatDate(dateInput) {
     if (!dateInput) return 'N/A';
@@ -4617,6 +4642,58 @@ function loadClientsView() {
 function loadPoliciesView() {
     const dashboardContent = document.querySelector('.dashboard-content');
     if (!dashboardContent) return;
+    
+    // Calculate actual statistics
+    const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    const totalPolicies = policies.length;
+    
+    // Count active policies
+    const activePolicies = policies.filter(p => {
+        const status = (p.policyStatus || p.status || '').toLowerCase();
+        return status === 'active' || status === 'in-force' || status === 'current';
+    }).length;
+    
+    // Count pending renewal (policies expiring within 60 days)
+    const today = new Date();
+    const sixtyDaysFromNow = new Date();
+    sixtyDaysFromNow.setDate(today.getDate() + 60);
+    
+    const pendingRenewal = policies.filter(p => {
+        if (!p.expirationDate) return false;
+        const expDate = new Date(p.expirationDate);
+        return expDate >= today && expDate <= sixtyDaysFromNow;
+    }).length;
+    
+    // Calculate total premium
+    let totalPremium = 0;
+    policies.forEach(policy => {
+        const premiumValue = policy.financial?.['Annual Premium'] || 
+                           policy.financial?.['Premium'] || 
+                           policy.premium || 
+                           policy.annualPremium || 0;
+        
+        if (premiumValue) {
+            let numValue = 0;
+            if (typeof premiumValue === 'number') {
+                numValue = premiumValue;
+            } else if (typeof premiumValue === 'string') {
+                const cleanValue = premiumValue.replace(/[$,\s]/g, '');
+                numValue = parseFloat(cleanValue) || 0;
+            }
+            totalPremium += numValue;
+        }
+    });
+    
+    // Format total premium
+    let formattedPremium = '$0';
+    if (totalPremium >= 1000000) {
+        formattedPremium = '$' + (totalPremium / 1000000).toFixed(1) + 'M';
+    } else if (totalPremium >= 1000) {
+        formattedPremium = '$' + (totalPremium / 1000).toFixed(0) + 'K';
+    } else {
+        formattedPremium = '$' + totalPremium.toFixed(0);
+    }
+    
     dashboardContent.innerHTML = `
         <div class="policies-view">
             <header class="content-header">
@@ -4633,19 +4710,19 @@ function loadPoliciesView() {
             
             <div class="policy-stats">
                 <div class="mini-stat">
-                    <span class="mini-stat-value">${(JSON.parse(localStorage.getItem('insurance_policies') || '[]')).length}</span>
+                    <span class="mini-stat-value">${totalPolicies}</span>
                     <span class="mini-stat-label">Total Policies</span>
                 </div>
                 <div class="mini-stat">
-                    <span class="mini-stat-value">4,892</span>
+                    <span class="mini-stat-value">${activePolicies}</span>
                     <span class="mini-stat-label">Active</span>
                 </div>
                 <div class="mini-stat">
-                    <span class="mini-stat-value">156</span>
+                    <span class="mini-stat-value">${pendingRenewal}</span>
                     <span class="mini-stat-label">Pending Renewal</span>
                 </div>
                 <div class="mini-stat">
-                    <span class="mini-stat-value">$7.2M</span>
+                    <span class="mini-stat-value">${formattedPremium}</span>
                     <span class="mini-stat-label">Total Premium</span>
                 </div>
             </div>
@@ -8485,6 +8562,21 @@ function generateClientPoliciesList(policies) {
                             policy.monthlyPremium ||
                             policy.annualPremium || 0;
         
+        // Format the premium for display
+        let formattedPremium = '0';
+        if (premiumValue) {
+            if (typeof premiumValue === 'number') {
+                formattedPremium = premiumValue.toLocaleString();
+            } else if (typeof premiumValue === 'string') {
+                // Remove formatting characters and parse
+                const cleanValue = premiumValue.replace(/[$,\s]/g, '');
+                const numValue = parseFloat(cleanValue);
+                if (!isNaN(numValue)) {
+                    formattedPremium = numValue.toLocaleString();
+                }
+            }
+        }
+        
         // Format status
         const status = policy.policyStatus || policy.status || 'Active';
         const statusClass = getStatusClass(status);
@@ -8497,13 +8589,13 @@ function generateClientPoliciesList(policies) {
                 </div>
                 <div class="policy-details">
                     <p><strong>${typeLabel}</strong></p>
-                    <p>${policy.carrier || 'N/A'} • $${Number(premiumValue).toLocaleString()}/year</p>
+                    <p>${policy.carrier || 'N/A'} • $${formattedPremium}/year</p>
                     <p>Expires: ${formatDate(policy.expirationDate) || 'N/A'}</p>
                 </div>
                 <div class="policy-actions">
                     <button class="btn-small" onclick="viewPolicy('${policy.id || policy.policyNumber}')">View Details</button>
                     <button class="btn-small" onclick="renewPolicy('${policy.id || policy.policyNumber}')">Renew</button>
-                    <button class="btn-small" onclick="confirmDeletePolicy('${policy.id || policy.policyNumber}', '${policy.policyNumber}')" style="background: #dc2626; color: white;">Delete</button>
+                    <button class="btn-small" onclick="confirmDeletePolicy('${policy.id || policy.policyNumber}', '${policy.policyNumber}', '${window.currentViewingClientId || ''}')" style="background: #dc2626; color: white;">Delete</button>
                 </div>
             </div>
         `;
@@ -8682,17 +8774,62 @@ function collectPolicyData() {
                 
             case 'vehicles':
                 // Collect vehicle and trailer data for commercial auto
-                const vehicleEntries = tab.querySelectorAll('.vehicle-entry, .trailer-entry');
+                const vehicleEntries = tab.querySelectorAll('.vehicle-entry');
                 vehicleEntries.forEach(entry => {
                     const vehicle = {};
-                    entry.querySelectorAll('input, select').forEach(field => {
+                    const inputs = entry.querySelectorAll('input, select');
+                    
+                    // Map fields based on their position and placeholder
+                    inputs.forEach((field, index) => {
                         if (field.value) {
-                            const fieldName = field.previousElementSibling?.textContent || field.placeholder || 'unknown';
+                            // Map placeholders to proper field names
+                            let fieldName = field.placeholder || '';
+                            
+                            // Clean up field names
+                            if (fieldName.includes('Year')) fieldName = 'Year';
+                            else if (fieldName.includes('Make')) fieldName = 'Make';
+                            else if (fieldName.includes('Model')) fieldName = 'Model';
+                            else if (fieldName.includes('VIN')) fieldName = 'VIN';
+                            else if (fieldName.includes('Value')) fieldName = 'Value';
+                            else if (fieldName.includes('Deductible')) fieldName = 'Deductible';
+                            else if (field.tagName === 'SELECT') fieldName = 'Coverage';
+                            
                             vehicle[fieldName] = field.value;
                         }
                     });
+                    
                     if (Object.keys(vehicle).length > 0) {
+                        vehicle.Type = 'Vehicle';
                         data.vehicles.push(vehicle);
+                    }
+                });
+                
+                // Collect trailer data separately
+                const trailerEntries = tab.querySelectorAll('.trailer-entry');
+                trailerEntries.forEach(entry => {
+                    const trailer = {};
+                    const inputs = entry.querySelectorAll('input');
+                    
+                    inputs.forEach((field, index) => {
+                        if (field.value) {
+                            // Map placeholders to proper field names
+                            let fieldName = field.placeholder || '';
+                            
+                            if (fieldName.includes('Year')) fieldName = 'Year';
+                            else if (fieldName.includes('Make')) fieldName = 'Make';
+                            else if (fieldName.includes('Type')) fieldName = 'Trailer Type';
+                            else if (fieldName.includes('VIN')) fieldName = 'VIN';
+                            else if (fieldName.includes('Length')) fieldName = 'Length';
+                            else if (fieldName.includes('Value')) fieldName = 'Value';
+                            else if (fieldName.includes('Deductible')) fieldName = 'Deductible';
+                            
+                            trailer[fieldName] = field.value;
+                        }
+                    });
+                    
+                    if (Object.keys(trailer).length > 0) {
+                        trailer.Type = 'Trailer';
+                        data.vehicles.push(trailer);
                     }
                 });
                 break;
@@ -8740,7 +8877,7 @@ function renewPolicy(policyId) {
 }
 
 // Policy Delete Functions
-function confirmDeletePolicy(policyId, policyNumber) {
+function confirmDeletePolicy(policyId, policyNumber, clientId) {
     // Create confirmation modal
     const modal = document.createElement('div');
     modal.className = 'modal-overlay active';
@@ -8763,7 +8900,7 @@ function confirmDeletePolicy(policyId, policyNumber) {
                 <button class="btn-secondary" onclick="document.getElementById('deleteConfirmModal').remove()">
                     Cancel
                 </button>
-                <button class="btn-primary" onclick="deletePolicy('${policyId}')" style="background: #dc2626; border-color: #dc2626;">
+                <button class="btn-primary" onclick="deletePolicy('${policyId}', '${clientId || ''}')" style="background: #dc2626; border-color: #dc2626;">
                     <i class="fas fa-trash"></i> Delete Policy
                 </button>
             </div>
@@ -8772,7 +8909,7 @@ function confirmDeletePolicy(policyId, policyNumber) {
     document.body.appendChild(modal);
 }
 
-function deletePolicy(policyId) {
+function deletePolicy(policyId, clientId) {
     // Remove the confirmation modal
     const modal = document.getElementById('deleteConfirmModal');
     if (modal) modal.remove();
@@ -8820,22 +8957,38 @@ function deletePolicy(policyId) {
     showNotification('Policy deleted successfully', 'success');
     
     // Refresh the current view
-    const clientProfileElement = document.querySelector('.client-profile');
-    if (clientProfileElement) {
-        // If we're in a client profile view, refresh it
-        const clientId = clientProfileElement.dataset.clientId;
-        if (clientId) {
-            viewClient(clientId);
-        }
+    // Use the passed clientId if available, otherwise try to determine from context
+    const refreshClientId = clientId || window.currentViewingClientId;
+    
+    if (refreshClientId) {
+        // Refresh the client view
+        viewClient(refreshClientId);
     } else if (window.location.hash === '#policies') {
         // If we're in the policies view, refresh it
         loadPoliciesView();
+    } else {
+        // Try to detect if we're in a client view
+        const clientProfileView = document.querySelector('.client-profile-view');
+        if (clientProfileView) {
+            // Try to find client ID from localStorage by matching policies
+            const allClients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+            for (const client of allClients) {
+                if (client.policies && client.policies.some(p => p.id === policyId || p.policyNumber === policyId)) {
+                    viewClient(client.id);
+                    return;
+                }
+            }
+            // Fallback: reload the page if we can't determine the client
+            location.reload();
+        }
     }
 }
 
 // Client Management Functions
 function viewClient(id) {
     console.log('Viewing client:', id);
+    // Store the current client ID globally for other functions to use
+    window.currentViewingClientId = id;
     
     // Get actual client data from localStorage
     const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
