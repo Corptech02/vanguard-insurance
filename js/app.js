@@ -4791,8 +4791,15 @@ function loadRenewalsView() {
     const dashboardContent = document.querySelector('.dashboard-content');
     if (!dashboardContent) return;
     
-    // Generate sample renewal data
-    const renewalPolicies = generateRenewalPolicies();
+    // Get real policy data from localStorage
+    const allPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    
+    // Process policies for renewals
+    const renewalPolicies = getRealRenewalPolicies(allPolicies, clients);
+    
+    // Calculate renewal statistics
+    const stats = calculateRenewalStats(renewalPolicies);
     
     dashboardContent.innerHTML = `
         <div class="renewals-view">
@@ -4816,22 +4823,22 @@ function loadRenewalsView() {
             <div class="renewal-stats">
                 <div class="stat-card">
                     <h4>Due This Month</h4>
-                    <span class="stat-value">23</span>
-                    <span class="stat-label">$125,450 Premium</span>
+                    <span class="stat-value">${stats.dueThisMonth.count}</span>
+                    <span class="stat-label">${stats.dueThisMonth.premium} Premium</span>
                 </div>
                 <div class="stat-card">
                     <h4>Due Next Month</h4>
-                    <span class="stat-value">31</span>
-                    <span class="stat-label">$187,230 Premium</span>
+                    <span class="stat-value">${stats.dueNextMonth.count}</span>
+                    <span class="stat-label">${stats.dueNextMonth.premium} Premium</span>
                 </div>
                 <div class="stat-card urgent">
                     <h4>Overdue</h4>
-                    <span class="stat-value">5</span>
-                    <span class="stat-label">Immediate Action Required</span>
+                    <span class="stat-value">${stats.overdue.count}</span>
+                    <span class="stat-label">${stats.overdue.premium === '$0' ? 'No overdue policies' : stats.overdue.premium + ' Total'}</span>
                 </div>
                 <div class="stat-card">
                     <h4>Renewal Rate</h4>
-                    <span class="stat-value">92%</span>
+                    <span class="stat-value">${stats.renewalRate}</span>
                     <span class="stat-label">Last 12 Months</span>
                 </div>
             </div>
@@ -4852,37 +4859,127 @@ function loadRenewalsView() {
     addRenewalStyles();
 }
 
-function generateRenewalPolicies() {
-    const policies = [];
-    const clients = ['ABC Corporation', 'Smith Industries', 'Johnson LLC', 'Davis Enterprises', 'Wilson Group', 
-                    'Brown Holdings', 'Miller Corp', 'Anderson Inc', 'Taylor Systems', 'Thomas Manufacturing'];
-    const carriers = ['Progressive', 'State Farm', 'Hartford', 'Travelers', 'Liberty Mutual', 'Nationwide'];
-    const types = ['Commercial Auto', 'General Liability', 'Workers Comp', 'Property', 'Umbrella'];
-    
-    // Generate policies for the next 12 months
+function getRealRenewalPolicies(policies, clients) {
+    const renewalPolicies = [];
     const today = new Date();
-    for (let i = 0; i < 60; i++) {
-        const expirationDate = new Date(today);
-        expirationDate.setDate(expirationDate.getDate() + Math.floor(Math.random() * 365));
+    const oneYearFromNow = new Date(today.getTime() + 365 * 24 * 60 * 60 * 1000);
+    
+    policies.forEach(policy => {
+        if (!policy.expirationDate && !policy.endDate) return;
         
-        policies.push({
-            id: `POL-2025-${1000 + i}`,
-            client: clients[Math.floor(Math.random() * clients.length)],
-            carrier: carriers[Math.floor(Math.random() * carriers.length)],
-            type: types[Math.floor(Math.random() * types.length)],
-            policyNumber: `${Math.random().toString(36).substr(2, 9).toUpperCase()}`,
-            premium: Math.floor(Math.random() * 50000) + 5000,
+        const expirationDate = new Date(policy.expirationDate || policy.endDate);
+        if (isNaN(expirationDate.getTime())) return;
+        
+        // Get client info
+        const client = clients.find(c => c.id === policy.clientId) || {};
+        const clientName = client.name || policy.clientName || 'Unknown Client';
+        
+        // Get premium value
+        let premiumValue = 0;
+        const premium = policy.financial?.['Annual Premium'] || 
+                       policy.financial?.['Premium'] || 
+                       policy.premium || 
+                       policy.annualPremium || 0;
+        
+        if (premium) {
+            if (typeof premium === 'number') {
+                premiumValue = premium;
+            } else if (typeof premium === 'string') {
+                const cleanValue = premium.replace(/[$,\s]/g, '');
+                premiumValue = parseFloat(cleanValue) || 0;
+            }
+        }
+        
+        renewalPolicies.push({
+            id: policy.id || `POL-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            client: clientName,
+            carrier: policy.carrier || policy.insuranceCarrier || 'Unknown Carrier',
+            type: policy.policyType || policy.type || 'Commercial Auto',
+            policyNumber: policy.policyNumber || policy.number || 'N/A',
+            premium: premiumValue,
             expirationDate: expirationDate,
-            effectiveDate: new Date(expirationDate.getFullYear() - 1, expirationDate.getMonth(), expirationDate.getDate()),
+            effectiveDate: policy.effectiveDate ? new Date(policy.effectiveDate) : 
+                          new Date(expirationDate.getFullYear() - 1, expirationDate.getMonth(), expirationDate.getDate()),
             status: getStatusFromDate(expirationDate),
-            agent: 'John Smith',
-            lastContact: new Date(today.getTime() - Math.random() * 30 * 24 * 60 * 60 * 1000)
+            agent: policy.agent || 'Unassigned',
+            phone: client.phone || policy.clientPhone || '',
+            email: client.email || policy.clientEmail || ''
         });
-    }
+    });
     
     // Sort by expiration date
-    policies.sort((a, b) => a.expirationDate - b.expirationDate);
-    return policies;
+    renewalPolicies.sort((a, b) => a.expirationDate - b.expirationDate);
+    return renewalPolicies;
+}
+
+function calculateRenewalStats(policies) {
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const startOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const endOfNextMonth = new Date(today.getFullYear(), today.getMonth() + 2, 0);
+    const oneYearAgo = new Date(today.getFullYear() - 1, today.getMonth(), today.getDate());
+    
+    let dueThisMonth = { count: 0, total: 0 };
+    let dueNextMonth = { count: 0, total: 0 };
+    let overdue = { count: 0, total: 0 };
+    let renewed = 0;
+    let expired = 0;
+    
+    policies.forEach(policy => {
+        const expDate = policy.expirationDate;
+        
+        if (expDate < today) {
+            overdue.count++;
+            overdue.total += policy.premium;
+        } else if (expDate >= startOfMonth && expDate <= endOfMonth) {
+            dueThisMonth.count++;
+            dueThisMonth.total += policy.premium;
+        } else if (expDate >= startOfNextMonth && expDate <= endOfNextMonth) {
+            dueNextMonth.count++;
+            dueNextMonth.total += policy.premium;
+        }
+        
+        // Count renewals in last 12 months
+        if (expDate >= oneYearAgo && expDate <= today) {
+            if (policy.status === 'renewed') {
+                renewed++;
+            } else {
+                expired++;
+            }
+        }
+    });
+    
+    // Calculate renewal rate
+    const totalPastDue = renewed + expired;
+    const renewalRate = totalPastDue > 0 ? Math.round((renewed / totalPastDue) * 100) : 0;
+    
+    // Format premium amounts
+    const formatPremium = (amount) => {
+        if (amount >= 1000000) {
+            return '$' + (amount / 1000000).toFixed(1) + 'M';
+        } else if (amount >= 1000) {
+            return '$' + Math.round(amount / 1000) + 'K';
+        } else {
+            return '$' + Math.round(amount);
+        }
+    };
+    
+    return {
+        dueThisMonth: {
+            count: dueThisMonth.count,
+            premium: formatPremium(dueThisMonth.total)
+        },
+        dueNextMonth: {
+            count: dueNextMonth.count,
+            premium: formatPremium(dueNextMonth.total)
+        },
+        overdue: {
+            count: overdue.count,
+            premium: formatPremium(overdue.total)
+        },
+        renewalRate: renewalRate + '%'
+    };
 }
 
 function getStatusFromDate(date) {
@@ -5005,20 +5102,37 @@ function showRenewalProfile(policyId) {
         selectedCard.classList.add('selected');
     }
     
-    // Sample policy data (in real app, fetch from database)
-    const policy = {
-        id: policyId,
-        client: 'ABC Corporation',
-        carrier: 'Progressive',
-        type: 'Commercial Auto',
-        policyNumber: 'CA-2024-78945',
-        premium: 25000,
-        expirationDate: new Date(2025, 2, 15),
-        effectiveDate: new Date(2024, 2, 15),
-        agent: 'John Smith',
-        phone: '(555) 123-4567',
-        email: 'contact@abccorp.com'
-    };
+    // Get real policy data from localStorage
+    const allPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+    const renewalPolicies = getRealRenewalPolicies(allPolicies, clients);
+    
+    // Find the selected policy
+    let policy = renewalPolicies.find(p => p.id === policyId);
+    
+    // If not found in processed renewals, create a basic policy object
+    if (!policy) {
+        const rawPolicy = allPolicies.find(p => p.id === policyId);
+        if (rawPolicy) {
+            const client = clients.find(c => c.id === rawPolicy.clientId) || {};
+            policy = {
+                id: policyId,
+                client: client.name || rawPolicy.clientName || 'Unknown Client',
+                carrier: rawPolicy.carrier || rawPolicy.insuranceCarrier || 'Unknown Carrier',
+                type: rawPolicy.policyType || rawPolicy.type || 'Commercial Auto',
+                policyNumber: rawPolicy.policyNumber || rawPolicy.number || 'N/A',
+                premium: rawPolicy.premium || 0,
+                expirationDate: new Date(rawPolicy.expirationDate || rawPolicy.endDate),
+                effectiveDate: new Date(rawPolicy.effectiveDate || rawPolicy.startDate),
+                agent: rawPolicy.agent || 'Unassigned',
+                phone: client.phone || '',
+                email: client.email || ''
+            };
+        } else {
+            console.error('Policy not found:', policyId);
+            return;
+        }
+    }
     
     // Show profile and adjust layout
     listContainer.style.width = '40%';
