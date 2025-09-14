@@ -4,17 +4,16 @@ console.log('COI Gmail Override loading...');
 // Backend API URL - Using HTTPS tunnel
 const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
 
-// Wait for app.js to load first
-window.addEventListener('DOMContentLoaded', function() {
-    console.log('DOM loaded, overriding COI functions...');
+// Override immediately after script loads (don't wait for DOM)
+(function() {
+    console.log('Overriding COI functions...');
 
-    // Store original functions
+    // Store original function if it exists
     const originalLoadCOIView = window.loadCOIView;
-    const originalLoadCOIInbox = window.loadCOIInbox;
 
     // Override loadCOIView - this is what gets called when navigating to #coi
     window.loadCOIView = function() {
-        console.log('COI View Override: Loading with Gmail integration...');
+        console.log('COI View Override: Loading with restored layout...');
 
         const dashboardContent = document.querySelector('.dashboard-content');
         if (!dashboardContent) return;
@@ -214,6 +213,6 @@ window.addEventListener('hashchange', function() {
             }
         }, 100);
     }
-});
+})();
 
 console.log('COI Gmail Override ready');
