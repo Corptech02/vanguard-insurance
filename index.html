@@ -806,7 +806,6 @@
     <script src="js/integrations.js?v=20"></script>
     <script src="js/data-sync.js?v=1"></script>
     <script src="js/app.js?v=45"></script>
-    <script src="js/original-client-profile.js"></script>
     <script src="js/ai-functions-fallback.js"></script>
     <script src="js/policy-modal.js?v=30"></script>
     <script src="js/fix-policy-types.js"></script>
@@ -831,7 +830,8 @@
     <script src="js/add-test-button.js"></script>
     <script src="js/debug-convert-lead.js"></script>
     <script src="js/fix-clients-view.js"></script>
-    <script src="js/fix-client-profile-policies.js"></script>
+    <!-- DISABLED: Conflicts with original-client-profile.js
+    <script src="js/fix-client-profile-policies.js"></script> -->
     <!-- TEMPORARILY DISABLED - This was blocking Vicidial lead imports -->
     <!-- <script src="js/fix-lead-persistence.js"></script> -->
     <script src="js/fix-stage-update.js"></script>
@@ -910,9 +910,12 @@
     <script src="js/firebase-sync.js?v=1"></script>
     
     <!-- Optional: Firebase SDK for real-time sync (uncomment to enable) -->
-    <!-- 
+    <!--
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     -->
+
+    <!-- ORIGINAL CLIENT PROFILE - Must be LAST to override all other viewClient functions -->
+    <script src="js/original-client-profile.js?v=2"></script>
 </body>
 </html><!-- Trigger rebuild -->
