@@ -6,9 +6,9 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <!-- Cache buster: 2025-01-09-v60-FORCE-CLEAR -->
+    <!-- Cache buster: 2025-01-14-v70-FORCE-CLEAR-CLIENTS -->
     <title>Vanguard Insurance Software - All-in-One Agency Management Platform</title>
-    <link rel="stylesheet" href="css/styles.css?v=30">
+    <link rel="stylesheet" href="css/styles.css?v=31">
     <link rel="stylesheet" href="css/carrier-profile.css?v=2">
     <link rel="stylesheet" href="css/policy-modal.css?v=3">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -193,6 +193,23 @@
         .policies-view .data-table td.policy-number {
             font-weight: 500 !important;
             color: #3b82f6 !important;
+        }
+
+        /* Force hide Type and Status columns in Clients Management */
+        .clients-view .data-table th:nth-child(4):contains("Type"),
+        .clients-view .data-table th:nth-child(5):contains("Status"),
+        .clients-view .data-table td:nth-child(4).client-type,
+        .clients-view .data-table td:nth-child(5).client-status {
+            display: none !important;
+        }
+
+        /* Ensure clients table has correct column count */
+        .clients-view .data-table thead tr th {
+            padding: 12px 15px !important;
+        }
+
+        .clients-view .data-table {
+            table-layout: auto !important;
         }
     </style>
     <!-- Authentication Service -->
@@ -788,7 +805,7 @@
     <script src="js/api-service.js?v=26"></script>
     <script src="js/integrations.js?v=20"></script>
     <script src="js/data-sync.js?v=1"></script>
-    <script src="js/app.js?v=41"></script>
+    <script src="js/app.js?v=42"></script>
     <script src="js/ai-functions-fallback.js"></script>
     <script src="js/policy-modal.js?v=30"></script>
     <script src="js/fix-policy-types.js"></script>
