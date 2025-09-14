@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Real Gmail Emails</title>
+    <style>
+        body { font-family: Arial; padding: 40px; max-width: 1000px; margin: 0 auto; }
+        button { padding: 10px 20px; margin: 10px; background: #667eea; color: white; border: none; border-radius: 6px; cursor: pointer; }
+        button:hover { background: #5a67d8; }
+        .result { margin-top: 20px; padding: 20px; background: #f5f5f5; border-radius: 8px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Test Real Gmail Emails</h1>
+
+    <button onclick="markConnected()">1. Mark Gmail as Connected</button>
+    <button onclick="testAPI()">2. Test API Connection</button>
+    <button onclick="fetchEmails()">3. Fetch Real Emails</button>
+    <button onclick="authorizeGmail()">4. Authorize Gmail (if needed)</button>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        const API_URL = 'https://vanguard-api.loca.lt/api/gmail';
+        const resultDiv = document.getElementById('result');
+
+        function log(msg, type = '') {
+            resultDiv.className = 'result ' + type;
+            resultDiv.innerHTML += msg + '<br>';
+        }
+
+        function clear() {
+            resultDiv.innerHTML = '';
+        }
+
+        function markConnected() {
+            clear();
+            localStorage.setItem('gmail_connected', 'true');
+            log('✅ Marked Gmail as connected', 'success');
+            log('Now try fetching emails (button 3)');
+        }
+
+        async function testAPI() {
+            clear();
+            log('Testing API connection...');
+
+            try {
+                const response = await fetch(API_URL + '/auth-url');
+                if (response.ok) {
+                    log('✅ API is working!', 'success');
+                    const data = await response.json();
+                    log('Response: ' + JSON.stringify(data).substring(0, 100) + '...');
+                } else {
+                    log('❌ API error: ' + response.status, 'error');
+                }
+            } catch (error) {
+                log('❌ Cannot connect to API: ' + error.message, 'error');
+            }
+        }
+
+        async function fetchEmails() {
+            clear();
+            log('Fetching real emails from corptech02@gmail.com...');
+
+            try {
+                const response = await fetch(API_URL + '/search-coi?days=30');
+
+                if (!response.ok) {
+                    const error = await response.text();
+                    log('❌ Error ' + response.status + ': ' + error, 'error');
+
+                    if (response.status === 500) {
+                        log('Gmail is not authorized. Click button 4 to authorize.', 'error');
+                    }
+                    return;
+                }
+
+                const emails = await response.json();
+
+                if (emails.error) {
+                    log('❌ Error: ' + emails.error, 'error');
+                    log('You need to authorize Gmail first (button 4)', 'error');
+                    return;
+                }
+
+                log('✅ Found ' + emails.length + ' emails!', 'success');
+
+                if (emails.length > 0) {
+                    log('\nShowing emails:', 'success');
+                    emails.forEach((email, i) => {
+                        log((i+1) + '. From: ' + email.from);
+                        log('   Subject: ' + email.subject);
+                        log('   Date: ' + new Date(email.date).toLocaleDateString());
+                        log('---');
+                    });
+                } else {
+                    log('No COI-related emails found in the last 30 days');
+                    log('The search looks for emails containing: COI, certificate, ACORD, insurance');
+                }
+
+            } catch (error) {
+                log('❌ Error: ' + error.message, 'error');
+                log('This usually means Gmail needs to be authorized', 'error');
+            }
+        }
+
+        function authorizeGmail() {
+            clear();
+            log('To authorize Gmail:', 'success');
+            log('1. Go to: <a href="gmail-setup.html" target="_blank">gmail-setup.html</a>');
+            log('2. Paste your OAuth credentials JSON');
+            log('3. Click "Connect with OAuth"');
+            log('4. Authorize corptech02@gmail.com');
+            log('5. Come back here and test again');
+
+            // Also try to initialize with dummy auth for testing
+            fetch(API_URL + '/init', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    client_id: 'test',
+                    client_secret: 'test',
+                    redirect_uri: 'test',
+                    refresh_token: 'test',
+                    access_token: 'test'
+                })
+            }).then(r => r.json()).then(data => {
+                if (data.error) {
+                    log('\nNote: ' + data.error);
+                }
+            });
+        }
+
+        // Auto-test on load
+        testAPI();
+    </script>
+</body>
+</html>

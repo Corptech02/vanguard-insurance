@@ -4,11 +4,11 @@ console.log('Initializing COI Gmail Integration...');
 // Backend API URL - Now using HTTPS tunnel via localtunnel
 const GMAIL_API_URL = 'https://vanguard-api.loca.lt/api/gmail';
 
-// Override the loadCOIManagement function to use real Gmail data
-const originalLoadCOIManagement = window.loadCOIManagement;
+// Override the loadCOIView function to use real Gmail data (this is what app.js calls)
+const originalLoadCOIView = window.loadCOIView;
 
-window.loadCOIManagement = async function() {
-    console.log('Loading COI Management with Gmail integration...');
+window.loadCOIView = async function() {
+    console.log('Loading COI View with Gmail integration...');
 
     const dashboardContent = document.querySelector('.dashboard-content');
     if (!dashboardContent) return;
@@ -653,9 +653,11 @@ function loadDemoInbox() {
     `;
 }
 
-// Override the loadCOIInbox function to use real Gmail data
+// Override the loadCOIInbox function to use real Gmail data from corptech02@gmail.com
+const originalLoadCOIInbox = window.loadCOIInbox;
+
 window.loadCOIInbox = async function() {
-    console.log('Loading COI Inbox with Gmail integration...');
+    console.log('Loading COI Inbox with real Gmail data from corptech02@gmail.com...');
 
     const coiInbox = document.getElementById('coiInbox');
     if (!coiInbox) return;
