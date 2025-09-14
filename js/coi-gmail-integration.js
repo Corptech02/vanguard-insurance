@@ -2,7 +2,7 @@
 console.log('Initializing COI Gmail Integration...');
 
 // Backend API URL - Now using HTTPS tunnel via localtunnel
-const GMAIL_API_URL = 'https://vanguard-api.loca.lt/api/gmail';
+const GMAIL_API_URL = 'https://empty-eel-30.loca.lt/api/gmail';
 
 // Override the loadCOIView function to use real Gmail data (this is what app.js calls)
 const originalLoadCOIView = window.loadCOIView;

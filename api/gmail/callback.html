@@ -89,7 +89,7 @@
                 }
 
                 // Exchange code for tokens via backend
-                const response = await fetch('https://vanguard-api.loca.lt/api/gmail/exchange-code', {
+                const response = await fetch('https://empty-eel-30.loca.lt/api/gmail/exchange-code', {
                     method: 'POST',
                     mode: 'cors',
                     headers: {
@@ -114,7 +114,7 @@
                     localStorage.setItem('gmail_connected', 'true');
 
                     // Initialize Gmail service with tokens
-                    await fetch('https://vanguard-api.loca.lt/api/gmail/init', {
+                    await fetch('https://empty-eel-30.loca.lt/api/gmail/init', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
