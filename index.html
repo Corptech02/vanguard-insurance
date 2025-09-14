@@ -69,40 +69,79 @@
             color: white !important;
         }
 
-        /* Optimize table column spacing */
-        #leadsTable th:nth-child(2),
-        #leadsTable td:nth-child(2) {
-            /* Name column */
-            width: 150px !important;
-            max-width: 150px !important;
+        /* Optimize table with uniform spacing */
+        #leadsTable {
+            width: 100% !important;
+            table-layout: fixed !important;
         }
 
-        #leadsTable th:nth-child(3),
-        #leadsTable td:nth-child(3) {
-            /* Contact column - narrow since it's just icons */
-            width: 80px !important;
-            text-align: center !important;
-            padding-right: 4px !important;
-        }
-
-        #leadsTable th:nth-child(4),
-        #leadsTable td:nth-child(4) {
-            /* Product Interest - move it left with padding */
-            width: 200px !important;
-            padding-left: 4px !important;
-            padding-right: 20px !important;
-        }
-
-        #leadsTable th:nth-child(5),
-        #leadsTable td:nth-child(5) {
-            /* Premium - add left padding to create visual separation */
-            padding-left: 25px !important;
-        }
-
-        /* Reduce padding on other columns to give more room */
         #leadsTable th,
         #leadsTable td {
-            padding: 8px 6px !important;
+            padding: 10px 12px !important;
+            text-align: left !important;
+        }
+
+        /* Checkbox column */
+        #leadsTable th:nth-child(1),
+        #leadsTable td:nth-child(1) {
+            width: 40px !important;
+            text-align: center !important;
+        }
+
+        /* Name column */
+        #leadsTable th:nth-child(2),
+        #leadsTable td:nth-child(2) {
+            width: 160px !important;
+            max-width: 160px !important;
+        }
+
+        /* Contact column - centered icons */
+        #leadsTable th:nth-child(3),
+        #leadsTable td:nth-child(3) {
+            width: 90px !important;
+            text-align: center !important;
+        }
+
+        /* Product Interest */
+        #leadsTable th:nth-child(4),
+        #leadsTable td:nth-child(4) {
+            width: 180px !important;
+        }
+
+        /* Premium */
+        #leadsTable th:nth-child(5),
+        #leadsTable td:nth-child(5) {
+            width: 100px !important;
+        }
+
+        /* Stage */
+        #leadsTable th:nth-child(6),
+        #leadsTable td:nth-child(6) {
+            width: 120px !important;
+        }
+
+        /* Renewal Date */
+        #leadsTable th:nth-child(7),
+        #leadsTable td:nth-child(7) {
+            width: 110px !important;
+        }
+
+        /* Assigned To */
+        #leadsTable th:nth-child(8),
+        #leadsTable td:nth-child(8) {
+            width: 120px !important;
+        }
+
+        /* Created */
+        #leadsTable th:nth-child(9),
+        #leadsTable td:nth-child(9) {
+            width: 100px !important;
+        }
+
+        /* Actions */
+        #leadsTable th:nth-child(10),
+        #leadsTable td:nth-child(10) {
+            width: 140px !important;
         }
 
         /* Ensure Product Interest text doesn't wrap unnecessarily */
