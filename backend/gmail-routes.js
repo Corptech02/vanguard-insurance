@@ -41,14 +41,44 @@ router.post('/init', async (req, res) => {
  * GET /api/gmail/auth-url
  */
 router.get('/auth-url', (req, res) => {
+    // Use the redirect URI from the client's credentials
+    const redirect_uri = req.query.redirect_uri || 'http://192.168.40.232:3001/api/gmail/callback';
+
     const credentials = {
         client_id: process.env.GMAIL_CLIENT_ID || req.query.client_id,
         client_secret: process.env.GMAIL_CLIENT_SECRET || req.query.client_secret,
-        redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://192.168.40.232:3001/api/gmail/callback'
+        redirect_uri: redirect_uri
     };
 
     const authUrl = gmailService.getAuthUrl(credentials);
     res.json({ authUrl });
+});
+
+/**
+ * Exchange authorization code for tokens
+ * POST /api/gmail/exchange-code
+ */
+router.post('/exchange-code', async (req, res) => {
+    try {
+        const { code, client_id, client_secret, redirect_uri } = req.body;
+
+        const credentials = {
+            client_id,
+            client_secret,
+            redirect_uri
+        };
+
+        const tokens = await gmailService.getTokensFromCode(code, credentials);
+
+        // Initialize service with tokens
+        gmailCredentials = { ...credentials, ...tokens };
+        await gmailService.initialize(gmailCredentials);
+
+        res.json({ success: true, tokens });
+    } catch (error) {
+        console.error('Error exchanging code:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 /**

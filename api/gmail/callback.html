@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gmail OAuth Callback</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        p {
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+        .spinner {
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .error {
+            color: #ef4444;
+        }
+        .success {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Connecting Gmail...</h1>
+        <div class="spinner"></div>
+        <p id="status">Processing authorization...</p>
+    </div>
+
+    <script>
+        // Get the authorization code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const code = urlParams.get('code');
+        const error = urlParams.get('error');
+
+        async function handleCallback() {
+            const statusEl = document.getElementById('status');
+
+            if (error) {
+                statusEl.className = 'error';
+                statusEl.textContent = 'Authorization denied. Please try again.';
+                setTimeout(() => {
+                    window.location.href = '/vanguard-insurance/gmail-setup.html';
+                }, 3000);
+                return;
+            }
+
+            if (!code) {
+                statusEl.className = 'error';
+                statusEl.textContent = 'No authorization code received.';
+                return;
+            }
+
+            try {
+                // Get stored credentials
+                const credentials = JSON.parse(localStorage.getItem('gmail_credentials') || '{}');
+
+                if (!credentials.client_id) {
+                    throw new Error('No credentials found. Please restart the setup.');
+                }
+
+                // Exchange code for tokens via backend
+                const response = await fetch('http://192.168.40.232:3001/api/gmail/exchange-code', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        client_id: credentials.client_id,
+                        client_secret: credentials.client_secret,
+                        redirect_uri: 'https://corptech02.github.io/vanguard-insurance/api/gmail/callback.html'
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusEl.className = 'success';
+                    statusEl.textContent = 'Successfully connected! Redirecting...';
+
+                    // Store tokens
+                    localStorage.setItem('gmail_tokens', JSON.stringify(result.tokens));
+                    localStorage.setItem('gmail_connected', 'true');
+
+                    // Initialize Gmail service with tokens
+                    await fetch('http://192.168.40.232:3001/api/gmail/init', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            client_id: credentials.client_id,
+                            client_secret: credentials.client_secret,
+                            redirect_uri: 'https://corptech02.github.io/vanguard-insurance/api/gmail/callback.html',
+                            refresh_token: result.tokens.refresh_token,
+                            access_token: result.tokens.access_token
+                        })
+                    });
+
+                    setTimeout(() => {
+                        window.location.href = '/vanguard-insurance/#coi-management';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to exchange code for tokens');
+                }
+
+            } catch (err) {
+                console.error('Error:', err);
+                statusEl.className = 'error';
+                statusEl.textContent = 'Error: ' + err.message;
+
+                setTimeout(() => {
+                    window.location.href = '/vanguard-insurance/gmail-setup.html?error=' + encodeURIComponent(err.message);
+                }, 3000);
+            }
+        }
+
+        // Handle the callback
+        handleCallback();
+    </script>
+</body>
+</html>
