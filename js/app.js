@@ -4475,36 +4475,74 @@ function generateClientRows() {
         `;
     }
     
+    // Get all policies from storage to calculate premiums
+    const allPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+
     // Generate rows for each client
     return clients.map(client => {
         // Get initials for avatar
         const nameParts = (client.name || 'Unknown').split(' ').filter(n => n);
         const initials = nameParts.map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'UN';
-        
-        // Determine badge color based on type
-        const typeColor = client.type === 'Commercial' ? 'purple' : 'blue';
-        
-        // Count policies (if available)
-        const policyCount = client.policies ? client.policies.length : 0;
-        
-        // Format premium
-        const premium = client.totalPremium ? `$${client.totalPremium.toLocaleString()}/yr` : 'N/A';
-        
-        // Status - default to Active for converted leads
-        const status = client.status || 'Active';
-        
+
+        // Count policies and calculate total premium
+        let policyCount = 0;
+        let totalPremium = 0;
+
+        // Find all policies for this client
+        const clientPolicies = allPolicies.filter(policy => {
+            // Check if policy belongs to this client
+            if (policy.clientId && String(policy.clientId) === String(client.id)) return true;
+
+            // Check if the insured name matches
+            const insuredName = policy.insured?.['Name/Business Name'] ||
+                               policy.insured?.['Primary Named Insured'] ||
+                               policy.insuredName;
+            if (insuredName && client.name && insuredName.toLowerCase() === client.name.toLowerCase()) return true;
+
+            // Check if policy is in client's policies array
+            if (client.policies && Array.isArray(client.policies)) {
+                return client.policies.some(p => {
+                    if (typeof p === 'string') {
+                        return p === policy.id || p === policy.policyNumber;
+                    }
+                    if (typeof p === 'object' && p) {
+                        return p.id === policy.id || p.policyNumber === policy.policyNumber;
+                    }
+                    return false;
+                });
+            }
+            return false;
+        });
+
+        policyCount = clientPolicies.length;
+
+        // Calculate total premium from policies
+        clientPolicies.forEach(policy => {
+            const premiumValue = policy.financial?.['Annual Premium'] ||
+                                policy.financial?.['Premium'] ||
+                                policy.premium ||
+                                policy.annualPremium || 0;
+
+            const numericPremium = typeof premiumValue === 'string' ?
+                parseFloat(premiumValue.replace(/[$,]/g, '')) || 0 :
+                parseFloat(premiumValue) || 0;
+
+            totalPremium += numericPremium;
+        });
+
+        // Format premium display
+        const premiumDisplay = totalPremium > 0 ? `$${totalPremium.toLocaleString()}/yr` : 'N/A';
+
         return `
             <tr>
                 <td class="client-name">
                     <div class="client-avatar">${initials}</div>
                     <span>${client.name}</span>
                 </td>
-                <td><span class="badge badge-${typeColor}">${client.type || 'Personal'}</span></td>
                 <td>${client.phone}</td>
                 <td>${client.email}</td>
                 <td>${policyCount}</td>
-                <td>${premium}</td>
-                <td><span class="status-badge ${status.toLowerCase()}">${status}</span></td>
+                <td>${premiumDisplay}</td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-icon" onclick="viewClient('${client.id}')" title="View Client"><i class="fas fa-eye"></i></button>
@@ -4565,12 +4603,10 @@ function loadClientsView() {
                     <thead>
                         <tr>
                             <th>Client Name <i class="fas fa-sort"></i></th>
-                            <th>Type</th>
                             <th>Phone</th>
                             <th>Email</th>
                             <th>Policies</th>
                             <th>Premium</th>
-                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
