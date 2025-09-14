@@ -171,7 +171,9 @@ if (window.location.hash === '#clients') {
     }, 100);
 }
 
+// Disabled - Using original viewClient from app.js
 // Also fix the viewClient function to work with merged data
+/*
 const originalViewClient = window.viewClient;
 window.viewClient = function(id) {
     console.log('Viewing client with ID:', id);
@@ -222,7 +224,10 @@ window.viewClient = function(id) {
         showClientProfileView(client);
     }
 };
+*/
 
+// Disabled - Using original client profile from app.js
+/*
 // Create a client profile view if needed
 function showClientProfileView(client) {
     const dashboardContent = document.querySelector('.dashboard-content');
@@ -347,5 +352,6 @@ function showClientProfileView(client) {
         </div>
     `;
 }
+*/
 
-console.log('Clients view fix applied');
+console.log('Clients view fix applied - Type/Status removed, original viewClient preserved');
