@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug COI Gmail</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug COI Gmail Integration</h1>
+
+    <div>
+        <button onclick="checkGmailStatus()">1. Check Gmail Connection</button>
+        <button onclick="testBackendConnection()">2. Test Backend API</button>
+        <button onclick="fetchRealEmails()">3. Fetch Real Emails</button>
+        <button onclick="markAsConnected()">4. Force Mark as Connected</button>
+        <button onclick="clearAll()">5. Clear All & Reset</button>
+    </div>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        const GMAIL_API_URL = 'http://192.168.40.232:3001/api/gmail';
+        const resultDiv = document.getElementById('result');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML += `[${timestamp}] ${message}\n`;
+        }
+
+        function clearLog() {
+            resultDiv.innerHTML = '';
+        }
+
+        async function checkGmailStatus() {
+            clearLog();
+            log('Checking Gmail connection status...', 'info');
+
+            const isConnected = localStorage.getItem('gmail_connected');
+            const tokens = localStorage.getItem('gmail_tokens');
+            const credentials = localStorage.getItem('gmail_credentials');
+
+            log(`\nLocalStorage Status:`, 'info');
+            log(`gmail_connected: ${isConnected || 'NOT SET'}`, isConnected === 'true' ? 'success' : 'error');
+            log(`gmail_tokens: ${tokens ? 'PRESENT' : 'NOT FOUND'}`, tokens ? 'success' : 'error');
+            log(`gmail_credentials: ${credentials ? 'PRESENT' : 'NOT FOUND'}`, credentials ? 'success' : 'error');
+
+            if (isConnected !== 'true') {
+                log(`\n⚠️ Gmail is NOT marked as connected!`, 'error');
+                log(`Fix: Click "Force Mark as Connected" or reconnect via gmail-setup.html`, 'info');
+            } else {
+                log(`\n✅ Gmail is marked as connected`, 'success');
+            }
+        }
+
+        async function testBackendConnection() {
+            clearLog();
+            log('Testing backend API connection...', 'info');
+
+            try {
+                const response = await fetch(`${GMAIL_API_URL}/auth-url`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    log(`\n✅ Backend API is running!`, 'success');
+                    log(`Response: ${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    log(`\n❌ Backend returned error: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                log(`\n❌ Cannot connect to backend API!`, 'error');
+                log(`Error: ${error.message}`, 'error');
+                log(`\nPossible issues:`, 'info');
+                log(`1. Backend not running (check PM2)`, 'info');
+                log(`2. Wrong port (should be 3001)`, 'info');
+                log(`3. Network/firewall issue`, 'info');
+            }
+        }
+
+        async function fetchRealEmails() {
+            clearLog();
+            log('Attempting to fetch real emails from Gmail...', 'info');
+
+            // First check if marked as connected
+            const isConnected = localStorage.getItem('gmail_connected');
+            if (isConnected !== 'true') {
+                log('\n⚠️ Gmail not marked as connected. Marking it now...', 'info');
+                localStorage.setItem('gmail_connected', 'true');
+            }
+
+            try {
+                log('\nFetching COI emails...', 'info');
+                const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    log(`\n❌ Backend error: ${response.status}`, 'error');
+                    log(`Error details: ${errorText}`, 'error');
+
+                    if (response.status === 500) {
+                        log(`\nThis means Gmail API is not properly initialized`, 'error');
+                        log(`You need to complete OAuth flow first via gmail-setup.html`, 'info');
+                    }
+                    return;
+                }
+
+                const emails = await response.json();
+                log(`\n✅ Successfully fetched ${emails.length} emails!`, 'success');
+
+                if (emails.length === 0) {
+                    log(`\nNo COI-related emails found in the last 30 days`, 'info');
+                    log(`The search looks for emails containing:`, 'info');
+                    log(`- "COI" or "certificate of insurance"`, 'info');
+                    log(`- "ACORD" forms`, 'info');
+                    log(`- Emails from agents/brokers`, 'info');
+                } else {
+                    log(`\nShowing first 5 emails:`, 'success');
+                    emails.slice(0, 5).forEach((email, i) => {
+                        log(`\n${i + 1}. From: ${email.from}`, 'success');
+                        log(`   Subject: ${email.subject}`, 'success');
+                        log(`   Date: ${new Date(email.date).toLocaleString()}`, 'success');
+                        log(`   Has Attachments: ${email.attachments?.length > 0 ? 'Yes' : 'No'}`, 'success');
+                    });
+                }
+
+                // Now try to load them in the UI
+                log(`\n\nAttempting to display in COI inbox...`, 'info');
+
+                // Call the loadCOIInbox function if it exists
+                if (window.loadCOIInbox) {
+                    await window.loadCOIInbox();
+                    log(`✅ Called loadCOIInbox() - check the COI Management tab`, 'success');
+                } else {
+                    log(`⚠️ loadCOIInbox function not found`, 'error');
+                }
+
+            } catch (error) {
+                log(`\n❌ Error fetching emails: ${error.message}`, 'error');
+                log(`\nThis could mean:`, 'info');
+                log(`1. Gmail API not properly authorized`, 'info');
+                log(`2. Backend server issue`, 'info');
+                log(`3. Network/CORS issue`, 'info');
+            }
+        }
+
+        function markAsConnected() {
+            clearLog();
+            log('Forcing Gmail connection status...', 'info');
+
+            localStorage.setItem('gmail_connected', 'true');
+            log('✅ Set gmail_connected = true', 'success');
+
+            // Create dummy tokens if needed
+            if (!localStorage.getItem('gmail_tokens')) {
+                localStorage.setItem('gmail_tokens', JSON.stringify({
+                    access_token: 'dummy_for_testing',
+                    refresh_token: 'dummy_for_testing'
+                }));
+                log('✅ Added dummy tokens for testing', 'success');
+            }
+
+            log('\nNow try refreshing the COI Management page', 'info');
+            log('Or click "Fetch Real Emails" to test', 'info');
+        }
+
+        function clearAll() {
+            clearLog();
+            log('Clearing all Gmail data...', 'info');
+
+            localStorage.removeItem('gmail_connected');
+            localStorage.removeItem('gmail_tokens');
+            localStorage.removeItem('gmail_credentials');
+
+            log('✅ Cleared all Gmail localStorage data', 'success');
+            log('\nYou can now start fresh with gmail-setup.html', 'info');
+        }
+
+        // Auto-check on load
+        checkGmailStatus();
+    </script>
+</body>
+</html>
