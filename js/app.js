@@ -4518,9 +4518,9 @@ function generateClientRows(page = 1) {
         let policyCount = 0;
         let totalPremium = 0;
 
-        // Find all policies for this client
+        // Find all policies for this client - ONLY use fresh data
         const clientPolicies = allPolicies.filter(policy => {
-            // Check if policy belongs to this client
+            // Check if policy belongs to this client by clientId
             if (policy.clientId && String(policy.clientId) === String(client.id)) return true;
 
             // Check if the insured name matches
@@ -4529,22 +4529,13 @@ function generateClientRows(page = 1) {
                                policy.insuredName;
             if (insuredName && client.name && insuredName.toLowerCase() === client.name.toLowerCase()) return true;
 
-            // Check if policy is in client's policies array
-            if (client.policies && Array.isArray(client.policies)) {
-                return client.policies.some(p => {
-                    if (typeof p === 'string') {
-                        return p === policy.id || p === policy.policyNumber;
-                    }
-                    if (typeof p === 'object' && p) {
-                        return p.id === policy.id || p.policyNumber === policy.policyNumber;
-                    }
-                    return false;
-                });
-            }
+            // DO NOT check client.policies array as it may be outdated
+            // Only use the fresh data from insurance_policies storage
             return false;
         });
 
         policyCount = clientPolicies.length;
+        console.log(`Client ${client.name}: Found ${policyCount} policies`);
 
         // Calculate total premium from policies
         clientPolicies.forEach(policy => {
@@ -4557,11 +4548,13 @@ function generateClientRows(page = 1) {
                 parseFloat(premiumValue.replace(/[$,]/g, '')) || 0 :
                 parseFloat(premiumValue) || 0;
 
+            console.log(`  Policy ${policy.policyNumber}: Premium = ${premiumValue} -> ${numericPremium}`);
             totalPremium += numericPremium;
         });
 
         // Format premium display
         const premiumDisplay = totalPremium > 0 ? `$${totalPremium.toLocaleString()}/yr` : 'N/A';
+        console.log(`  Total Premium: ${totalPremium} -> ${premiumDisplay}`);
 
         return `
             <tr>
