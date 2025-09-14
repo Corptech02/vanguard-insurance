@@ -187,9 +187,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
             btn.disabled = false;
         });
     };
+})();
 
-    // Expand email to show full content inline in the inbox panel
-    window.expandEmail = async function(emailId) {
+// Define expand email function globally (outside the IIFE)
+window.expandEmail = async function(emailId) {
         console.log('Expanding email:', emailId);
 
         const coiInbox = document.getElementById('coiInbox');
@@ -286,10 +287,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
                 </div>
             `;
         }
-    };
+};
 
-    // Function to go back to inbox
-    window.backToInbox = function() {
+// Function to go back to inbox
+window.backToInbox = function() {
         const coiInbox = document.getElementById('coiInbox');
         if (coiInbox && window.previousInboxContent) {
             coiInbox.innerHTML = window.previousInboxContent;
@@ -297,20 +298,20 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
             // If no previous content, reload the emails
             loadRealCOIEmails();
         }
-    };
+};
 
-    // Forward email function
-    window.forwardEmail = function(emailId) {
+// Forward email function
+window.forwardEmail = function(emailId) {
         console.log('Forward email:', emailId);
         const notification = document.createElement('div');
         notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #667eea; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000;';
         notification.innerHTML = '<i class="fas fa-share"></i> Opening forward composer...';
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
-    };
+};
 
-    // Mark email as read
-    window.markAsRead = async function(emailId) {
+// Mark email as read
+window.markAsRead = async function(emailId) {
         console.log('Marking email as read:', emailId);
         try {
             await fetch(`${GMAIL_API_URL}/messages/${emailId}/read`, {
@@ -329,10 +330,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
         } catch (error) {
             console.error('Error marking as read:', error);
         }
-    };
+};
 
-    // Process COI from Gmail
-    window.processGmailCOI = async function(emailId) {
+// Process COI from Gmail
+window.processGmailCOI = async function(emailId) {
         console.log('Processing COI:', emailId);
         // For now, just show a notification
         const notification = document.createElement('div');
@@ -340,10 +341,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
         notification.innerHTML = '<i class="fas fa-check-circle"></i> Processing COI request...';
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
-    };
+};
 
-    // Reply to email
-    window.replyToEmail = async function(emailId) {
+// Reply to email
+window.replyToEmail = async function(emailId) {
         console.log('Reply to email:', emailId);
         // For now, just show a notification
         const notification = document.createElement('div');
@@ -351,8 +352,7 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
         notification.innerHTML = '<i class="fas fa-envelope"></i> Opening reply composer...';
         document.body.appendChild(notification);
         setTimeout(() => notification.remove(), 3000);
-    };
-});
+};
 
 // Also handle hash changes
 window.addEventListener('hashchange', function() {
