@@ -4806,15 +4806,14 @@ function loadPoliciesView() {
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th>Policy #</th>
-                            <th>Client</th>
-                            <th>Type</th>
-                            <th>Carrier</th>
-                            <th>Effective Date</th>
-                            <th>Expiration</th>
-                            <th>Premium</th>
-                            <th>Status</th>
-                            <th>Actions</th>
+                            <th style="width: 12%; padding-left: 20px;">Policy #</th>
+                            <th style="width: 18%;">Client</th>
+                            <th style="width: 15%;">Carrier</th>
+                            <th style="width: 12%;">Effective Date</th>
+                            <th style="width: 12%;">Expiration</th>
+                            <th style="width: 10%;">Premium</th>
+                            <th style="width: 10%;">Status</th>
+                            <th style="width: 11%;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="policyTableBody">
@@ -9921,7 +9920,7 @@ function generatePolicyRows() {
         // Show message when no policies exist
         return `
             <tr>
-                <td colspan="9" style="text-align: center; padding: 40px; color: #6b7280;">
+                <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
                     <i class="fas fa-file-contract" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
                     <p style="font-size: 16px; margin: 0;">No policies found</p>
                     <p style="font-size: 14px; margin-top: 8px;">Click "New Policy" to create your first policy</p>
@@ -9955,9 +9954,8 @@ function generatePolicyRows() {
         
         return `
             <tr>
-                <td class="policy-number">${policy.policyNumber}</td>
+                <td class="policy-number" style="padding-left: 20px;">${policy.policyNumber}</td>
                 <td>${insuredName}</td>
-                <td><span class="badge ${badgeClass}">${typeLabel}</span></td>
                 <td>${policy.carrier}</td>
                 <td>${formatDate(policy.effectiveDate)}</td>
                 <td>${formatDate(policy.expirationDate)}</td>

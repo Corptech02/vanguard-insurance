@@ -168,6 +168,32 @@
             overflow: hidden !important;
             text-overflow: ellipsis !important;
         }
+
+        /* Policy Management Table Spacing */
+        #policyTableBody td,
+        .policies-view .data-table td {
+            padding: 12px 15px !important;
+            white-space: nowrap !important;
+        }
+
+        .policies-view .data-table th {
+            padding: 12px 15px !important;
+            text-align: left !important;
+            font-weight: 600 !important;
+            white-space: nowrap !important;
+        }
+
+        /* Ensure proper spacing for policy table columns */
+        .policies-view .data-table {
+            table-layout: fixed !important;
+            width: 100% !important;
+        }
+
+        /* Policy number column */
+        .policies-view .data-table td.policy-number {
+            font-weight: 500 !important;
+            color: #3b82f6 !important;
+        }
     </style>
     <!-- Authentication Service -->
     <script src="js/auth-service.js"></script>
@@ -762,7 +788,7 @@
     <script src="js/api-service.js?v=26"></script>
     <script src="js/integrations.js?v=20"></script>
     <script src="js/data-sync.js?v=1"></script>
-    <script src="js/app.js?v=40"></script>
+    <script src="js/app.js?v=41"></script>
     <script src="js/ai-functions-fallback.js"></script>
     <script src="js/policy-modal.js?v=30"></script>
     <script src="js/fix-policy-types.js"></script>
