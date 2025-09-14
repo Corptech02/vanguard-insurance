@@ -2857,6 +2857,29 @@ input:checked + .slider:before {
     gap: 1.5rem;
 }
 
+/* Make first card (client info) span full height on left */
+.client-profile-grid .profile-card:first-child {
+    grid-row: span 3;
+}
+
+/* Policies card on right, top position */
+.client-profile-grid .profile-card:nth-child(2) {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+/* Recent Activity below policies */
+.client-profile-grid .profile-card:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+/* Documents below recent activity */
+.client-profile-grid .profile-card:nth-child(4) {
+    grid-column: 2;
+    grid-row: 3;
+}
+
 .profile-card {
     background: var(--white);
     border-radius: 8px;
