@@ -44,7 +44,7 @@ router.get('/auth-url', (req, res) => {
     const credentials = {
         client_id: process.env.GMAIL_CLIENT_ID || req.query.client_id,
         client_secret: process.env.GMAIL_CLIENT_SECRET || req.query.client_secret,
-        redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://localhost:3001/api/gmail/callback'
+        redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://192.168.40.232:3001/api/gmail/callback'
     };
 
     const authUrl = gmailService.getAuthUrl(credentials);
@@ -62,7 +62,7 @@ router.get('/callback', async (req, res) => {
         const credentials = {
             client_id: process.env.GMAIL_CLIENT_ID,
             client_secret: process.env.GMAIL_CLIENT_SECRET,
-            redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://localhost:3001/api/gmail/callback'
+            redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://192.168.40.232:3001/api/gmail/callback'
         };
 
         const tokens = await gmailService.getTokensFromCode(code, credentials);
@@ -72,10 +72,10 @@ router.get('/callback', async (req, res) => {
         await gmailService.initialize(gmailCredentials);
 
         // Redirect to COI management page with success message
-        res.redirect('http://localhost:3000/#coi-management?gmail=connected');
+        res.redirect('https://corptech02.github.io/vanguard-insurance/#coi-management?gmail=connected');
     } catch (error) {
         console.error('Error in OAuth callback:', error);
-        res.redirect('http://localhost:3000/#coi-management?gmail=error');
+        res.redirect('https://corptech02.github.io/vanguard-insurance/#coi-management?gmail=error');
     }
 });
 

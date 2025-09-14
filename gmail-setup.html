@@ -266,7 +266,7 @@
                     <p>
                         Go to "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID"<br>
                         Application type: Web application<br>
-                        Authorized redirect URIs: <code>http://localhost:3001/api/gmail/callback</code>
+                        Authorized redirect URIs: <code>https://corptech02.github.io/api/gmail/callback</code>
                     </p>
                 </div>
 
@@ -373,7 +373,7 @@
                 }
 
                 // Get auth URL from backend
-                const response = await fetch(`http://localhost:3001/api/gmail/auth-url?client_id=${webCreds.client_id}&client_secret=${webCreds.client_secret}`);
+                const response = await fetch(`http://192.168.40.232:3001/api/gmail/auth-url?client_id=${webCreds.client_id}&client_secret=${webCreds.client_secret}`);
                 const { authUrl } = await response.json();
 
                 // Store credentials locally for callback
@@ -408,7 +408,7 @@
                     client_secret: document.getElementById('client_secret').value,
                     refresh_token: document.getElementById('refresh_token').value,
                     access_token: document.getElementById('access_token').value,
-                    redirect_uri: 'http://localhost:3001/api/gmail/callback'
+                    redirect_uri: 'http://192.168.40.232:3001/api/gmail/callback'
                 };
 
                 if (!credentials.client_id || !credentials.client_secret || !credentials.refresh_token) {
@@ -416,7 +416,7 @@
                     return;
                 }
 
-                const response = await fetch('http://localhost:3001/api/gmail/init', {
+                const response = await fetch('http://192.168.40.232:3001/api/gmail/init', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -444,7 +444,7 @@
 
         async function testConnection() {
             try {
-                const response = await fetch('http://localhost:3001/api/gmail/messages?maxResults=1');
+                const response = await fetch('http://192.168.40.232:3001/api/gmail/messages?maxResults=1');
                 const messages = await response.json();
 
                 if (Array.isArray(messages)) {
