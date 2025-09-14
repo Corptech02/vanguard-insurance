@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Gmail Connection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gmail Connection Test</h1>
+
+    <button onclick="checkConnection()">Check Gmail Connection Status</button>
+    <button onclick="testFetch()">Test Fetch Emails</button>
+    <button onclick="setConnected()">Mark as Connected</button>
+    <button onclick="clearConnection()">Clear Connection</button>
+
+    <div id="result" class="result"></div>
+
+    <script>
+        const GMAIL_API_URL = 'http://192.168.40.232:3001/api/gmail';
+        const resultDiv = document.getElementById('result');
+
+        function checkConnection() {
+            const isConnected = localStorage.getItem('gmail_connected');
+            const tokens = localStorage.getItem('gmail_tokens');
+            const credentials = localStorage.getItem('gmail_credentials');
+
+            resultDiv.innerHTML = `
+Connection Status: ${isConnected === 'true' ? '✅ Connected' : '❌ Not Connected'}
+Has Tokens: ${tokens ? '✅ Yes' : '❌ No'}
+Has Credentials: ${credentials ? '✅ Yes' : '❌ No'}
+
+LocalStorage Data:
+gmail_connected: ${isConnected}
+gmail_tokens: ${tokens ? 'Present (hidden for security)' : 'Not found'}
+gmail_credentials: ${credentials ? 'Present (hidden for security)' : 'Not found'}
+            `;
+        }
+
+        async function testFetch() {
+            resultDiv.innerHTML = 'Fetching emails...';
+
+            try {
+                const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const emails = await response.json();
+
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+✅ Successfully fetched emails!
+
+Found ${emails.length} COI-related emails
+
+${emails.slice(0, 5).map(email => `
+From: ${email.from}
+Subject: ${email.subject}
+Date: ${new Date(email.date).toLocaleString()}
+---`).join('\n')}
+                `;
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+❌ Error fetching emails:
+${error.message}
+
+This could mean:
+1. Gmail is not connected/authorized
+2. Backend server is not running
+3. No credentials have been set up
+
+Try connecting Gmail first at: gmail-setup.html
+                `;
+            }
+        }
+
+        function setConnected() {
+            localStorage.setItem('gmail_connected', 'true');
+            resultDiv.className = 'result success';
+            resultDiv.innerHTML = '✅ Marked as connected in localStorage';
+        }
+
+        function clearConnection() {
+            localStorage.removeItem('gmail_connected');
+            localStorage.removeItem('gmail_tokens');
+            localStorage.removeItem('gmail_credentials');
+            resultDiv.className = 'result';
+            resultDiv.innerHTML = '✅ Cleared all Gmail connection data';
+        }
+
+        // Check on load
+        checkConnection();
+    </script>
+</body>
+</html>

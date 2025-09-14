@@ -653,6 +653,141 @@ function loadDemoInbox() {
     `;
 }
 
+// Override the loadCOIInbox function to use real Gmail data
+window.loadCOIInbox = async function() {
+    console.log('Loading COI Inbox with Gmail integration...');
+
+    const coiInbox = document.getElementById('coiInbox');
+    if (!coiInbox) return;
+
+    // Check if Gmail is connected
+    const gmailConnected = localStorage.getItem('gmail_connected') === 'true';
+
+    if (gmailConnected) {
+        // Show loading state
+        coiInbox.innerHTML = `
+            <div class="loading-spinner">
+                <i class="fas fa-spinner fa-spin"></i> Loading emails from Gmail...
+            </div>
+        `;
+
+        try {
+            // Fetch COI-related emails
+            const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const emails = await response.json();
+            console.log(`Fetched ${emails.length} COI emails from Gmail`);
+
+            // Display real emails
+            displayEmailsInInbox(coiInbox, emails);
+
+        } catch (error) {
+            console.error('Error fetching Gmail emails:', error);
+            // Fall back to demo data
+            loadDemoDataInInbox(coiInbox);
+        }
+    } else {
+        // Show demo data with connection prompt
+        loadDemoDataInInbox(coiInbox);
+    }
+};
+
+// Display real emails in the COI inbox
+function displayEmailsInInbox(container, emails) {
+    if (emails.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state" style="text-align: center; padding: 60px;">
+                <i class="fas fa-inbox" style="font-size: 64px; color: #d1d5db; margin-bottom: 16px;"></i>
+                <h3 style="color: #6b7280; margin-bottom: 8px;">No COI requests found</h3>
+                <p style="color: #9ca3af;">Emails containing COI, certificates, or ACORD will appear here</p>
+            </div>
+        `;
+        return;
+    }
+
+    // Build email list HTML
+    let html = '<div class="email-list">';
+
+    emails.forEach(email => {
+        const fromMatch = email.from.match(/^([^<]+)/);
+        const senderName = fromMatch ? fromMatch[1].trim() : email.from.split('@')[0];
+        const senderEmail = email.from.match(/<(.+)>/)?.[1] || email.from;
+
+        const date = new Date(email.date);
+        const dateStr = date.toLocaleDateString('en-US', {
+            month: '2-digit',
+            day: '2-digit',
+            year: 'numeric'
+        });
+
+        const isUnread = email.labelIds && email.labelIds.includes('UNREAD');
+        const hasAttachments = email.attachments && email.attachments.length > 0;
+
+        html += `
+            <div class="email-item ${isUnread ? 'unread' : ''}" onclick="viewGmailEmail('${email.id}')">
+                <div class="email-checkbox">
+                    <input type="checkbox" onclick="event.stopPropagation()">
+                </div>
+                <div class="email-from">
+                    <strong>${senderName}</strong>
+                    <br>
+                    <small>${senderEmail}</small>
+                </div>
+                <div class="email-subject">
+                    ${email.subject}
+                    ${hasAttachments ? '<i class="fas fa-paperclip" style="margin-left: 8px;"></i>' : ''}
+                </div>
+                <div class="email-date">${dateStr}</div>
+            </div>
+        `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Load demo data as fallback
+function loadDemoDataInInbox(container) {
+    container.innerHTML = `
+        <div class="info-message" style="background: #fef3c7; border: 1px solid #fbbf24; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <i class="fas fa-info-circle" style="color: #f59e0b;"></i>
+            <span style="margin-left: 8px;">Showing demo data. <a href="gmail-setup.html" style="color: #3b82f6;">Connect Gmail</a> to see real emails.</span>
+        </div>
+        <div class="email-list">
+            <div class="email-item unread">
+                <div class="email-checkbox">
+                    <input type="checkbox">
+                </div>
+                <div class="email-from">
+                    <strong>Dispatch</strong><br>
+                    <small>dispatch@walmart.com</small>
+                </div>
+                <div class="email-subject">
+                    COI Required - Walmart Distribution Center Access
+                </div>
+                <div class="email-date">09/14/2025</div>
+            </div>
+            <div class="email-item">
+                <div class="email-checkbox">
+                    <input type="checkbox">
+                </div>
+                <div class="email-from">
+                    <strong>Broker</strong><br>
+                    <small>broker@chrobinson.com</small>
+                </div>
+                <div class="email-subject">
+                    Insurance Certificate - Load #78234
+                </div>
+                <div class="email-date">09/13/2025</div>
+            </div>
+        </div>
+    `;
+}
+
 // Check Gmail connection status on page load
 document.addEventListener('DOMContentLoaded', () => {
     // Check URL parameters for Gmail connection status
@@ -663,6 +798,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Clean up URL
         window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+    }
+
+    // If we're on the COI management page, reload the inbox
+    if (window.location.hash === '#coi-management') {
+        setTimeout(() => {
+            if (window.loadCOIInbox) {
+                window.loadCOIInbox();
+            }
+        }, 500);
     }
 });
 
