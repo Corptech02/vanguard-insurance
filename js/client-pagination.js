@@ -66,12 +66,10 @@
                         <thead>
                             <tr>
                                 <th>Client Name <i class="fas fa-sort"></i></th>
-                                <th>Type</th>
                                 <th>Phone</th>
                                 <th>Email</th>
                                 <th>Policies</th>
                                 <th>Premium</th>
-                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -105,7 +103,7 @@
         if (clients.length === 0) {
             return `
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">
                         <i class="fas fa-users" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
                         <p style="font-size: 16px; margin: 0;">No clients found</p>
                         <p style="font-size: 14px; margin-top: 8px;">Convert leads or add new clients to get started</p>
@@ -148,9 +146,6 @@
                         </div>
                     </td>
                     <td>
-                        <span class="badge badge-${typeColor}">${client.type || 'Personal'}</span>
-                    </td>
-                    <td>
                         <span class="clickable-phone">${client.phone || '-'}</span>
                     </td>
                     <td>
@@ -161,9 +156,6 @@
                     </td>
                     <td>
                         <span class="premium-amount">${formattedPremium}</span>
-                    </td>
-                    <td>
-                        <span class="badge badge-${statusColor}">${status}</span>
                     </td>
                     <td>
                         <div class="action-buttons">

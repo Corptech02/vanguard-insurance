@@ -26,7 +26,7 @@ window.generateClientRows = function() {
     if (allClients.length === 0) {
         return `
             <tr>
-                <td colspan="8" style="text-align: center; padding: 40px; color: #6b7280;">
+                <td colspan="6" style="text-align: center; padding: 40px; color: #6b7280;">
                     <i class="fas fa-users" style="font-size: 48px; margin-bottom: 16px; opacity: 0.3;"></i>
                     <p style="font-size: 16px; margin: 0;">No clients found</p>
                     <p style="font-size: 14px; margin-top: 8px;">Convert leads or add new clients to get started</p>
@@ -74,12 +74,10 @@ window.generateClientRows = function() {
                         </div>
                     </div>
                 </td>
-                <td><span class="badge badge-${typeColor}">${clientType}</span></td>
                 <td>${client.phone || 'N/A'}</td>
                 <td>${client.email || 'N/A'}</td>
                 <td><span class="policy-count">${policyCount}</span></td>
                 <td>${formattedPremium}</td>
-                <td><span class="status ${statusClass}">${status}</span></td>
                 <td>
                     <div class="action-buttons">
                         <button class="btn-icon" onclick="viewClient('${client.id}')" title="View Profile">
