@@ -75,7 +75,7 @@ async function loadGmailInbox() {
 
     try {
         // Fetch COI-related emails
-        const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+        const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
 
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -249,7 +249,7 @@ function extractClientName(subject, snippet) {
 // View Gmail email details
 async function viewGmailEmail(emailId) {
     try {
-        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`);
+        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
         const email = await response.json();
 
         // Create modal to display email
@@ -324,7 +324,7 @@ async function viewGmailEmail(emailId) {
 // Process COI from Gmail
 async function processGmailCOI(emailId) {
     try {
-        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`);
+        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
         const email = await response.json();
 
         // Extract client information
@@ -394,7 +394,7 @@ async function processGmailCOI(emailId) {
 // Reply to email
 async function replyToEmail(emailId) {
     try {
-        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`);
+        const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
         const email = await response.json();
 
         // Create reply modal
@@ -675,7 +675,7 @@ window.loadCOIInbox = async function() {
 
         try {
             // Fetch COI-related emails
-            const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+            const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

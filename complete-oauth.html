@@ -180,7 +180,11 @@
         // Load auth URL
         async function loadAuthUrl() {
             try {
-                const response = await fetch(`${API_URL}/auth-url?client_id=${encodeURIComponent(credentials.client_id)}&client_secret=${encodeURIComponent(credentials.client_secret)}&redirect_uri=${encodeURIComponent(credentials.redirect_uri)}`);
+                const response = await fetch(`${API_URL}/auth-url?client_id=${encodeURIComponent(credentials.client_id)}&client_secret=${encodeURIComponent(credentials.client_secret)}&redirect_uri=${encodeURIComponent(credentials.redirect_uri)}`, {
+                    headers: {
+                        'Bypass-Tunnel-Reminder': 'true'
+                    }
+                });
                 const data = await response.json();
                 document.getElementById('authUrl').textContent = data.authUrl;
             } catch (error) {
