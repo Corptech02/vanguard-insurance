@@ -4680,6 +4680,41 @@ function loadClientsView() {
     setTimeout(scanContent, 300);
     setTimeout(scanContent, 600);
     setTimeout(scanContent, 1000);
+
+    // Force remove Type and Status columns if they exist
+    setTimeout(() => {
+        const table = document.querySelector('.clients-view .data-table');
+        if (table) {
+            // Check headers and remove Type/Status if found
+            const headers = table.querySelectorAll('thead th');
+            let typeIndex = -1;
+            let statusIndex = -1;
+
+            headers.forEach((th, index) => {
+                const text = th.textContent.trim();
+                if (text === 'Type') {
+                    typeIndex = index;
+                    th.remove();
+                }
+                if (text === 'Status') {
+                    statusIndex = index;
+                    th.remove();
+                }
+            });
+
+            // Remove corresponding td elements if headers were found
+            if (typeIndex >= 0 || statusIndex >= 0) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (statusIndex >= 0 && cells[statusIndex]) cells[statusIndex].remove();
+                    if (typeIndex >= 0 && cells[typeIndex]) cells[typeIndex].remove();
+                });
+            }
+
+            console.log('Clients table cleanup completed - Type/Status columns removed');
+        }
+    }, 500);
 }
 
 function loadPoliciesView() {
