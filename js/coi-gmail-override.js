@@ -84,7 +84,11 @@ window.addEventListener('DOMContentLoaded', function() {
 
         try {
             // Search for COI-related emails
-            const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`);
+            const response = await fetch(`${GMAIL_API_URL}/search-coi?days=30`, {
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true'
+                }
+            });
 
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);

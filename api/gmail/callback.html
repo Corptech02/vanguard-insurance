@@ -93,7 +93,8 @@
                     method: 'POST',
                     mode: 'cors',
                     headers: {
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Bypass-Tunnel-Reminder': 'true'
                     },
                     body: JSON.stringify({
                         code: code,
@@ -117,7 +118,8 @@
                     await fetch('https://shaggy-dingos-divide.loca.lt/api/gmail/init', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/json',
+                            'Bypass-Tunnel-Reminder': 'true'
                         },
                         body: JSON.stringify({
                             client_id: credentials.client_id,
