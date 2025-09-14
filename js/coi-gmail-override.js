@@ -188,11 +188,25 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
         });
     };
 
-    // Expand email to show full content
+    // Expand email to show full content inline in the inbox panel
     window.expandEmail = async function(emailId) {
         console.log('Expanding email:', emailId);
 
+        const coiInbox = document.getElementById('coiInbox');
+        if (!coiInbox) return;
+
+        // Store the current inbox content so we can go back
+        window.previousInboxContent = coiInbox.innerHTML;
+
         try {
+            // Show loading state
+            coiInbox.innerHTML = `
+                <div style="padding: 20px; text-align: center;">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #667eea;"></i>
+                    <p>Loading email...</p>
+                </div>
+            `;
+
             // Fetch full email details
             const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, {
                 headers: {
@@ -206,65 +220,93 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
 
             const email = await response.json();
 
-            // Create modal to display email
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.innerHTML = `
-                <div class="modal-content" style="max-width: 800px;">
-                    <div class="modal-header">
-                        <h2>Email Details</h2>
-                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+            // Display email in the inbox panel (not a modal)
+            coiInbox.innerHTML = `
+                <div class="email-detail-view" style="padding: 20px;">
+                    <div style="margin-bottom: 20px;">
+                        <button class="btn-secondary btn-small" onclick="backToInbox()">
+                            <i class="fas fa-arrow-left"></i> Back to Inbox
+                        </button>
                     </div>
-                    <div class="modal-body">
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #6b7280; font-size: 12px;">FROM</div>
-                            <div style="font-weight: 500;">${email.from}</div>
+
+                    <div class="email-detail-header" style="border-bottom: 2px solid #e5e7eb; padding-bottom: 20px; margin-bottom: 20px;">
+                        <h3 style="margin: 0 0 15px 0; color: #1f2937;">${email.subject}</h3>
+
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap; color: #6b7280; font-size: 14px;">
+                            <div>
+                                <strong>From:</strong> ${email.from}
+                            </div>
+                            <div>
+                                <strong>Date:</strong> ${new Date(email.date).toLocaleString()}
+                            </div>
                         </div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #6b7280; font-size: 12px;">TO</div>
-                            <div>${email.to}</div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #6b7280; font-size: 12px;">SUBJECT</div>
-                            <div style="font-weight: 500; font-size: 18px;">${email.subject}</div>
-                        </div>
-                        <div style="margin-bottom: 20px;">
-                            <div style="color: #6b7280; font-size: 12px;">DATE</div>
-                            <div>${new Date(email.date).toLocaleString()}</div>
-                        </div>
+
                         ${email.attachments && email.attachments.length > 0 ? `
-                            <div style="margin-bottom: 20px;">
-                                <div style="color: #6b7280; font-size: 12px;">ATTACHMENTS</div>
-                                <div>
-                                    ${email.attachments.map(att => `
-                                        <span style="display: inline-block; margin: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px;">
-                                            <i class="fas fa-paperclip"></i> ${att.filename} (${(att.size / 1024).toFixed(1)}KB)
-                                        </span>
-                                    `).join('')}
-                                </div>
+                            <div style="margin-top: 10px;">
+                                <i class="fas fa-paperclip"></i>
+                                ${email.attachments.map(att => `
+                                    <span style="margin-left: 8px; padding: 2px 6px; background: #f3f4f6; border-radius: 4px; font-size: 12px;">
+                                        ${att.filename} (${(att.size / 1024).toFixed(1)}KB)
+                                    </span>
+                                `).join('')}
                             </div>
                         ` : ''}
-                        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px;">
-                            <div style="white-space: pre-wrap; line-height: 1.6;">${email.body || email.snippet}</div>
-                        </div>
                     </div>
-                    <div class="modal-footer">
+
+                    <div class="email-detail-body" style="padding: 20px; background: #f9fafb; border-radius: 8px; margin-bottom: 20px;">
+                        <pre style="white-space: pre-wrap; font-family: inherit; margin: 0; line-height: 1.6;">${email.body || email.snippet}</pre>
+                    </div>
+
+                    <div class="email-detail-actions" style="display: flex; gap: 10px;">
                         <button class="btn-primary" onclick="replyToEmail('${emailId}')">
                             <i class="fas fa-reply"></i> Reply
+                        </button>
+                        <button class="btn-secondary" onclick="forwardEmail('${emailId}')">
+                            <i class="fas fa-share"></i> Forward
                         </button>
                         <button class="btn-secondary" onclick="processGmailCOI('${emailId}')">
                             <i class="fas fa-file-contract"></i> Process COI
                         </button>
-                        <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                        <button class="btn-secondary" onclick="markAsRead('${emailId}'); backToInbox();">
+                            <i class="fas fa-check"></i> Mark as Read
+                        </button>
                     </div>
                 </div>
             `;
-            document.body.appendChild(modal);
 
         } catch (error) {
             console.error('Error expanding email:', error);
-            alert('Error loading email details: ' + error.message);
+            coiInbox.innerHTML = `
+                <div style="padding: 20px; text-align: center; color: #ef4444;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
+                    <p>Error loading email: ${error.message}</p>
+                    <button class="btn-primary" onclick="backToInbox()" style="margin-top: 16px;">
+                        <i class="fas fa-arrow-left"></i> Back to Inbox
+                    </button>
+                </div>
+            `;
         }
+    };
+
+    // Function to go back to inbox
+    window.backToInbox = function() {
+        const coiInbox = document.getElementById('coiInbox');
+        if (coiInbox && window.previousInboxContent) {
+            coiInbox.innerHTML = window.previousInboxContent;
+        } else {
+            // If no previous content, reload the emails
+            loadRealCOIEmails();
+        }
+    };
+
+    // Forward email function
+    window.forwardEmail = function(emailId) {
+        console.log('Forward email:', emailId);
+        const notification = document.createElement('div');
+        notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #667eea; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000;';
+        notification.innerHTML = '<i class="fas fa-share"></i> Opening forward composer...';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
     };
 
     // Mark email as read
