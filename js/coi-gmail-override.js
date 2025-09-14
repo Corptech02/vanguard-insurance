@@ -2,7 +2,7 @@
 console.log('COI Gmail Override loading...');
 
 // Backend API URL - Using HTTPS tunnel
-const GMAIL_API_URL = 'https://empty-eel-30.loca.lt/api/gmail';
+const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
 
 // Wait for app.js to load first
 window.addEventListener('DOMContentLoaded', function() {
