@@ -22,10 +22,9 @@ window.addEventListener('DOMContentLoaded', function() {
         dashboardContent.innerHTML = `
             <div class="coi-management">
                 <div class="page-header">
-                    <h1>COI Management - Real Emails</h1>
-                    <p>Connected to corptech02@gmail.com</p>
+                    <h1>COI Management</h1>
+                    <p>Manage Certificates of Insurance requests and policies</p>
                 </div>
-
                 <div class="coi-container">
                     <!-- Left Panel - Policy Profile Viewer -->
                     <div class="coi-left-panel">
@@ -41,14 +40,13 @@ window.addEventListener('DOMContentLoaded', function() {
                             </div>
                         </div>
                     </div>
-
                     <!-- Right Panel - COI Email Inbox -->
                     <div class="coi-right-panel">
                         <div class="panel-header">
-                            <h3><i class="fas fa-inbox"></i> COI Request Inbox - Real Emails</h3>
+                            <h3><i class="fas fa-inbox"></i> COI Request Inbox</h3>
                             <div class="inbox-actions">
-                                <button class="btn-secondary btn-small" onclick="syncGmailEmails()">
-                                    <i class="fas fa-sync"></i> Sync Gmail
+                                <button class="btn-secondary btn-small" onclick="filterCOIEmails('unread')">
+                                    <i class="fas fa-envelope"></i> Unread
                                 </button>
                                 <button class="btn-secondary btn-small" onclick="filterCOIEmails('all')">
                                     <i class="fas fa-list"></i> All
@@ -58,7 +56,7 @@ window.addEventListener('DOMContentLoaded', function() {
                         <div class="coi-inbox" id="coiInbox">
                             <div style="text-align: center; padding: 20px;">
                                 <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #667eea;"></i>
-                                <p>Loading real emails from corptech02@gmail.com...</p>
+                                <p>Loading emails from corptech02@gmail.com...</p>
                             </div>
                         </div>
                     </div>
@@ -113,7 +111,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Display real emails
+            // Display real emails in the original format
             coiInbox.innerHTML = `
                 <div class="email-list">
                     ${emails.map(email => {
@@ -123,13 +121,17 @@ window.addEventListener('DOMContentLoaded', function() {
                             date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) :
                             date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
+                        // Extract sender name from email
+                        const fromMatch = email.from.match(/"?([^"<]+)"?\s*<?/);
+                        const senderName = fromMatch ? fromMatch[1].trim() : email.from.split('@')[0];
+
                         return `
-                            <div class="email-item unread" data-email-id="${email.id}">
+                            <div class="email-item unread" data-email-id="${email.id}" onclick="expandEmail('${email.id}')">
                                 <div class="email-header">
                                     <div class="email-info">
                                         <div class="email-from">
                                             <i class="fas fa-circle" style="color: var(--primary-blue); font-size: 8px; margin-right: 8px;"></i>
-                                            <strong>${email.from}</strong>
+                                            <strong>${senderName}</strong>
                                         </div>
                                         <div class="email-subject">${email.subject}</div>
                                         <div class="email-meta">
@@ -139,26 +141,17 @@ window.addEventListener('DOMContentLoaded', function() {
                                         </div>
                                     </div>
                                     <div class="email-actions">
-                                        <button class="btn-icon" onclick="viewEmail('${email.id}')" title="View">
-                                            <i class="fas fa-eye"></i>
+                                        <button class="btn-icon" onclick="event.stopPropagation(); markAsRead('${email.id}')" title="Mark as Read">
+                                            <i class="fas fa-check"></i>
                                         </button>
-                                        <button class="btn-icon" onclick="processEmail('${email.id}')" title="Process">
-                                            <i class="fas fa-cog"></i>
+                                        <button class="btn-icon" onclick="event.stopPropagation(); processGmailCOI('${email.id}')" title="Process COI">
+                                            <i class="fas fa-file-contract"></i>
                                         </button>
                                     </div>
-                                </div>
-                                <div class="email-preview" style="color: #6b7280; font-size: 14px; margin-top: 8px;">
-                                    ${email.snippet || ''}
                                 </div>
                             </div>
                         `;
                     }).join('')}
-                </div>
-
-                <div style="text-align: center; padding: 16px; border-top: 1px solid #e5e7eb;">
-                    <p style="color: #6b7280; font-size: 12px;">
-                        Showing ${emails.length} real emails from corptech02@gmail.com
-                    </p>
                 </div>
             `;
 
