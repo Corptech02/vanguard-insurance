@@ -2853,31 +2853,33 @@ input:checked + .slider:before {
 
 .client-profile-grid {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
     gap: 1.5rem;
 }
 
-/* Make first card (client info) span full height on left */
-.client-profile-grid .profile-card:first-child {
-    grid-row: span 3;
+/* Client info - top left */
+.client-profile-grid .profile-card:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
 }
 
-/* Policies card on right, top position */
+/* Policies - top right */
 .client-profile-grid .profile-card:nth-child(2) {
     grid-column: 2;
     grid-row: 1;
 }
 
-/* Recent Activity below policies */
+/* Recent Activity - bottom left */
 .client-profile-grid .profile-card:nth-child(3) {
-    grid-column: 2;
+    grid-column: 1;
     grid-row: 2;
 }
 
-/* Documents below recent activity */
+/* Documents - bottom right */
 .client-profile-grid .profile-card:nth-child(4) {
     grid-column: 2;
-    grid-row: 3;
+    grid-row: 2;
 }
 
 .profile-card {
