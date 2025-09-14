@@ -40,35 +40,40 @@ window.viewClientOriginal = function(id) {
 
     dashboardContent.innerHTML = `
         <div class="client-profile-view">
-            <header class="content-header">
+            <header class="content-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 24px; border-radius: 12px; margin-bottom: 24px;">
                 <div class="header-back">
-                    <button class="btn-back" onclick="loadClientsView()">
+                    <button class="btn-back" onclick="loadClientsView()" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white; backdrop-filter: blur(10px);">
                         <i class="fas fa-arrow-left"></i> Back to Clients
                     </button>
-                    <h1>${client.name}</h1>
+                    <h1 style="color: white; margin: 12px 0 0 0; font-size: 28px; font-weight: 600;">${client.name}</h1>
                 </div>
                 <div class="header-actions">
-                    <button class="btn-secondary" onclick="editClient('${id}')">
+                    <button class="btn-secondary" onclick="editClient('${id}')" style="background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3); color: white;">
                         <i class="fas fa-edit"></i> Edit Client
                     </button>
-                    <button class="btn-primary" onclick="addPolicyToClient('${id}')">
+                    <button class="btn-primary" onclick="addPolicyToClient('${id}')" style="background: white; color: #667eea;">
                         <i class="fas fa-plus"></i> Add Policy
                     </button>
                 </div>
             </header>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 0 24px;">
                 <!-- Client Information - Left Side -->
-                <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h2 style="margin: 0 0 24px 0; color: #1f2937; font-size: 20px;">
-                        <i class="fas fa-user" style="margin-right: 8px; color: #3b82f6;"></i>
-                        Client Information
-                    </h2>
-
-                    <div style="display: grid; gap: 20px;">
+                <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; margin-bottom: 28px;">
+                        <div style="width: 64px; height: 64px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; font-weight: 600; margin-right: 16px;">
+                            ${client.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                        </div>
                         <div>
-                            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Full Name</label>
-                            <p style="margin: 0; font-size: 16px; color: #1f2937;">${client.name || 'N/A'}</p>
+                            <h2 style="margin: 0; color: #1f2937; font-size: 22px; font-weight: 600;">Client Information</h2>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Personal & Contact Details</p>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; gap: 24px;">
+                        <div style="padding: 16px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <label style="display: block; font-size: 11px; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Full Name</label>
+                            <p style="margin: 0; font-size: 16px; color: #1f2937; font-weight: 500;">${client.name || 'N/A'}</p>
                         </div>
 
                         ${client.company ? `
@@ -78,19 +83,21 @@ window.viewClientOriginal = function(id) {
                         </div>
                         ` : ''}
 
-                        <div>
-                            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Phone</label>
-                            <p style="margin: 0; font-size: 16px; color: #1f2937;">
-                                <a href="tel:${client.phone}" style="color: #3b82f6; text-decoration: none;">
+                        <div style="padding: 16px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <label style="display: block; font-size: 11px; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Phone</label>
+                            <p style="margin: 0; font-size: 16px;">
+                                <a href="tel:${client.phone}" style="color: #3b82f6; text-decoration: none; font-weight: 500; display: flex; align-items: center;">
+                                    <i class="fas fa-phone" style="margin-right: 8px; font-size: 14px;"></i>
                                     ${client.phone || 'N/A'}
                                 </a>
                             </p>
                         </div>
 
-                        <div>
-                            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Email</label>
-                            <p style="margin: 0; font-size: 16px; color: #1f2937;">
-                                <a href="mailto:${client.email}" style="color: #3b82f6; text-decoration: none;">
+                        <div style="padding: 16px; background: #f9fafb; border-radius: 8px; border-left: 4px solid #667eea;">
+                            <label style="display: block; font-size: 11px; color: #6b7280; margin-bottom: 6px; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px;">Email</label>
+                            <p style="margin: 0; font-size: 16px;">
+                                <a href="mailto:${client.email}" style="color: #3b82f6; text-decoration: none; font-weight: 500; display: flex; align-items: center;">
+                                    <i class="fas fa-envelope" style="margin-right: 8px; font-size: 14px;"></i>
                                     ${client.email || 'N/A'}
                                 </a>
                             </p>
@@ -108,11 +115,12 @@ window.viewClientOriginal = function(id) {
                             </p>
                         </div>
 
-                        <div>
-                            <label style="display: block; font-size: 12px; color: #6b7280; margin-bottom: 4px; text-transform: uppercase;">Total Annual Premium</label>
-                            <p style="margin: 0; font-size: 24px; color: #059669; font-weight: bold;">
+                        <div style="padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border-radius: 10px; border: 1px solid #bfdbfe; text-align: center;">
+                            <label style="display: block; font-size: 12px; color: #1e40af; margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Total Annual Premium</label>
+                            <p style="margin: 0; font-size: 32px; color: #059669; font-weight: 700;">
                                 $${totalPremium.toLocaleString()}
                             </p>
+                            <p style="margin: 8px 0 0 0; font-size: 14px; color: #64748b;">Across ${clientPolicies.length} ${clientPolicies.length === 1 ? 'policy' : 'policies'}</p>
                         </div>
 
                         ${client.notes ? `
@@ -127,11 +135,18 @@ window.viewClientOriginal = function(id) {
                 </div>
 
                 <!-- Policies - Right Side -->
-                <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h2 style="margin: 0 0 24px 0; color: #1f2937; font-size: 20px;">
-                        <i class="fas fa-file-contract" style="margin-right: 8px; color: #3b82f6;"></i>
-                        Active Policies (${clientPolicies.length})
-                    </h2>
+                <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px;">
+                        <div style="display: flex; align-items: center;">
+                            <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px;">
+                                <i class="fas fa-file-contract" style="font-size: 20px;"></i>
+                            </div>
+                            <div>
+                                <h2 style="margin: 0; color: #1f2937; font-size: 22px; font-weight: 600;">Active Policies</h2>
+                                <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">${clientPolicies.length} ${clientPolicies.length === 1 ? 'Policy' : 'Policies'} Found</p>
+                            </div>
+                        </div>
+                    </div>
 
                     <div style="display: grid; gap: 16px;">
                         ${clientPolicies.length > 0 ? clientPolicies.map(policy => {
@@ -142,17 +157,18 @@ window.viewClientOriginal = function(id) {
                                 premium : `$${Number(premium).toLocaleString()}`;
 
                             return `
-                            <div style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fafafa;">
-                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
+                            <div style="border: 1px solid #e5e7eb; border-radius: 10px; padding: 20px; background: linear-gradient(135deg, #fafafa 0%, #f9fafb 100%); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 10px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='none';">
+                                <div style="position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);"></div>
+                                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
                                     <div>
-                                        <p style="margin: 0; font-weight: bold; color: #3b82f6; font-size: 14px;">
+                                        <p style="margin: 0; font-weight: 600; color: #3b82f6; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px;">
                                             ${policy.policyNumber || 'No Policy Number'}
                                         </p>
-                                        <p style="margin: 4px 0 0 0; color: #1f2937; font-size: 16px; font-weight: 500;">
+                                        <p style="margin: 6px 0 0 0; color: #1f2937; font-size: 18px; font-weight: 600;">
                                             ${policy.policyType || policy.type || 'Unknown Type'}
                                         </p>
                                     </div>
-                                    <span style="background: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;">
+                                    <span style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 6px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">
                                         ${policy.policyStatus || policy.status || 'Active'}
                                     </span>
                                 </div>
@@ -200,13 +216,18 @@ window.viewClientOriginal = function(id) {
             </div>
 
             <!-- Bottom Activity Section -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; padding: 0 20px 20px;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; padding: 24px; margin-top: 4px;">
                 <!-- Recent Activity - Bottom Left -->
-                <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">
-                        <i class="fas fa-history" style="margin-right: 8px; color: #3b82f6;"></i>
-                        Recent Activity
-                    </h3>
+                <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px;">
+                            <i class="fas fa-history" style="font-size: 20px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Recent Activity</h3>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Latest Updates</p>
+                        </div>
+                    </div>
                     <div style="display: grid; gap: 16px;">
                         <div style="padding-left: 20px; border-left: 2px solid #e5e7eb;">
                             <p style="margin: 0; font-weight: 500; color: #1f2937;">Policy Added</p>
@@ -222,11 +243,16 @@ window.viewClientOriginal = function(id) {
                 </div>
 
                 <!-- Documents - Bottom Right -->
-                <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                    <h3 style="margin: 0 0 20px 0; color: #1f2937; font-size: 18px;">
-                        <i class="fas fa-folder" style="margin-right: 8px; color: #3b82f6;"></i>
-                        Documents
-                    </h3>
+                <div style="background: white; border-radius: 12px; padding: 28px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); border: 1px solid #e5e7eb;">
+                    <div style="display: flex; align-items: center; margin-bottom: 24px;">
+                        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; margin-right: 12px;">
+                            <i class="fas fa-folder" style="font-size: 20px;"></i>
+                        </div>
+                        <div>
+                            <h3 style="margin: 0; color: #1f2937; font-size: 20px; font-weight: 600;">Documents</h3>
+                            <p style="margin: 4px 0 0 0; color: #6b7280; font-size: 14px;">Policy Files</p>
+                        </div>
+                    </div>
                     <div style="display: grid; gap: 12px;">
                         <div style="display: flex; align-items: center; padding: 12px; background: #f9fafb; border-radius: 6px;">
                             <i class="fas fa-file-pdf" style="color: #dc2626; margin-right: 12px; font-size: 20px;"></i>
