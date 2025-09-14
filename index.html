@@ -22,6 +22,50 @@
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'pdf.worker.min.js';
         }
     </script>
+    <style>
+        /* Force lead name truncation and contact icon display */
+        #leadsTableBody .lead-name {
+            max-width: 150px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+        }
+
+        #leadsTableBody .lead-name strong {
+            display: block !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            max-width: 150px !important;
+        }
+
+        #leadsTableBody .contact-info {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: center !important;
+        }
+
+        #leadsTableBody .contact-info div {
+            display: none !important;
+        }
+
+        #leadsTableBody .contact-info a {
+            display: inline-flex !important;
+            width: 28px !important;
+            height: 28px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #e6f2ff !important;
+            border-radius: 50% !important;
+            color: #0066cc !important;
+            text-decoration: none !important;
+        }
+
+        #leadsTableBody .contact-info a:hover {
+            background: #0066cc !important;
+            color: white !important;
+        }
+    </style>
     <!-- Authentication Service -->
     <script src="js/auth-service.js"></script>
 </head>
@@ -614,7 +658,7 @@
     <script src="js/lead-archive-system.js?v=2"></script>
     <script src="js/api-service.js?v=26"></script>
     <script src="js/integrations.js?v=20"></script>
-    <script src="js/app.js?v=37"></script>
+    <script src="js/app.js?v=38"></script>
     <script src="js/ai-functions-fallback.js"></script>
     <script src="js/policy-modal.js?v=30"></script>
     <script src="js/fix-policy-types.js"></script>
