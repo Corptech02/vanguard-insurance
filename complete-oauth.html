@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Gmail OAuth</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 40px;
+            max-width: 800px;
+            margin: 0 auto;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 20px;
+        }
+        .info-box {
+            background: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #667eea;
+        }
+        .auth-url {
+            background: #1f2937;
+            color: #10b981;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            word-break: break-all;
+            margin: 20px 0;
+        }
+        button {
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .btn-secondary {
+            background: #6b7280;
+        }
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: none;
+        }
+        .steps {
+            counter-reset: step;
+        }
+        .step {
+            margin: 20px 0;
+            padding-left: 40px;
+            position: relative;
+            counter-increment: step;
+        }
+        .step::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #667eea;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Complete Gmail OAuth Authorization</h1>
+
+        <div class="info-box">
+            <strong>Account:</strong> corptech02@gmail.com<br>
+            <strong>Purpose:</strong> Enable COI Management to access real emails
+        </div>
+
+        <div class="success" id="successMsg">
+            ✅ Successfully authorized! Gmail is now connected.
+        </div>
+
+        <div class="error" id="errorMsg">
+            ❌ Authorization failed. Please try again.
+        </div>
+
+        <h2>Option 1: Automatic Authorization (Recommended)</h2>
+        <div class="steps">
+            <div class="step">
+                Click the button below to open Google's authorization page in a new window
+            </div>
+            <div class="step">
+                Log in with corptech02@gmail.com account
+            </div>
+            <div class="step">
+                Grant permission to access Gmail
+            </div>
+            <div class="step">
+                You'll be redirected back automatically
+            </div>
+        </div>
+
+        <button onclick="startOAuth()">Start Authorization</button>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+        <h2>Option 2: Manual Authorization</h2>
+        <p>If the automatic process doesn't work, copy this URL and open it in your browser:</p>
+
+        <div class="auth-url" id="authUrl">Loading...</div>
+
+        <button onclick="copyAuthUrl()">Copy URL</button>
+        <button class="btn-secondary" onclick="window.open(document.getElementById('authUrl').textContent, '_blank')">Open in New Tab</button>
+
+        <p style="margin-top: 30px;">After authorizing, you'll get a code. Paste it here:</p>
+        <input type="text" id="authCode" placeholder="Paste authorization code here...">
+        <button onclick="submitCode()">Submit Code</button>
+
+        <hr style="margin: 40px 0; border: none; border-top: 1px solid #e5e7eb;">
+
+        <h2>Option 3: Skip Authorization (Testing)</h2>
+        <p>For testing purposes, you can simulate authorization:</p>
+        <button onclick="simulateAuth()">Simulate Authorization</button>
+    </div>
+
+    <script>
+        const API_URL = 'https://empty-eel-30.loca.lt/api/gmail';
+        // Get credentials from localStorage or prompt user
+        const storedCreds = localStorage.getItem('gmail_credentials');
+        const credentials = storedCreds ? JSON.parse(storedCreds) : {
+            client_id: prompt('Enter Client ID:'),
+            client_secret: prompt('Enter Client Secret:'),
+            redirect_uri: "https://corptech02.github.io/vanguard-insurance/api/gmail/callback.html"
+        };
+
+        if (!storedCreds && credentials.client_id && credentials.client_secret) {
+            localStorage.setItem('gmail_credentials', JSON.stringify(credentials));
+        }
+
+        // Load auth URL
+        async function loadAuthUrl() {
+            try {
+                const response = await fetch(`${API_URL}/auth-url?client_id=${encodeURIComponent(credentials.client_id)}&client_secret=${encodeURIComponent(credentials.client_secret)}&redirect_uri=${encodeURIComponent(credentials.redirect_uri)}`);
+                const data = await response.json();
+                document.getElementById('authUrl').textContent = data.authUrl;
+            } catch (error) {
+                document.getElementById('authUrl').textContent = 'Error loading auth URL: ' + error.message;
+            }
+        }
+
+        // Start OAuth flow
+        function startOAuth() {
+            const authUrl = document.getElementById('authUrl').textContent;
+            if (authUrl && !authUrl.startsWith('Error')) {
+                // Store credentials for callback
+                localStorage.setItem('gmail_credentials', JSON.stringify(credentials));
+
+                // Open OAuth window
+                const authWindow = window.open(authUrl, 'gmail_auth', 'width=600,height=600');
+
+                // Check for completion
+                const checkInterval = setInterval(() => {
+                    if (localStorage.getItem('gmail_connected') === 'true') {
+                        clearInterval(checkInterval);
+                        document.getElementById('successMsg').style.display = 'block';
+                        localStorage.removeItem('gmail_connected');
+                        setTimeout(() => {
+                            window.location.href = '/#coi';
+                        }, 2000);
+                    }
+                }, 1000);
+            }
+        }
+
+        // Copy auth URL
+        function copyAuthUrl() {
+            const authUrl = document.getElementById('authUrl').textContent;
+            navigator.clipboard.writeText(authUrl).then(() => {
+                alert('URL copied to clipboard!');
+            });
+        }
+
+        // Submit authorization code manually
+        async function submitCode() {
+            const code = document.getElementById('authCode').value;
+            if (!code) {
+                alert('Please enter the authorization code');
+                return;
+            }
+
+            try {
+                // Exchange code for tokens
+                const response = await fetch(`${API_URL}/exchange-code`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        code: code,
+                        client_id: credentials.client_id,
+                        client_secret: credentials.client_secret,
+                        redirect_uri: credentials.redirect_uri
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Store tokens
+                    localStorage.setItem('gmail_tokens', JSON.stringify(result.tokens));
+                    localStorage.setItem('gmail_connected', 'true');
+
+                    // Initialize Gmail service
+                    await fetch(`${API_URL}/init`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            ...credentials,
+                            refresh_token: result.tokens.refresh_token,
+                            access_token: result.tokens.access_token
+                        })
+                    });
+
+                    document.getElementById('successMsg').style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/#coi';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to exchange code');
+                }
+            } catch (error) {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '❌ ' + error.message;
+            }
+        }
+
+        // Simulate authorization for testing
+        async function simulateAuth() {
+            try {
+                // Initialize with test tokens
+                const response = await fetch(`${API_URL}/init`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        ...credentials,
+                        refresh_token: 'simulated_refresh_token',
+                        access_token: 'simulated_access_token'
+                    })
+                });
+
+                const result = await response.json();
+
+                localStorage.setItem('gmail_connected', 'true');
+                localStorage.setItem('gmail_credentials', JSON.stringify(credentials));
+
+                document.getElementById('successMsg').style.display = 'block';
+                document.getElementById('successMsg').innerHTML = '✅ Simulation complete! Note: This won\'t access real emails without proper authorization.';
+
+                setTimeout(() => {
+                    window.location.href = '/#coi';
+                }, 3000);
+            } catch (error) {
+                document.getElementById('errorMsg').style.display = 'block';
+                document.getElementById('errorMsg').textContent = '❌ ' + error.message;
+            }
+        }
+
+        // Load auth URL on page load
+        loadAuthUrl();
+    </script>
+</body>
+</html>
