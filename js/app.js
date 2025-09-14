@@ -4457,10 +4457,31 @@ function updateSortArrows(field, direction) {
     }
 }
 
-function generateClientRows() {
+// Global pagination state for clients
+let currentClientPage = 1;
+const clientsPerPage = 10;
+
+function generateClientRows(page = 1) {
     // Get clients from localStorage
-    const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
-    console.log('generateClientRows - Found clients:', clients.length, clients);
+    let clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+
+    // Remove duplicates based on name
+    const uniqueClients = [];
+    const seenNames = new Set();
+
+    clients.forEach(client => {
+        const name = (client.name || '').toUpperCase().trim();
+        if (name && !seenNames.has(name)) {
+            seenNames.add(name);
+            uniqueClients.push(client);
+        } else if (!name) {
+            // Keep clients without names (shouldn't happen but just in case)
+            uniqueClients.push(client);
+        }
+    });
+
+    clients = uniqueClients;
+    console.log('generateClientRows - Found unique clients:', clients.length);
     
     // If no clients, show a message
     if (clients.length === 0) {
@@ -4475,11 +4496,20 @@ function generateClientRows() {
         `;
     }
     
+    // Calculate pagination
+    const totalPages = Math.ceil(clients.length / clientsPerPage);
+    const startIndex = (page - 1) * clientsPerPage;
+    const endIndex = Math.min(startIndex + clientsPerPage, clients.length);
+    const paginatedClients = clients.slice(startIndex, endIndex);
+
+    // Store current page globally
+    currentClientPage = page;
+
     // Get all policies from storage to calculate premiums
     const allPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
 
-    // Generate rows for each client
-    return clients.map(client => {
+    // Generate rows for each paginated client
+    return paginatedClients.map(client => {
         // Get initials for avatar
         const nameParts = (client.name || 'Unknown').split(' ').filter(n => n);
         const initials = nameParts.map(n => n[0]).join('').toUpperCase().slice(0, 2) || 'UN';
@@ -4620,14 +4650,8 @@ function loadClientsView() {
                 <div class="showing-info">
                     Showing 1-10 of 2,847 clients
                 </div>
-                <div class="pagination">
-                    <button class="page-btn" disabled><i class="fas fa-chevron-left"></i></button>
-                    <button class="page-btn active">1</button>
-                    <button class="page-btn">2</button>
-                    <button class="page-btn">3</button>
-                    <span>...</span>
-                    <button class="page-btn">285</button>
-                    <button class="page-btn"><i class="fas fa-chevron-right"></i></button>
+                <div class="pagination" id="clientsPagination">
+                    <!-- Pagination buttons will be generated dynamically -->
                 </div>
             </div>
         </div>
@@ -4636,17 +4660,11 @@ function loadClientsView() {
     // Populate the table with actual client data
     const tbody = document.getElementById('clientsTableBody');
     if (tbody) {
-        tbody.innerHTML = generateClientRows();
+        tbody.innerHTML = generateClientRows(currentClientPage);
     }
-    
-    // Update count in footer
-    const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
-    const footerInfo = dashboardContent.querySelector('.showing-info');
-    if (footerInfo && clients.length > 0) {
-        footerInfo.textContent = `Showing 1-${Math.min(10, clients.length)} of ${clients.length} clients`;
-    } else if (footerInfo) {
-        footerInfo.textContent = 'No clients to display';
-    }
+
+    // Update count and pagination
+    updateClientsPagination();
     
     // Scan for clickable phone numbers and emails with aggressive retry
     const scanContent = () => {
@@ -4716,6 +4734,129 @@ function loadClientsView() {
         }
     }, 500);
 }
+
+// Update clients pagination
+function updateClientsPagination() {
+    let clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+
+    // Remove duplicates
+    const uniqueClients = [];
+    const seenNames = new Set();
+    clients.forEach(client => {
+        const name = (client.name || '').toUpperCase().trim();
+        if (name && !seenNames.has(name)) {
+            seenNames.add(name);
+            uniqueClients.push(client);
+        } else if (!name) {
+            uniqueClients.push(client);
+        }
+    });
+    clients = uniqueClients;
+
+    const totalPages = Math.ceil(clients.length / clientsPerPage);
+    const startIndex = (currentClientPage - 1) * clientsPerPage;
+    const endIndex = Math.min(startIndex + clientsPerPage, clients.length);
+
+    // Update showing info
+    const footerInfo = document.querySelector('.showing-info');
+    if (footerInfo) {
+        if (clients.length > 0) {
+            footerInfo.textContent = `Showing ${startIndex + 1}-${endIndex} of ${clients.length} clients`;
+        } else {
+            footerInfo.textContent = 'No clients to display';
+        }
+    }
+
+    // Generate pagination buttons
+    const pagination = document.getElementById('clientsPagination');
+    if (pagination) {
+        let paginationHTML = '';
+
+        // Previous button
+        paginationHTML += `<button class="page-btn" ${currentClientPage === 1 ? 'disabled' : ''} onclick="goToClientPage(${currentClientPage - 1})">
+            <i class="fas fa-chevron-left"></i>
+        </button>`;
+
+        // Page numbers
+        if (totalPages <= 7) {
+            // Show all pages if 7 or less
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `<button class="page-btn ${i === currentClientPage ? 'active' : ''}" onclick="goToClientPage(${i})">${i}</button>`;
+            }
+        } else {
+            // Show smart pagination for many pages
+            if (currentClientPage <= 3) {
+                for (let i = 1; i <= 4; i++) {
+                    paginationHTML += `<button class="page-btn ${i === currentClientPage ? 'active' : ''}" onclick="goToClientPage(${i})">${i}</button>`;
+                }
+                paginationHTML += '<span>...</span>';
+                paginationHTML += `<button class="page-btn" onclick="goToClientPage(${totalPages})">${totalPages}</button>`;
+            } else if (currentClientPage >= totalPages - 2) {
+                paginationHTML += `<button class="page-btn" onclick="goToClientPage(1)">1</button>`;
+                paginationHTML += '<span>...</span>';
+                for (let i = totalPages - 3; i <= totalPages; i++) {
+                    paginationHTML += `<button class="page-btn ${i === currentClientPage ? 'active' : ''}" onclick="goToClientPage(${i})">${i}</button>`;
+                }
+            } else {
+                paginationHTML += `<button class="page-btn" onclick="goToClientPage(1)">1</button>`;
+                paginationHTML += '<span>...</span>';
+                for (let i = currentClientPage - 1; i <= currentClientPage + 1; i++) {
+                    paginationHTML += `<button class="page-btn ${i === currentClientPage ? 'active' : ''}" onclick="goToClientPage(${i})">${i}</button>`;
+                }
+                paginationHTML += '<span>...</span>';
+                paginationHTML += `<button class="page-btn" onclick="goToClientPage(${totalPages})">${totalPages}</button>`;
+            }
+        }
+
+        // Next button
+        paginationHTML += `<button class="page-btn" ${currentClientPage === totalPages || totalPages === 0 ? 'disabled' : ''} onclick="goToClientPage(${currentClientPage + 1})">
+            <i class="fas fa-chevron-right"></i>
+        </button>`;
+
+        pagination.innerHTML = paginationHTML;
+    }
+}
+
+// Navigate to a specific page in clients table
+window.goToClientPage = function(page) {
+    currentClientPage = page;
+    const tbody = document.getElementById('clientsTableBody');
+    if (tbody) {
+        tbody.innerHTML = generateClientRows(page);
+    }
+    updateClientsPagination();
+
+    // Remove Type and Status columns if they appear
+    setTimeout(() => {
+        const table = document.querySelector('.clients-view .data-table');
+        if (table) {
+            const headers = table.querySelectorAll('thead th');
+            let typeIndex = -1;
+            let statusIndex = -1;
+
+            headers.forEach((th, index) => {
+                const text = th.textContent.trim();
+                if (text === 'Type') {
+                    typeIndex = index;
+                    th.remove();
+                }
+                if (text === 'Status') {
+                    statusIndex = index;
+                    th.remove();
+                }
+            });
+
+            if (typeIndex >= 0 || statusIndex >= 0) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (statusIndex >= 0 && cells[statusIndex]) cells[statusIndex].remove();
+                    if (typeIndex >= 0 && cells[typeIndex]) cells[typeIndex].remove();
+                });
+            }
+        }
+    }, 100);
+};
 
 function loadPoliciesView() {
     const dashboardContent = document.querySelector('.dashboard-content');
