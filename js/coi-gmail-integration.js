@@ -247,8 +247,15 @@ function extractClientName(subject, snippet) {
     return null;
 }
 
-// View Gmail email details
-async function viewGmailEmail(emailId) {
+// Redirect to expandEmail (no modal)
+function viewGmailEmail(emailId) {
+    if (window.expandEmail) {
+        window.expandEmail(emailId);
+    }
+}
+
+// View Gmail email details - DISABLED (now handled by expandEmail in coi-gmail-override.js)
+async function viewGmailEmailDisabled(emailId) {
     try {
         const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, { headers: { 'Bypass-Tunnel-Reminder': 'true' } });
         const email = await response.json();
