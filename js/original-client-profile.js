@@ -2,6 +2,9 @@
 window.viewClientOriginal = function(id) {
     console.log('Loading original client profile for:', id);
 
+    // Store the client ID globally for refresh after policy deletion
+    window.currentViewingClientId = id;
+
     // Get client data
     const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
     const client = clients.find(c => c.id == id);
@@ -12,16 +15,34 @@ window.viewClientOriginal = function(id) {
         return;
     }
 
-    // Get policies for this client
+    // Get policies for this client - ALWAYS get fresh data from localStorage
     const allPolicies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    console.log('Total policies in storage:', allPolicies.length);
+    console.log('Client ID:', id, 'Client Name:', client.name);
+
     const clientPolicies = allPolicies.filter(policy => {
-        if (policy.clientId && String(policy.clientId) === String(id)) return true;
+        // Match by clientId
+        if (policy.clientId && String(policy.clientId) === String(id)) {
+            console.log('Policy matched by clientId:', policy.policyNumber);
+            return true;
+        }
+
+        // Match by insured name
         const insuredName = policy.insured?.['Name/Business Name'] ||
                            policy.insured?.['Primary Named Insured'] ||
                            policy.insuredName;
-        if (insuredName && client.name && insuredName.toLowerCase() === client.name.toLowerCase()) return true;
+        if (insuredName && client.name && insuredName.toLowerCase() === client.name.toLowerCase()) {
+            console.log('Policy matched by insured name:', policy.policyNumber, 'Insured:', insuredName);
+            return true;
+        }
+
+        // DO NOT check client.policies array as it may be outdated
+        // Only use the fresh data from insurance_policies storage
+
         return false;
     });
+
+    console.log('Client policies found:', clientPolicies.length);
 
     // Calculate total premium
     let totalPremium = 0;
@@ -196,7 +217,7 @@ window.viewClientOriginal = function(id) {
                                     <button onclick="viewPolicy('${policy.id}')" style="flex: 1; padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
                                         View Details
                                     </button>
-                                    <button onclick="deletePolicy('${policy.id}')" style="padding: 6px 12px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
+                                    <button onclick="deletePolicy('${policy.id}', '${id}')" style="padding: 6px 12px; background: #dc2626; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </div>
