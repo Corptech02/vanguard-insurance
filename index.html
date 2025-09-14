@@ -43,6 +43,9 @@
             display: flex !important;
             gap: 12px !important;
             align-items: center !important;
+            justify-content: center !important;
+            min-width: 70px !important;
+            max-width: 80px !important;
         }
 
         #leadsTableBody .contact-info div {
@@ -64,6 +67,41 @@
         #leadsTableBody .contact-info a:hover {
             background: #0066cc !important;
             color: white !important;
+        }
+
+        /* Optimize table column spacing */
+        #leadsTable th:nth-child(2),
+        #leadsTable td:nth-child(2) {
+            /* Name column */
+            width: 150px !important;
+            max-width: 150px !important;
+        }
+
+        #leadsTable th:nth-child(3),
+        #leadsTable td:nth-child(3) {
+            /* Contact column - narrow since it's just icons */
+            width: 80px !important;
+            text-align: center !important;
+        }
+
+        #leadsTable th:nth-child(4),
+        #leadsTable td:nth-child(4) {
+            /* Product Interest - give it more space */
+            width: 180px !important;
+            padding-left: 8px !important;
+        }
+
+        /* Reduce padding on other columns to give more room */
+        #leadsTable th,
+        #leadsTable td {
+            padding: 8px 6px !important;
+        }
+
+        /* Ensure Product Interest text doesn't wrap unnecessarily */
+        #leadsTableBody td:nth-child(4) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
         }
     </style>
     <!-- Authentication Service -->
