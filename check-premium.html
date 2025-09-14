@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head><title>Check Premium Data</title></head>
+<body>
+<script>
+// Get all policies
+const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+console.log('Total policies:', policies.length);
+
+// Check DU ROAD TRUCKING LLC policies
+policies.forEach(policy => {
+    const insuredName = policy.insured?.['Name/Business Name'] || 
+                       policy.insured?.['Primary Named Insured'] || 
+                       policy.insuredName;
+    
+    if (insuredName && insuredName.includes('DU ROAD')) {
+        console.log('Found DU ROAD policy:', policy);
+        console.log('Policy structure:');
+        console.log('- policyNumber:', policy.policyNumber);
+        console.log('- premium:', policy.premium);
+        console.log('- annualPremium:', policy.annualPremium);
+        console.log('- financial:', policy.financial);
+        if (policy.financial) {
+            console.log('  - Annual Premium:', policy.financial['Annual Premium']);
+            console.log('  - Premium:', policy.financial['Premium']);
+        }
+    }
+});
+
+// Check client data
+const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+const duClient = clients.find(c => c.name && c.name.includes('DU ROAD'));
+if (duClient) {
+    console.log('DU ROAD client:', duClient);
+}
+</script>
+Check console for output
+</body>
+</html>

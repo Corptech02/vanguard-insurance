@@ -49,10 +49,16 @@ window.viewClientOriginal = function(id) {
     clientPolicies.forEach(policy => {
         const premiumValue = policy.financial?.['Annual Premium'] ||
                             policy.financial?.['Premium'] ||
-                            policy.premium || 0;
+                            policy.financial?.annualPremium ||
+                            policy.financial?.premium ||
+                            policy['Annual Premium'] ||
+                            policy.Premium ||
+                            policy.premium ||
+                            policy.annualPremium || 0;
         const numericPremium = typeof premiumValue === 'string' ?
             parseFloat(premiumValue.replace(/[$,]/g, '')) || 0 :
             parseFloat(premiumValue) || 0;
+        console.log(`Profile - Policy ${policy.policyNumber}: Premium = ${premiumValue} -> ${numericPremium}`);
         totalPremium += numericPremium;
     });
 

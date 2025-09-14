@@ -4537,10 +4537,15 @@ function generateClientRows(page = 1) {
         policyCount = clientPolicies.length;
         console.log(`Client ${client.name}: Found ${policyCount} policies`);
 
-        // Calculate total premium from policies
+        // Calculate total premium from policies - check all possible locations
         clientPolicies.forEach(policy => {
+            // Check all possible premium field locations
             const premiumValue = policy.financial?.['Annual Premium'] ||
                                 policy.financial?.['Premium'] ||
+                                policy.financial?.annualPremium ||
+                                policy.financial?.premium ||
+                                policy['Annual Premium'] ||
+                                policy.Premium ||
                                 policy.premium ||
                                 policy.annualPremium || 0;
 
@@ -4548,7 +4553,8 @@ function generateClientRows(page = 1) {
                 parseFloat(premiumValue.replace(/[$,]/g, '')) || 0 :
                 parseFloat(premiumValue) || 0;
 
-            console.log(`  Policy ${policy.policyNumber}: Premium = ${premiumValue} -> ${numericPremium}`);
+            console.log(`  Policy ${policy.policyNumber}: Premium value = ${premiumValue} -> numeric = ${numericPremium}`);
+            console.log(`    Full policy.financial:`, policy.financial);
             totalPremium += numericPremium;
         });
 
