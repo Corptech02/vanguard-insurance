@@ -117,19 +117,24 @@
         /* Stage */
         #leadsTable th:nth-child(6),
         #leadsTable td:nth-child(6) {
-            width: 120px !important;
+            width: 110px !important;
         }
 
-        /* Renewal Date */
+        /* Renewal Date - needs more space for header + sort arrow */
         #leadsTable th:nth-child(7),
         #leadsTable td:nth-child(7) {
-            width: 110px !important;
+            width: 130px !important;
+        }
+
+        #leadsTable th:nth-child(7) {
+            white-space: nowrap !important;
+            overflow: hidden !important;
         }
 
         /* Assigned To */
         #leadsTable th:nth-child(8),
         #leadsTable td:nth-child(8) {
-            width: 120px !important;
+            width: 110px !important;
         }
 
         /* Created */
@@ -142,6 +147,19 @@
         #leadsTable th:nth-child(10),
         #leadsTable td:nth-child(10) {
             width: 140px !important;
+        }
+
+        /* Fix sort arrows to prevent overflow */
+        #leadsTable th.sortable {
+            position: relative !important;
+            padding-right: 25px !important;
+        }
+
+        #leadsTable th.sortable .sort-arrow {
+            position: absolute !important;
+            right: 8px !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
         }
 
         /* Ensure Product Interest text doesn't wrap unnecessarily */
