@@ -1,6 +1,38 @@
 // COI Email Expansion Fix - Ensures email clicking works
 console.log('COI Email Fix loading...');
 
+// Use event delegation to handle all email clicks
+document.addEventListener('click', function(event) {
+    // Check if action button was clicked
+    const actionBtn = event.target.closest('.email-action-btn');
+    if (actionBtn) {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const action = actionBtn.getAttribute('data-action');
+        const emailId = actionBtn.getAttribute('data-email-id');
+
+        if (action === 'read') {
+            window.markAsRead(emailId);
+        } else if (action === 'process') {
+            window.processGmailCOI(emailId);
+        }
+        return;
+    }
+
+    // Check if clicked element is within an email-item
+    const emailItem = event.target.closest('.email-item');
+    if (emailItem && !event.target.closest('.email-actions')) {
+        const emailId = emailItem.getAttribute('data-email-id');
+        if (emailId) {
+            console.log('Email clicked with ID:', emailId);
+            event.preventDefault();
+            event.stopPropagation();
+            window.expandEmail(emailId);
+        }
+    }
+});
+
 // Make expandEmail function available globally and add debugging
 window.expandEmail = function(emailId) {
     console.log('expandEmail called with ID:', emailId);

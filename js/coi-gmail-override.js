@@ -125,7 +125,7 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
                         const senderName = fromMatch ? fromMatch[1].trim() : email.from.split('@')[0];
 
                         return `
-                            <div class="email-item unread" data-email-id="${email.id}" onclick="expandEmail('${email.id}')">
+                            <div class="email-item unread" data-email-id="${email.id}" style="cursor: pointer;">
                                 <div class="email-header">
                                     <div class="email-info">
                                         <div class="email-from">
@@ -140,10 +140,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
                                         </div>
                                     </div>
                                     <div class="email-actions">
-                                        <button class="btn-icon" onclick="event.stopPropagation(); markAsRead('${email.id}')" title="Mark as Read">
+                                        <button class="btn-icon email-action-btn" data-action="read" data-email-id="${email.id}" title="Mark as Read">
                                             <i class="fas fa-check"></i>
                                         </button>
-                                        <button class="btn-icon" onclick="event.stopPropagation(); processGmailCOI('${email.id}')" title="Process COI">
+                                        <button class="btn-icon email-action-btn" data-action="process" data-email-id="${email.id}" title="Process COI">
                                             <i class="fas fa-file-contract"></i>
                                         </button>
                                     </div>
