@@ -12911,3 +12911,4 @@ function uploadToVicidialWithCriteria() {
 // Make function globally accessible
 window.uploadToVicidialWithCriteria = uploadToVicidialWithCriteria;
 
+// Cache bust: Sun Sep 14 06:33:16 PM UTC 2025
