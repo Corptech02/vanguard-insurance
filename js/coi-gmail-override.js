@@ -188,18 +188,127 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
         });
     };
 
-    // View email function
-    window.viewEmail = async function(emailId) {
-        console.log('Viewing email:', emailId);
-        // TODO: Implement email viewer modal
-        alert('Email viewer coming soon. Email ID: ' + emailId);
+    // Expand email to show full content
+    window.expandEmail = async function(emailId) {
+        console.log('Expanding email:', emailId);
+
+        try {
+            // Fetch full email details
+            const response = await fetch(`${GMAIL_API_URL}/messages/${emailId}`, {
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            const email = await response.json();
+
+            // Create modal to display email
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 800px;">
+                    <div class="modal-header">
+                        <h2>Email Details</h2>
+                        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #6b7280; font-size: 12px;">FROM</div>
+                            <div style="font-weight: 500;">${email.from}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #6b7280; font-size: 12px;">TO</div>
+                            <div>${email.to}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #6b7280; font-size: 12px;">SUBJECT</div>
+                            <div style="font-weight: 500; font-size: 18px;">${email.subject}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="color: #6b7280; font-size: 12px;">DATE</div>
+                            <div>${new Date(email.date).toLocaleString()}</div>
+                        </div>
+                        ${email.attachments && email.attachments.length > 0 ? `
+                            <div style="margin-bottom: 20px;">
+                                <div style="color: #6b7280; font-size: 12px;">ATTACHMENTS</div>
+                                <div>
+                                    ${email.attachments.map(att => `
+                                        <span style="display: inline-block; margin: 4px; padding: 4px 8px; background: #f3f4f6; border-radius: 4px;">
+                                            <i class="fas fa-paperclip"></i> ${att.filename} (${(att.size / 1024).toFixed(1)}KB)
+                                        </span>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div style="border-top: 1px solid #e5e7eb; padding-top: 20px;">
+                            <div style="white-space: pre-wrap; line-height: 1.6;">${email.body || email.snippet}</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn-primary" onclick="replyToEmail('${emailId}')">
+                            <i class="fas fa-reply"></i> Reply
+                        </button>
+                        <button class="btn-secondary" onclick="processGmailCOI('${emailId}')">
+                            <i class="fas fa-file-contract"></i> Process COI
+                        </button>
+                        <button class="btn-secondary" onclick="this.closest('.modal-overlay').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+        } catch (error) {
+            console.error('Error expanding email:', error);
+            alert('Error loading email details: ' + error.message);
+        }
     };
 
-    // Process email function
-    window.processEmail = async function(emailId) {
-        console.log('Processing email:', emailId);
-        // TODO: Implement email processing
-        alert('Email processing coming soon. Email ID: ' + emailId);
+    // Mark email as read
+    window.markAsRead = async function(emailId) {
+        console.log('Marking email as read:', emailId);
+        try {
+            await fetch(`${GMAIL_API_URL}/messages/${emailId}/read`, {
+                method: 'POST',
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true'
+                }
+            });
+            // Update UI to show email as read
+            const emailItem = document.querySelector(`[data-email-id="${emailId}"]`);
+            if (emailItem) {
+                emailItem.classList.remove('unread');
+                const dot = emailItem.querySelector('.fa-circle');
+                if (dot) dot.style.display = 'none';
+            }
+        } catch (error) {
+            console.error('Error marking as read:', error);
+        }
+    };
+
+    // Process COI from Gmail
+    window.processGmailCOI = async function(emailId) {
+        console.log('Processing COI:', emailId);
+        // For now, just show a notification
+        const notification = document.createElement('div');
+        notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #10b981; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000;';
+        notification.innerHTML = '<i class="fas fa-check-circle"></i> Processing COI request...';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
+    };
+
+    // Reply to email
+    window.replyToEmail = async function(emailId) {
+        console.log('Reply to email:', emailId);
+        // For now, just show a notification
+        const notification = document.createElement('div');
+        notification.style.cssText = 'position: fixed; top: 20px; right: 20px; background: #667eea; color: white; padding: 15px 20px; border-radius: 8px; z-index: 10000;';
+        notification.innerHTML = '<i class="fas fa-envelope"></i> Opening reply composer...';
+        document.body.appendChild(notification);
+        setTimeout(() => notification.remove(), 3000);
     };
 });
 
