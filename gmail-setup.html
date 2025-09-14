@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gmail API Setup - Vanguard Insurance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+
+        .steps {
+            margin-bottom: 30px;
+        }
+
+        .step {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .step h3 {
+            color: #374151;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .step-number {
+            background: #667eea;
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .step p {
+            color: #6b7280;
+            line-height: 1.6;
+            margin-left: 38px;
+        }
+
+        .step code {
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #374151;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+            font-family: monospace;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .success-message {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error-message {
+            background: #ef4444;
+            color: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .link {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .link:hover {
+            text-decoration: underline;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .tab-button {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+        }
+
+        .tab-button.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gmail API Setup</h1>
+        <p class="subtitle">Connect your Gmail account to the COI Management system</p>
+
+        <div class="success-message" id="successMessage">
+            Successfully connected to Gmail! You can now access emails in the COI Management tool.
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Error connecting to Gmail. Please check your credentials and try again.
+        </div>
+
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="showTab('oauth')">OAuth Setup (Recommended)</button>
+            <button class="tab-button" onclick="showTab('manual')">Manual Credentials</button>
+        </div>
+
+        <!-- OAuth Setup Tab -->
+        <div class="tab-content active" id="oauth-tab">
+            <div class="steps">
+                <div class="step">
+                    <h3>
+                        <span class="step-number">1</span>
+                        Create a Google Cloud Project
+                    </h3>
+                    <p>
+                        Go to <a href="https://console.cloud.google.com" target="_blank" class="link">Google Cloud Console</a>
+                        and create a new project or select an existing one.
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>
+                        <span class="step-number">2</span>
+                        Enable Gmail API
+                    </h3>
+                    <p>
+                        In your project, go to "APIs & Services" → "Enable APIs and Services" →
+                        Search for "Gmail API" → Click "Enable"
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>
+                        <span class="step-number">3</span>
+                        Create OAuth 2.0 Credentials
+                    </h3>
+                    <p>
+                        Go to "APIs & Services" → "Credentials" → "Create Credentials" → "OAuth client ID"<br>
+                        Application type: Web application<br>
+                        Authorized redirect URIs: <code>http://localhost:3001/api/gmail/callback</code>
+                    </p>
+                </div>
+
+                <div class="step">
+                    <h3>
+                        <span class="step-number">4</span>
+                        Download and Paste Credentials
+                    </h3>
+                    <p>
+                        Download the JSON file and paste its contents below:
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="credentials">OAuth 2.0 Credentials JSON:</label>
+                <textarea id="credentials" placeholder='Paste your credentials.json content here...
+{
+  "web": {
+    "client_id": "your-client-id.apps.googleusercontent.com",
+    "client_secret": "your-client-secret",
+    "redirect_uris": ["http://localhost:3001/api/gmail/callback"]
+  }
+}'></textarea>
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="connectWithOAuth()">Connect with OAuth</button>
+                <button class="btn-secondary" onclick="testConnection()">Test Connection</button>
+            </div>
+        </div>
+
+        <!-- Manual Credentials Tab -->
+        <div class="tab-content" id="manual-tab">
+            <div class="steps">
+                <div class="step">
+                    <h3>
+                        <span class="step-number">1</span>
+                        Get OAuth Credentials
+                    </h3>
+                    <p>
+                        If you already have OAuth tokens (access_token and refresh_token),
+                        you can enter them manually below.
+                    </p>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="client_id">Client ID:</label>
+                <input type="text" id="client_id" placeholder="your-client-id.apps.googleusercontent.com">
+            </div>
+
+            <div class="form-group">
+                <label for="client_secret">Client Secret:</label>
+                <input type="password" id="client_secret" placeholder="your-client-secret">
+            </div>
+
+            <div class="form-group">
+                <label for="refresh_token">Refresh Token:</label>
+                <input type="text" id="refresh_token" placeholder="1//your-refresh-token">
+            </div>
+
+            <div class="form-group">
+                <label for="access_token">Access Token (optional):</label>
+                <input type="text" id="access_token" placeholder="ya29.your-access-token">
+            </div>
+
+            <div class="button-group">
+                <button class="btn-primary" onclick="saveManualCredentials()">Save Credentials</button>
+                <button class="btn-secondary" onclick="testConnection()">Test Connection</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        async function connectWithOAuth() {
+            try {
+                const credentialsText = document.getElementById('credentials').value;
+                if (!credentialsText) {
+                    alert('Please paste your OAuth credentials JSON');
+                    return;
+                }
+
+                const credentials = JSON.parse(credentialsText);
+                const webCreds = credentials.web || credentials.installed;
+
+                if (!webCreds) {
+                    alert('Invalid credentials format');
+                    return;
+                }
+
+                // Get auth URL from backend
+                const response = await fetch(`http://localhost:3001/api/gmail/auth-url?client_id=${webCreds.client_id}&client_secret=${webCreds.client_secret}`);
+                const { authUrl } = await response.json();
+
+                // Store credentials locally for callback
+                localStorage.setItem('gmail_credentials', JSON.stringify(webCreds));
+
+                // Open OAuth consent screen
+                window.open(authUrl, 'gmail_auth', 'width=600,height=600');
+
+                // Check for success
+                const checkInterval = setInterval(() => {
+                    if (localStorage.getItem('gmail_connected') === 'true') {
+                        clearInterval(checkInterval);
+                        document.getElementById('successMessage').style.display = 'block';
+                        localStorage.removeItem('gmail_connected');
+                        setTimeout(() => {
+                            window.location.href = '/#coi-management';
+                        }, 2000);
+                    }
+                }, 1000);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function saveManualCredentials() {
+            try {
+                const credentials = {
+                    client_id: document.getElementById('client_id').value,
+                    client_secret: document.getElementById('client_secret').value,
+                    refresh_token: document.getElementById('refresh_token').value,
+                    access_token: document.getElementById('access_token').value,
+                    redirect_uri: 'http://localhost:3001/api/gmail/callback'
+                };
+
+                if (!credentials.client_id || !credentials.client_secret || !credentials.refresh_token) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+
+                const response = await fetch('http://localhost:3001/api/gmail/init', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(credentials)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('successMessage').style.display = 'block';
+                    setTimeout(() => {
+                        window.location.href = '/#coi-management';
+                    }, 2000);
+                } else {
+                    throw new Error(result.error || 'Failed to initialize Gmail');
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('errorMessage').style.display = 'block';
+                document.getElementById('errorMessage').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        async function testConnection() {
+            try {
+                const response = await fetch('http://localhost:3001/api/gmail/messages?maxResults=1');
+                const messages = await response.json();
+
+                if (Array.isArray(messages)) {
+                    alert(`Connection successful! Found ${messages.length} message(s).`);
+                } else if (messages.error) {
+                    throw new Error(messages.error);
+                }
+
+            } catch (error) {
+                alert('Connection failed: ' + error.message);
+            }
+        }
+
+        // Check if we're returning from OAuth
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('gmail') === 'connected') {
+            localStorage.setItem('gmail_connected', 'true');
+            window.close();
+        } else if (urlParams.get('gmail') === 'error') {
+            document.getElementById('errorMessage').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

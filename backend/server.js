@@ -56,6 +56,31 @@ function initializeDatabase() {
         value TEXT NOT NULL,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // COI Email tables
+    db.run(`CREATE TABLE IF NOT EXISTS coi_emails (
+        id TEXT PRIMARY KEY,
+        thread_id TEXT,
+        from_email TEXT,
+        to_email TEXT,
+        subject TEXT,
+        date DATETIME,
+        body TEXT,
+        snippet TEXT,
+        attachments TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    db.run(`CREATE TABLE IF NOT EXISTS coi_emails_sent (
+        message_id TEXT PRIMARY KEY,
+        to_email TEXT,
+        subject TEXT,
+        body TEXT,
+        sent_date DATETIME,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    console.log('Database tables initialized');
 }
 
 // API Routes
@@ -280,6 +305,13 @@ app.get('/api/all-data', (req, res) => {
         });
     });
 });
+
+// Gmail routes
+const gmailRoutes = require('./gmail-routes');
+app.use('/api/gmail', gmailRoutes);
+
+// Export database for use in other modules
+module.exports = { db };
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
