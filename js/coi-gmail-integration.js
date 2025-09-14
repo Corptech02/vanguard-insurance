@@ -1,8 +1,10 @@
 // COI Gmail Integration
 console.log('Initializing COI Gmail Integration...');
 
-// Backend API URL
-const GMAIL_API_URL = 'http://192.168.40.232:3001/api/gmail';
+// Backend API URL - Use HTTPS proxy if available, otherwise HTTP
+const GMAIL_API_URL = window.location.protocol === 'https:'
+    ? 'https://192.168.40.232:3001/api/gmail'  // Will need SSL cert
+    : 'http://192.168.40.232:3001/api/gmail';
 
 // Override the loadCOIManagement function to use real Gmail data
 const originalLoadCOIManagement = window.loadCOIManagement;

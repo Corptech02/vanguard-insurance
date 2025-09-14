@@ -375,8 +375,15 @@
                 // Get redirect URI from credentials or use default
                 const redirectUri = webCreds.redirect_uris ? webCreds.redirect_uris[0] : 'http://192.168.40.232:3001/api/gmail/callback';
 
-                // Get auth URL from backend
-                const response = await fetch(`http://192.168.40.232:3001/api/gmail/auth-url?client_id=${encodeURIComponent(webCreds.client_id)}&client_secret=${encodeURIComponent(webCreds.client_secret)}&redirect_uri=${encodeURIComponent(redirectUri)}`);
+                // Get auth URL from backend - Try to use proxy for HTTPS pages
+                let apiUrl = `http://192.168.40.232:3001/api/gmail/auth-url?client_id=${encodeURIComponent(webCreds.client_id)}&client_secret=${encodeURIComponent(webCreds.client_secret)}&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+                // If on HTTPS (GitHub Pages), show warning about mixed content
+                if (window.location.protocol === 'https:') {
+                    alert('Note: You may need to allow mixed content or open this page locally via http://192.168.40.232/gmail-setup.html to connect Gmail.');
+                }
+
+                const response = await fetch(apiUrl);
                 const { authUrl } = await response.json();
 
                 // Store credentials locally for callback
