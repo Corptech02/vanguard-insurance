@@ -82,13 +82,21 @@
             /* Contact column - narrow since it's just icons */
             width: 80px !important;
             text-align: center !important;
+            padding-right: 4px !important;
         }
 
         #leadsTable th:nth-child(4),
         #leadsTable td:nth-child(4) {
-            /* Product Interest - give it more space */
-            width: 180px !important;
-            padding-left: 8px !important;
+            /* Product Interest - move it left with padding */
+            width: 200px !important;
+            padding-left: 4px !important;
+            padding-right: 20px !important;
+        }
+
+        #leadsTable th:nth-child(5),
+        #leadsTable td:nth-child(5) {
+            /* Premium - add left padding to create visual separation */
+            padding-left: 25px !important;
         }
 
         /* Reduce padding on other columns to give more room */
