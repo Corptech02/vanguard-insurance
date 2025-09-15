@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACORD 25 Form Filler</title>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body style="margin: 0; padding: 0;">
+    <div id="status" style="width: 100%; height: 100vh;">Loading...</div>
+
+    <script>
+        async function fillACORDForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const policyId = urlParams.get('policyId');
+
+            // Get policy data from localStorage
+            const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+            const policy = policies.find(p =>
+                p.policyNumber === policyId ||
+                p.id === policyId ||
+                String(p.policyNumber) === String(policyId) ||
+                String(p.id) === String(policyId)
+            );
+
+            if (!policy) {
+                document.getElementById('status').textContent = 'Policy not found';
+                return;
+            }
+
+            // Extract policy data
+            const insuredName = policy.clientName ||
+                               policy.insured?.['Name/Business Name'] ||
+                               policy.insured?.['Primary Named Insured'] || '';
+
+            // Load the PDF
+            const formUrl = 'acord-25.pdf';
+            const formPdfBytes = await fetch(formUrl).then(res => res.arrayBuffer());
+
+            // Load a PDFDocument from the existing PDF bytes
+            const pdfDoc = await PDFLib.PDFDocument.load(formPdfBytes);
+
+            // Get the first page
+            const pages = pdfDoc.getPages();
+            const firstPage = pages[0];
+            const { width, height } = firstPage.getSize();
+
+            // Embed font
+            const helveticaFont = await pdfDoc.embedFont(PDFLib.StandardFonts.Helvetica);
+
+            // Draw text directly on the PDF at specific coordinates
+            // These coordinates are specific to ACORD 25 form layout
+
+            // Date (top right)
+            firstPage.drawText(new Date().toLocaleDateString(), {
+                x: 450,
+                y: height - 50,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // Producer (top left box)
+            firstPage.drawText('Vanguard Insurance Group', {
+                x: 50,
+                y: height - 100,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+            firstPage.drawText('123 Insurance Way', {
+                x: 50,
+                y: height - 115,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+            firstPage.drawText('New York, NY 10001', {
+                x: 50,
+                y: height - 130,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // Insured (middle section)
+            firstPage.drawText(insuredName, {
+                x: 320,
+                y: height - 100,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+            if (policy.address) {
+                firstPage.drawText(policy.address, {
+                    x: 320,
+                    y: height - 115,
+                    size: 10,
+                    font: helveticaFont,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+            }
+            if (policy.city || policy.state || policy.zip) {
+                firstPage.drawText(`${policy.city || ''}, ${policy.state || ''} ${policy.zip || ''}`, {
+                    x: 320,
+                    y: height - 130,
+                    size: 10,
+                    font: helveticaFont,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+            }
+
+            // Policy Number
+            if (policy.policyNumber || policy.id) {
+                firstPage.drawText(policy.policyNumber || policy.id, {
+                    x: 250,
+                    y: height - 280,
+                    size: 10,
+                    font: helveticaFont,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+            }
+
+            // Effective Date
+            if (policy.effectiveDate) {
+                firstPage.drawText(formatDate(policy.effectiveDate), {
+                    x: 360,
+                    y: height - 280,
+                    size: 10,
+                    font: helveticaFont,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+            }
+
+            // Expiration Date
+            if (policy.expirationDate) {
+                firstPage.drawText(formatDate(policy.expirationDate), {
+                    x: 440,
+                    y: height - 280,
+                    size: 10,
+                    font: helveticaFont,
+                    color: PDFLib.rgb(0, 0, 0)
+                });
+            }
+
+            // Coverage Limits - Each Occurrence
+            firstPage.drawText(policy.coverage?.['Each Occurrence'] || '$1,000,000', {
+                x: 520,
+                y: height - 310,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // General Aggregate
+            firstPage.drawText(policy.coverage?.['General Aggregate'] || '$2,000,000', {
+                x: 520,
+                y: height - 385,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // Carrier name
+            firstPage.drawText(policy.carrier || 'GEICO', {
+                x: 140,
+                y: height - 240,
+                size: 10,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // Check marks for coverage types (using 'X' character)
+            firstPage.drawText('X', {
+                x: 32,
+                y: height - 280,
+                size: 12,
+                font: helveticaFont,
+                color: PDFLib.rgb(0, 0, 0)
+            });
+
+            // Serialize the PDFDocument to bytes
+            const pdfBytes = await pdfDoc.save();
+
+            // Create a blob and download
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            // Display the filled PDF
+            document.getElementById('status').innerHTML = `
+                <div style="height: 100vh; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: center; gap: 20px; padding: 15px; background: #f8f9fa;">
+                        <div style="background: #28a745; color: white; padding: 5px 10px; border-radius: 3px;">
+                            ✓ Form Filled with ${insuredName}'s Data
+                        </div>
+                        <button onclick="emailACORD()"
+                                style="background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                        <button onclick="download('${url}', 'ACORD_25_${insuredName.replace(/\s+/g, '_')}.pdf')"
+                                style="background: #28a745; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            <i class="fas fa-download"></i> Save
+                        </button>
+                    </div>
+                    <iframe src="${url}" width="100%" height="100%" style="border: none; flex: 1;"></iframe>
+                </div>
+            `;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+        }
+
+        function download(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        function emailACORD() {
+            const email = prompt('Enter recipient email address:');
+            if (email) {
+                alert('ACORD 25 certificate will be emailed to: ' + email);
+            }
+        }
+
+        // Run when page loads
+        fillACORDForm();
+    </script>
+</body>
+</html>

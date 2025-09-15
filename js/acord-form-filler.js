@@ -35,6 +35,33 @@ window.prepareCOI = async function(policyId) {
         return;
     }
 
+    // Create iframe to load fill-acord.html with policy ID
+    policyViewer.innerHTML = `
+        <div style="padding: 10px; background: white; height: 100vh; display: flex; flex-direction: column;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 5px; margin-bottom: 10px;">
+                <button onclick="backToPolicyList()"
+                        style="background: #6c757d; color: white; padding: 8px 16px; border: none; border-radius: 5px; cursor: pointer;">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <h3 style="margin: 0;">ACORD 25 Certificate</h3>
+                <span style="background: #28a745; color: white; padding: 5px 10px; border-radius: 3px; font-size: 12px;">
+                    ✓ Filling Form...
+                </span>
+            </div>
+            <iframe
+                src="fill-acord-text.html?policyId=${encodeURIComponent(policyId)}"
+                width="100%"
+                height="100%"
+                style="border: 1px solid #ddd; flex: 1;">
+            </iframe>
+        </div>
+    `;
+
+    return;
+
+    // OLD CODE - Now handled by fill-acord.html
+    return;
+
     // Extract all policy data
     const insuredName = policy.clientName ||
                        policy.insured?.['Name/Business Name'] ||

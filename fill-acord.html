@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACORD 25 Form Filler</title>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/downloadjs@1.4.7"></script>
+</head>
+<body style="margin: 0; padding: 0;">
+    <div id="status" style="width: 100%; height: 100vh;">Loading...</div>
+
+    <script>
+        async function fillACORDForm() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const policyId = urlParams.get('policyId');
+
+            // Get policy data from localStorage
+            const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+            const policy = policies.find(p =>
+                p.policyNumber === policyId ||
+                p.id === policyId ||
+                String(p.policyNumber) === String(policyId) ||
+                String(p.id) === String(policyId)
+            );
+
+            if (!policy) {
+                document.getElementById('status').textContent = 'Policy not found';
+                return;
+            }
+
+            // Load the PDF
+            const formUrl = 'acord-25.pdf';
+            const formPdfBytes = await fetch(formUrl).then(res => res.arrayBuffer());
+
+            // Load a PDFDocument from the existing PDF bytes
+            const pdfDoc = await PDFLib.PDFDocument.load(formPdfBytes);
+
+            // Get the form
+            const form = pdfDoc.getForm();
+
+            // Get all field names to see what's available
+            const fields = form.getFields();
+            const fieldNames = fields.map(f => f.getName());
+            console.log('Available form fields:', fieldNames);
+
+            // Fill the form fields with policy data
+            const insuredName = policy.clientName ||
+                               policy.insured?.['Name/Business Name'] ||
+                               policy.insured?.['Primary Named Insured'] || '';
+
+            // Try to fill fields - try multiple possible field name variations
+            try {
+                // Try different field name patterns
+                const fieldMapping = {
+                    // Date variations
+                    'DATE': new Date().toLocaleDateString(),
+                    'Date': new Date().toLocaleDateString(),
+                    'date': new Date().toLocaleDateString(),
+                    'TODAYS DATE': new Date().toLocaleDateString(),
+
+                    // Producer variations
+                    'PRODUCER': 'Vanguard Insurance Group\n123 Insurance Way\nNew York, NY 10001',
+                    'Producer': 'Vanguard Insurance Group\n123 Insurance Way\nNew York, NY 10001',
+                    'PRODUCER NAME': 'Vanguard Insurance Group',
+                    'PRODUCER ADDRESS': '123 Insurance Way\nNew York, NY 10001',
+
+                    // Insured variations
+                    'INSURED': insuredName + '\n' + (policy.address || '') + '\n' + (policy.city || '') + ', ' + (policy.state || '') + ' ' + (policy.zip || ''),
+                    'Insured': insuredName,
+                    'INSURED NAME': insuredName,
+                    'NAME OF INSURED': insuredName,
+
+                    // Policy number variations
+                    'POLICY NUMBER': policy.policyNumber || policy.id || '',
+                    'Policy Number': policy.policyNumber || policy.id || '',
+                    'POLICY #': policy.policyNumber || policy.id || '',
+                    'POLICY NO': policy.policyNumber || policy.id || '',
+
+                    // Date variations
+                    'EFF DATE': formatDate(policy.effectiveDate),
+                    'POLICY EFF DATE': formatDate(policy.effectiveDate),
+                    'EFFECTIVE DATE': formatDate(policy.effectiveDate),
+                    'EXP DATE': formatDate(policy.expirationDate),
+                    'POLICY EXP DATE': formatDate(policy.expirationDate),
+                    'EXPIRATION DATE': formatDate(policy.expirationDate),
+
+                    // Coverage limits
+                    'EACH OCCURRENCE': policy.coverage?.['Each Occurrence'] || '$1,000,000',
+                    'Each Occurrence': policy.coverage?.['Each Occurrence'] || '$1,000,000',
+                    'GENERAL AGGREGATE': policy.coverage?.['General Aggregate'] || '$2,000,000',
+                    'General Aggregate': policy.coverage?.['General Aggregate'] || '$2,000,000',
+                    'COMBINED SINGLE LIMIT': policy.coverage?.['Liability Limit'] || '$1,000,000',
+                    'Combined Single Limit': policy.coverage?.['Liability Limit'] || '$1,000,000'
+                };
+
+                // Try to fill each field
+                for (const [fieldName, value] of Object.entries(fieldMapping)) {
+                    try {
+                        const field = form.getTextField(fieldName);
+                        if (field) {
+                            field.setText(value);
+                            console.log(`Filled field '${fieldName}' with '${value}'`);
+                        }
+                    } catch (e) {
+                        // Field might not exist, continue
+                    }
+                }
+
+                // Try checkbox fields
+                const checkboxes = [
+                    'GEN LIAB', 'GENERAL LIABILITY', 'General Liability',
+                    'AUTOMOBILE LIABILITY', 'AUTO LIABILITY', 'Auto Liability',
+                    'OCCUR', 'Occur', 'CLAIMS-MADE', 'Claims-Made'
+                ];
+
+                for (const checkboxName of checkboxes) {
+                    try {
+                        const checkbox = form.getCheckBox(checkboxName);
+                        if (checkbox) {
+                            checkbox.check();
+                            console.log(`Checked checkbox '${checkboxName}'`);
+                        }
+                    } catch (e) {
+                        // Checkbox might not exist, continue
+                    }
+                }
+
+                // Log all actual field names for debugging
+                console.log('\nActual field names in PDF:');
+                fields.forEach(field => {
+                    const name = field.getName();
+                    const type = field.constructor.name;
+                    console.log(`  ${name} (${type})`);
+                });
+
+            } catch (e) {
+                console.log('Error filling fields:', e);
+            }
+
+            // Serialize the PDFDocument to bytes
+            const pdfBytes = await pdfDoc.save();
+
+            // Create a blob and download
+            const blob = new Blob([pdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            // Display the filled PDF with overlay showing the data
+            document.getElementById('status').innerHTML = `
+                <div style="height: 100vh; display: flex; flex-direction: column;">
+                    <div style="display: flex; justify-content: center; gap: 20px; padding: 15px; background: #f8f9fa;">
+                        <button onclick="toggleDataOverlay()"
+                                style="background: #6c757d; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            Show/Hide Filled Data
+                        </button>
+                        <button onclick="emailACORD()"
+                                style="background: #007bff; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            <i class="fas fa-envelope"></i> Email
+                        </button>
+                        <button onclick="download('${url}', 'ACORD_25_${insuredName.replace(/\s+/g, '_')}.pdf')"
+                                style="background: #28a745; color: white; padding: 12px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px;">
+                            <i class="fas fa-download"></i> Save
+                        </button>
+                    </div>
+                    <div style="position: relative; flex: 1;">
+                        <iframe src="${url}" width="100%" height="100%" style="border: none; position: absolute; top: 0; left: 0;"></iframe>
+
+                        <!-- Data overlay to show what was filled -->
+                        <div id="dataOverlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: block;">
+                            <!-- Date field (top right) -->
+                            <div style="position: absolute; top: 28px; right: 180px; font-size: 11px; font-family: Helvetica, Arial; color: #000;">
+                                ${new Date().toLocaleDateString()}
+                            </div>
+
+                            <!-- Producer (top left) -->
+                            <div style="position: absolute; top: 72px; left: 30px; font-size: 10px; font-family: Helvetica, Arial; color: #000; white-space: pre-line;">
+                                Vanguard Insurance Group
+                                123 Insurance Way
+                                New York, NY 10001
+                            </div>
+
+                            <!-- Insured (middle left) -->
+                            <div style="position: absolute; top: 72px; left: 380px; font-size: 10px; font-family: Helvetica, Arial; color: #000; white-space: pre-line;">
+                                <strong>${insuredName}</strong>
+                                ${policy.address || ''}
+                                ${policy.city || ''}, ${policy.state || ''} ${policy.zip || ''}
+                            </div>
+
+                            <!-- Policy Number (middle) -->
+                            <div style="position: absolute; top: 235px; left: 280px; font-size: 10px; font-family: Helvetica, Arial; color: #000;">
+                                ${policy.policyNumber || policy.id || ''}
+                            </div>
+
+                            <!-- Effective Date -->
+                            <div style="position: absolute; top: 235px; left: 385px; font-size: 10px; font-family: Helvetica, Arial; color: #000;">
+                                ${formatDate(policy.effectiveDate)}
+                            </div>
+
+                            <!-- Expiration Date -->
+                            <div style="position: absolute; top: 235px; left: 460px; font-size: 10px; font-family: Helvetica, Arial; color: #000;">
+                                ${formatDate(policy.expirationDate)}
+                            </div>
+
+                            <!-- Coverage Limits -->
+                            <div style="position: absolute; top: 265px; right: 30px; font-size: 10px; font-family: Helvetica, Arial; color: #000; text-align: right;">
+                                ${policy.coverage?.['Each Occurrence'] || '$1,000,000'}
+                            </div>
+
+                            <div style="position: absolute; top: 340px; right: 30px; font-size: 10px; font-family: Helvetica, Arial; color: #000; text-align: right;">
+                                ${policy.coverage?.['General Aggregate'] || '$2,000,000'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return (date.getMonth() + 1) + '/' + date.getDate() + '/' + date.getFullYear();
+        }
+
+        function download(url, filename) {
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+        }
+
+        function emailACORD() {
+            const email = prompt('Enter recipient email address:');
+            if (email) {
+                alert('ACORD 25 certificate will be emailed to: ' + email);
+            }
+        }
+
+        function toggleDataOverlay() {
+            const overlay = document.getElementById('dataOverlay');
+            if (overlay) {
+                overlay.style.display = overlay.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        // Run when page loads
+        fillACORDForm();
+    </script>
+</body>
+</html>

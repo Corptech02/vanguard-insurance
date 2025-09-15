@@ -11838,6 +11838,7 @@ function getGenerateLeadsContent() {
                         <div class="form-group">
                             <label>Insurance Expiring Within</label>
                             <select class="form-control" id="genExpiry">
+                                <option value="5/30">5/30 (Skip 1-5 days, Show 6-30)</option>
                                 <option value="30">30 Days</option>
                                 <option value="45">45 Days</option>
                                 <option value="60">60 Days</option>
@@ -11984,18 +11985,48 @@ let generatedLeadsData = [];
 
 // Display generated leads in the results table
 function displayGeneratedLeads(leads) {
+    // Check if 5/30 filter is active
+    const expiryValue = document.getElementById('genExpiry')?.value;
+    let filteredLeads = leads;
+
+    if (expiryValue === '5/30') {
+        // Apply 5/30 filter: skip leads expiring in 1-5 days, show 6-30 days
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const skipUntil = new Date(today);
+        skipUntil.setDate(skipUntil.getDate() + 5);
+
+        const showUntil = new Date(today);
+        showUntil.setDate(showUntil.getDate() + 30);
+
+        filteredLeads = leads.filter(lead => {
+            const expiryDate = lead.expiry || lead.policy_renewal_date;
+            if (!expiryDate || expiryDate === 'N/A') return false;
+
+            const expDate = new Date(expiryDate);
+            return expDate > skipUntil && expDate <= showUntil;
+        });
+
+        console.log(`Applied 5/30 filter: ${filteredLeads.length} of ${leads.length} leads shown (skipped first 5 days)`);
+    }
+
     // Don't switch tabs - stay on Generate Leads tab
     // Update the lead count on the Generate Leads tab
     const genLeadsCount = document.querySelector('#generateLeads .lead-count');
     if (genLeadsCount) {
-        genLeadsCount.textContent = `${leads.length} total leads found`;
+        if (expiryValue === '5/30') {
+            genLeadsCount.textContent = `${filteredLeads.length} leads (Days 6-30 of ${leads.length} total)`;
+        } else {
+            genLeadsCount.textContent = `${filteredLeads.length} total leads found`;
+        }
     }
-    
+
     // Store the generated leads for when user switches to lookup tab
-    window.generatedLeads = leads;
-    
+    window.generatedLeads = filteredLeads;
+
     // Use the existing displayLeadResults function
-    const formattedLeads = leads.map(lead => ({
+    const formattedLeads = filteredLeads.map(lead => ({
         usdot: lead.usdot_number,
         company: lead.legal_name || lead.dba_name,
         location: lead.location,
@@ -12008,11 +12039,15 @@ function displayGeneratedLeads(leads) {
     }));
     
     displayLeadResults(formattedLeads);
-    
+
     // Update the results count
     const resultsCount = document.querySelector('.results-count');
     if (resultsCount) {
-        resultsCount.textContent = `${leads.length} qualified leads generated (filtered by insurance criteria)`;
+        if (expiryValue === '5/30') {
+            resultsCount.textContent = `${filteredLeads.length} leads expiring in days 6-30 (skipped ${leads.length - filteredLeads.length} leads expiring in 1-5 days)`;
+        } else {
+            resultsCount.textContent = `${filteredLeads.length} qualified leads generated (filtered by insurance criteria)`;
+        }
     }
 }
 
@@ -12063,9 +12098,19 @@ async function generateLeadsFromForm() {
     
     try {
         // Build criteria object for API
+        let expiryValue = expiry;
+        let skipDays = 0;
+
+        // Handle 5/30 filter option
+        if (expiry === '5/30') {
+            expiryValue = 30;  // Total window is 30 days
+            skipDays = 5;      // But skip first 5 days
+        }
+
         const criteria = {
             state: state,
-            expiryDays: parseInt(expiry),
+            expiryDays: parseInt(expiryValue),
+            skipDays: skipDays,  // Add skip days to criteria
             minFleet: parseInt(minFleet),
             maxFleet: parseInt(maxFleet),
             status: status || undefined,

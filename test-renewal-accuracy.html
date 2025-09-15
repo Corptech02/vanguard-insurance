@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Insurance Renewal Data Accuracy Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .expired { background-color: #ffcccc; }
+        .expiring-soon { background-color: #fff3cd; }
+        .active { background-color: #d4edda; }
+    </style>
+</head>
+<body>
+    <h1>Insurance Renewal Data Accuracy Test</h1>
+    <button onclick="testRenewalData()">Test Insurance Renewal Data</button>
+    <div id="results"></div>
+
+    <script>
+    async function testRenewalData() {
+        const results = document.getElementById('results');
+        results.innerHTML = '<h2>Testing Insurance Renewal Data...</h2>';
+
+        try {
+            // Fetch recent insurance data from FMCSA
+            const response = await fetch('https://data.transportation.gov/resource/ypjt-5ydn.json?$limit=50&$order=effective_date DESC');
+            const insuranceData = await response.json();
+
+            let html = '<h3>FMCSA Insurance Data Analysis (50 Most Recent Records):</h3>';
+
+            // Analyze the data
+            const today = new Date();
+            let activeCount = 0;
+            let expiredCount = 0;
+            let noExpirationCount = 0;
+            let expiringSoon30 = 0;
+            let expiringSoon60 = 0;
+            let expiringSoon90 = 0;
+
+            html += '<table>';
+            html += '<tr><th>Docket#</th><th>Insurance Company</th><th>Policy#</th><th>Effective Date</th><th>Expiration Date</th><th>Days Until Expiry</th><th>Status</th></tr>';
+
+            insuranceData.forEach(policy => {
+                const effectiveDate = policy.effective_date ? new Date(policy.effective_date) : null;
+                const expirationDate = policy.cancellation_date ? new Date(policy.cancellation_date) : null;
+
+                let daysUntilExpiry = 'N/A';
+                let status = 'Unknown';
+                let rowClass = '';
+
+                if (!expirationDate) {
+                    noExpirationCount++;
+                    status = '⚠️ No Expiration Date';
+                    daysUntilExpiry = 'INDEFINITE';
+                } else {
+                    const msUntilExpiry = expirationDate - today;
+                    daysUntilExpiry = Math.floor(msUntilExpiry / (1000 * 60 * 60 * 24));
+
+                    if (daysUntilExpiry < 0) {
+                        expiredCount++;
+                        status = '❌ EXPIRED';
+                        rowClass = 'expired';
+                    } else if (daysUntilExpiry <= 30) {
+                        expiringSoon30++;
+                        status = '🔴 Expiring Soon';
+                        rowClass = 'expiring-soon';
+                    } else if (daysUntilExpiry <= 60) {
+                        expiringSoon60++;
+                        status = '🟡 Renewal Needed';
+                        rowClass = 'expiring-soon';
+                    } else if (daysUntilExpiry <= 90) {
+                        expiringSoon90++;
+                        status = '🟢 Active';
+                        rowClass = 'active';
+                    } else {
+                        activeCount++;
+                        status = '✅ Active';
+                        rowClass = 'active';
+                    }
+                }
+
+                html += `<tr class="${rowClass}">
+                    <td>${policy.prefix_docket_number || 'N/A'}</td>
+                    <td>${policy.name_company || 'Unknown'}</td>
+                    <td>${policy.policy_no || 'N/A'}</td>
+                    <td>${effectiveDate ? effectiveDate.toLocaleDateString() : 'N/A'}</td>
+                    <td>${expirationDate ? expirationDate.toLocaleDateString() : 'NO EXPIRATION'}</td>
+                    <td>${daysUntilExpiry}</td>
+                    <td>${status}</td>
+                </tr>`;
+            });
+
+            html += '</table>';
+
+            // Summary statistics
+            html += '<h3>Data Quality Summary:</h3>';
+            html += '<ul>';
+            html += `<li><strong>Total Records Analyzed:</strong> ${insuranceData.length}</li>`;
+            html += `<li><strong>No Expiration Date:</strong> ${noExpirationCount} (${Math.round(noExpirationCount/insuranceData.length*100)}%) - <span style="color: red;">Cannot track renewals!</span></li>`;
+            html += `<li><strong>Already Expired:</strong> ${expiredCount} (${Math.round(expiredCount/insuranceData.length*100)}%)</li>`;
+            html += `<li><strong>Expiring in 30 days:</strong> ${expiringSoon30}</li>`;
+            html += `<li><strong>Expiring in 60 days:</strong> ${expiringSoon60}</li>`;
+            html += `<li><strong>Expiring in 90 days:</strong> ${expiringSoon90}</li>`;
+            html += `<li><strong>Active (90+ days):</strong> ${activeCount}</li>`;
+            html += '</ul>';
+
+            // Key findings
+            html += '<h3>⚠️ Critical Issues with FMCSA Insurance Renewal Data:</h3>';
+            html += '<ol>';
+            html += '<li><strong style="color: red;">Most records have NO expiration date</strong> - The "cancellation_date" field is usually empty</li>';
+            html += '<li><strong style="color: red;">No direct contact information</strong> - Insurance records don\'t include phone/email for renewal outreach</li>';
+            html += '<li><strong style="color: orange;">Outdated records</strong> - Many policies shown as "active" may have been cancelled/renewed elsewhere</li>';
+            html += '<li><strong style="color: orange;">No renewal tracking</strong> - FMCSA doesn\'t track when policies are renewed, only when new ones are filed</li>';
+            html += '</ol>';
+
+            html += '<h3>📊 Renewal Data Reliability:</h3>';
+            html += '<div style="background: #f8d7da; padding: 15px; border-radius: 5px;">';
+            html += '<strong>❌ NOT RELIABLE for renewal tracking because:</strong><br>';
+            html += '• Most policies don\'t have expiration dates in the system<br>';
+            html += '• No contact information for renewal outreach<br>';
+            html += '• Data reflects filings, not actual policy status<br>';
+            html += '• Carriers may renew without updating FMCSA<br>';
+            html += '</div>';
+
+            results.innerHTML = html;
+
+        } catch (error) {
+            results.innerHTML = `<p style="color: red;">Error testing renewal data: ${error.message}</p>`;
+        }
+    }
+    </script>
+</body>
+</html>

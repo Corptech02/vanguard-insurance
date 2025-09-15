@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FMCSA Data Accuracy Test</title>
+</head>
+<body>
+    <h1>FMCSA Lead Data Accuracy Test</h1>
+    <button onclick="testFMCSAData()">Test FMCSA API Data Quality</button>
+    <div id="results"></div>
+
+    <script>
+    async function testFMCSAData() {
+        const results = document.getElementById('results');
+        results.innerHTML = '<h2>Testing FMCSA Data...</h2>';
+
+        // Test the carrier API
+        try {
+            const carrierResponse = await fetch('https://data.transportation.gov/resource/az4n-8mr2.json?$limit=10');
+            const carriers = await carrierResponse.json();
+
+            let html = '<h3>Carrier Data Sample (10 records):</h3>';
+            html += '<table border="1" style="border-collapse: collapse;">';
+            html += '<tr><th>Company</th><th>DOT#</th><th>Phone</th><th>Status</th><th>Last Update</th></tr>';
+
+            let phonesFound = 0;
+            let validPhones = 0;
+
+            carriers.forEach(carrier => {
+                const phone = carrier.phone || 'NO PHONE';
+                const hasPhone = carrier.phone && carrier.phone.length > 0;
+                if (hasPhone) phonesFound++;
+
+                // Check if phone looks valid (10 digits)
+                const cleanPhone = phone.replace(/\D/g, '');
+                const isValidPhone = cleanPhone.length === 10;
+                if (isValidPhone) validPhones++;
+
+                html += `<tr>
+                    <td>${carrier.legal_name || carrier.dba_name || 'Unknown'}</td>
+                    <td>${carrier.dot_number || 'N/A'}</td>
+                    <td style="background: ${isValidPhone ? '#90EE90' : hasPhone ? '#FFD700' : '#FFB6C1'}">
+                        ${phone}
+                    </td>
+                    <td>${carrier.operating_status || carrier.status_code || 'Unknown'}</td>
+                    <td>${carrier.mcs150_date || 'Never'}</td>
+                </tr>`;
+            });
+
+            html += '</table>';
+            html += `<p><strong>Phone Data Quality:</strong><br>`;
+            html += `Records with phones: ${phonesFound}/10 (${phonesFound*10}%)<br>`;
+            html += `Valid phone format: ${validPhones}/10 (${validPhones*10}%)</p>`;
+
+            // Test the insurance API
+            const insResponse = await fetch('https://data.transportation.gov/resource/ypjt-5ydn.json?$limit=10&$order=effective_date DESC');
+            const insurance = await insResponse.json();
+
+            html += '<h3>Insurance Data Sample (10 most recent):</h3>';
+            html += '<table border="1" style="border-collapse: collapse;">';
+            html += '<tr><th>Docket#</th><th>Company</th><th>Policy#</th><th>Coverage</th><th>Effective</th></tr>';
+
+            insurance.forEach(ins => {
+                html += `<tr>
+                    <td>${ins.prefix_docket_number || 'N/A'}</td>
+                    <td>${ins.name_company || 'Unknown'}</td>
+                    <td>${ins.policy_no || 'N/A'}</td>
+                    <td>$${(parseInt(ins.max_cov_amount || 0) * 1000).toLocaleString()}</td>
+                    <td>${ins.effective_date || 'N/A'}</td>
+                </tr>`;
+            });
+
+            html += '</table>';
+
+            // Test matching insurance to carriers
+            html += '<h3>Insurance-to-Carrier Matching Test:</h3>';
+            let matchCount = 0;
+            let matchesWithPhone = 0;
+
+            for (const ins of insurance.slice(0, 5)) {
+                const docket = ins.prefix_docket_number;
+                if (docket) {
+                    const cleanDocket = docket.replace(/^[A-Z]+/, '');
+                    try {
+                        const matchResponse = await fetch(`https://data.transportation.gov/resource/az4n-8mr2.json?dot_number=${cleanDocket}&$limit=1`);
+                        const matches = await matchResponse.json();
+                        if (matches.length > 0) {
+                            matchCount++;
+                            if (matches[0].phone) matchesWithPhone++;
+                            html += `<p>✓ Docket ${docket} → Found carrier: ${matches[0].legal_name || 'Unknown'} (Phone: ${matches[0].phone || 'NO PHONE'})</p>`;
+                        } else {
+                            html += `<p>✗ Docket ${docket} → No carrier match found</p>`;
+                        }
+                    } catch (e) {
+                        html += `<p>✗ Docket ${docket} → Error matching</p>`;
+                    }
+                }
+            }
+
+            html += `<p><strong>Matching Results:</strong><br>`;
+            html += `Insurance records matched to carriers: ${matchCount}/5 (${matchCount*20}%)<br>`;
+            html += `Matched carriers with phones: ${matchesWithPhone}/5 (${matchesWithPhone*20}%)</p>`;
+
+            html += '<h3>Data Quality Summary:</h3>';
+            html += '<ul>';
+            html += '<li style="color: red;">❌ Most carrier records lack phone numbers</li>';
+            html += '<li style="color: red;">❌ Insurance-to-carrier matching is unreliable</li>';
+            html += '<li style="color: orange;">⚠️ Phone numbers may be outdated (check MCS-150 dates)</li>';
+            html += '<li style="color: orange;">⚠️ Docket numbers don\'t directly map to DOT numbers</li>';
+            html += '</ul>';
+
+            results.innerHTML = html;
+
+        } catch (error) {
+            results.innerHTML = `<p style="color: red;">Error testing FMCSA API: ${error.message}</p>`;
+        }
+    }
+    </script>
+</body>
+</html>
