@@ -119,7 +119,16 @@ window.viewPolicyProfileCOI = function(policyId) {
     // Store the current HTML for back navigation
     window.originalPolicyListHTML = policyViewer.innerHTML;
 
-    // Display policy details in the same design as demo
+    // Get insured name
+    const insuredName = policy.clientName ||
+                       policy.name ||
+                       policy.insured?.['Name/Business Name'] ||
+                       policy.insured?.['Primary Named Insured'] ||
+                       policy.insured?.name ||
+                       policy.insuredName ||
+                       'Primary Insured';
+
+    // Display comprehensive policy details
     policyViewer.innerHTML = `
         <div class="policy-profile">
             <div class="profile-header">
@@ -135,69 +144,208 @@ window.viewPolicyProfileCOI = function(policyId) {
             </div>
 
             <div class="profile-content">
+                <!-- Policy Information Section -->
                 <div class="profile-section">
-                    <h3>Policy Information</h3>
+                    <h3><i class="fas fa-file-contract"></i> Policy Information</h3>
                     <div class="info-grid">
                         <div class="info-item">
                             <label>Policy Number:</label>
-                            <span>${policy.policyNumber || policy.id}</span>
+                            <span><strong>${policy.policyNumber || policy.id}</strong></span>
                         </div>
                         <div class="info-item">
-                            <label>Type:</label>
+                            <label>Policy Type:</label>
                             <span>${policy.policyType || policy.type || 'Commercial Auto'}</span>
                         </div>
                         <div class="info-item">
-                            <label>Carrier:</label>
-                            <span>${policy.carrier || policy.insuranceCarrier || 'GEICO'}</span>
+                            <label>Insurance Carrier:</label>
+                            <span>${policy.carrier || policy.insuranceCarrier || policy.financial?.carrier || 'GEICO'}</span>
                         </div>
                         <div class="info-item">
-                            <label>Premium:</label>
-                            <span>$${policy.premium || policy.annualPremium || '0'}/year</span>
+                            <label>Policy Status:</label>
+                            <span class="status-badge ${policy.status === 'Active' ? 'status-active' : 'status-inactive'}">
+                                ${policy.status || 'Active'}
+                            </span>
                         </div>
                         <div class="info-item">
                             <label>Effective Date:</label>
                             <span>${new Date(policy.effectiveDate || policy.startDate || new Date()).toLocaleDateString()}</span>
                         </div>
                         <div class="info-item">
-                            <label>Expiry Date:</label>
+                            <label>Expiration Date:</label>
                             <span>${new Date(policy.expiryDate || policy.expirationDate).toLocaleDateString()}</span>
                         </div>
                     </div>
                 </div>
 
+                <!-- Financial Information Section -->
                 <div class="profile-section">
-                    <h3>Named Insured</h3>
-                    <ul class="insured-list">
-                        <li>${policy.clientName ||
-                              policy.name ||
-                              policy.insured?.['Name/Business Name'] ||
-                              policy.insured?.['Primary Named Insured'] ||
-                              policy.insured?.name ||
-                              policy.insuredName ||
-                              'Primary Insured'}</li>
-                        ${policy.namedInsured ? policy.namedInsured.map(name => `<li>${name}</li>`).join('') : ''}
-                    </ul>
-                </div>
-
-                <div class="profile-section">
-                    <h3>Coverage Details</h3>
-                    <div class="coverage-grid">
-                        ${policy.coverageDetails ?
-                            Object.entries(policy.coverageDetails).map(([key, value]) => `
-                                <div class="coverage-item">
-                                    <label>${key}:</label>
-                                    <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
-                                </div>
-                            `).join('') :
-                            `<div class="coverage-item">
-                                <label>Liability Limit:</label>
-                                <span>${policy.coverageLimit || policy.coverage || '$1,000,000'}</span>
-                            </div>`
-                        }
+                    <h3><i class="fas fa-dollar-sign"></i> Financial Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Annual Premium:</label>
+                            <span><strong>$${(policy.annualPremium || policy.premium || policy.financial?.annualPremium || 0).toLocaleString()}</strong></span>
+                        </div>
+                        <div class="info-item">
+                            <label>Monthly Payment:</label>
+                            <span>$${((policy.annualPremium || policy.premium || 0) / 12).toFixed(2).toLocaleString()}</span>
+                        </div>
+                        ${policy.financial?.deductible || policy.deductible ? `
+                        <div class="info-item">
+                            <label>Deductible:</label>
+                            <span>$${(policy.financial?.deductible || policy.deductible || 0).toLocaleString()}</span>
+                        </div>` : ''}
+                        ${policy.financial?.downPayment || policy.downPayment ? `
+                        <div class="info-item">
+                            <label>Down Payment:</label>
+                            <span>$${(policy.financial?.downPayment || policy.downPayment || 0).toLocaleString()}</span>
+                        </div>` : ''}
                     </div>
                 </div>
 
-                <div class="profile-actions">
+                <!-- Named Insured Section -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-user"></i> Named Insured</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Primary Insured:</label>
+                            <span><strong>${insuredName}</strong></span>
+                        </div>
+                        ${policy.insured?.['Additional Named Insured'] || policy.additionalInsured ? `
+                        <div class="info-item">
+                            <label>Additional Insured:</label>
+                            <span>${policy.insured?.['Additional Named Insured'] || policy.additionalInsured || 'None'}</span>
+                        </div>` : ''}
+                        ${policy.insured?.['DBA Name'] ? `
+                        <div class="info-item">
+                            <label>DBA Name:</label>
+                            <span>${policy.insured['DBA Name']}</span>
+                        </div>` : ''}
+                        ${policy.contact?.phone || policy.insured?.phone ? `
+                        <div class="info-item">
+                            <label>Phone:</label>
+                            <span>${policy.contact?.phone || policy.insured?.phone || 'N/A'}</span>
+                        </div>` : ''}
+                        ${policy.contact?.email || policy.insured?.email ? `
+                        <div class="info-item">
+                            <label>Email:</label>
+                            <span>${policy.contact?.email || policy.insured?.email || 'N/A'}</span>
+                        </div>` : ''}
+                    </div>
+                </div>
+
+                <!-- Coverage Details Section -->
+                <div class="profile-section">
+                    <h3><i class="fas fa-shield-alt"></i> Coverage Details</h3>
+                    <div class="coverage-grid">
+                        ${policy.coverage || policy.coverageDetails ?
+                            (policy.coverage ?
+                                // If coverage is an object
+                                Object.entries(policy.coverage).map(([key, value]) => `
+                                    <div class="coverage-item">
+                                        <label>${key.replace(/([A-Z])/g, ' $1').trim()}:</label>
+                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
+                                    </div>
+                                `).join('') :
+                                // If coverageDetails exists
+                                Object.entries(policy.coverageDetails || {}).map(([key, value]) => `
+                                    <div class="coverage-item">
+                                        <label>${key}:</label>
+                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
+                                    </div>
+                                `).join('')
+                            ) :
+                            // Default coverage display
+                            `<div class="coverage-item">
+                                <label>Liability Limit:</label>
+                                <span>${policy.coverageLimit || '$1,000,000'}</span>
+                            </div>
+                            <div class="coverage-item">
+                                <label>Coverage Type:</label>
+                                <span>${policy.policyType || 'Commercial Auto'}</span>
+                            </div>`
+                        }
+                        ${policy.operations?.radiusOfOperation || policy.radiusOfOperation ? `
+                        <div class="coverage-item">
+                            <label>Radius of Operation:</label>
+                            <span>${policy.operations?.radiusOfOperation || policy.radiusOfOperation}</span>
+                        </div>` : ''}
+                    </div>
+                </div>
+
+                <!-- Vehicles Section (if applicable) -->
+                ${policy.vehicles && policy.vehicles.length > 0 ? `
+                <div class="profile-section">
+                    <h3><i class="fas fa-truck"></i> Vehicles (${policy.vehicles.length})</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="vehicles-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f3f4f6;">
+                                    <th style="padding: 8px; text-align: left;">Year</th>
+                                    <th style="padding: 8px; text-align: left;">Make</th>
+                                    <th style="padding: 8px; text-align: left;">Model</th>
+                                    <th style="padding: 8px; text-align: left;">VIN</th>
+                                    <th style="padding: 8px; text-align: left;">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${policy.vehicles.map(vehicle => `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 8px;">${vehicle.year || vehicle.Year || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.make || vehicle.Make || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.model || vehicle.Model || 'N/A'}</td>
+                                        <td style="padding: 8px; font-size: 12px;">${vehicle.vin || vehicle.VIN || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.type || vehicle.Type || 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>` : ''}
+
+                <!-- Drivers Section (if applicable) -->
+                ${policy.drivers && policy.drivers.length > 0 ? `
+                <div class="profile-section">
+                    <h3><i class="fas fa-id-card"></i> Drivers (${policy.drivers.length})</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="drivers-table" style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #f3f4f6;">
+                                    <th style="padding: 8px; text-align: left;">Name</th>
+                                    <th style="padding: 8px; text-align: left;">License #</th>
+                                    <th style="padding: 8px; text-align: left;">DOB</th>
+                                    <th style="padding: 8px; text-align: left;">Experience</th>
+                                    <th style="padding: 8px; text-align: left;">CDL</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${policy.drivers.map(driver => `
+                                    <tr style="border-bottom: 1px solid #e5e7eb;">
+                                        <td style="padding: 8px;">${driver.name || driver['Full Name'] || driver.Name || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.licenseNumber || driver['License Number'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.dob || driver.DOB || driver['Date of Birth'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.experience || driver.Experience || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.cdl || driver.CDL || driver.hasCDL ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>` : ''}
+
+                <!-- Additional Information Section -->
+                ${policy.notes || policy.additionalInfo ? `
+                <div class="profile-section">
+                    <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
+                    <div style="background: #f9fafb; padding: 15px; border-radius: 6px;">
+                        <p style="margin: 0; white-space: pre-wrap;">${policy.notes || policy.additionalInfo}</p>
+                    </div>
+                </div>` : ''}
+
+                <!-- Action Buttons -->
+                <div class="profile-actions" style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb;">
+                    <button class="btn-primary" onclick="prepareCOI('${policy.policyNumber || policy.id}')">
+                        <i class="fas fa-file-alt"></i> Generate COI
+                    </button>
                     <button class="btn-secondary" onclick="editPolicy('${policy.policyNumber || policy.id}')">
                         <i class="fas fa-edit"></i> Edit Policy
                     </button>
