@@ -97,24 +97,43 @@ function updateEmailStyles() {
             item.classList.remove('read');
         }
 
-        // Add hover effects
+        // Add hover effects - keep unread styling on hover
         item.onmouseenter = function() {
             if (this.classList.contains('read')) {
+                // For read emails, slightly darker on hover
                 this.style.background = '#f3f4f6 !important';
-                this.style.opacity = '0.8 !important';
+                this.style.opacity = '0.7 !important';
             } else {
+                // For unread emails, keep them prominent with light blue tint
                 this.style.background = '#eff6ff !important';
                 this.style.transform = 'translateX(2px)';
+                // Keep the blue border and bold text
+                this.style.borderLeft = '4px solid #3b82f6 !important';
+                // Keep the blue dot visible
+                const dot = this.querySelector('.fa-circle');
+                if (dot) {
+                    dot.style.display = 'inline';
+                    dot.style.color = '#3b82f6';
+                }
             }
         };
 
         item.onmouseleave = function() {
             if (this.classList.contains('read')) {
+                // Return to read styling
                 this.style.background = '#f9fafb !important';
                 this.style.opacity = '0.6 !important';
             } else {
+                // Return to unread styling - keep everything prominent
                 this.style.background = '#ffffff !important';
                 this.style.transform = 'translateX(0)';
+                this.style.borderLeft = '4px solid #3b82f6 !important';
+                // Keep the blue dot visible
+                const dot = this.querySelector('.fa-circle');
+                if (dot) {
+                    dot.style.display = 'inline';
+                    dot.style.color = '#3b82f6';
+                }
             }
         };
     });
@@ -163,13 +182,47 @@ function updateUnreadCount() {
     console.log(`📊 Emails: ${unreadCount} unread, ${totalEmails - unreadCount} read`);
 }
 
-// Mark email as read when expanded
+// Mark email as read ONLY when expanded (clicked to open)
 const originalExpandEmail = window.expandEmail;
 window.expandEmail = async function(emailId) {
     console.log('📖 Opening email:', emailId);
 
-    // Mark as read immediately
+    // Mark as read immediately when opened
     markEmailAsRead(emailId);
+
+    // Update the specific email item immediately
+    const emailItem = document.querySelector(`[data-email-id="${emailId}"]`);
+    if (emailItem) {
+        // Remove unread styling immediately
+        emailItem.classList.remove('unread');
+        emailItem.classList.add('read');
+
+        // Apply read styling
+        emailItem.style.cssText = `
+            background: #f9fafb !important;
+            opacity: 0.6 !important;
+            border-left: 4px solid #d1d5db !important;
+            padding: 15px !important;
+            border-bottom: 1px solid #e5e7eb !important;
+        `;
+
+        // Remove the blue dot
+        const dot = emailItem.querySelector('.fa-circle');
+        if (dot) {
+            dot.style.display = 'none';
+        }
+
+        // Update text styling
+        const fromElement = emailItem.querySelector('.email-from strong');
+        if (fromElement) {
+            fromElement.style.cssText = 'color: #9ca3af !important; font-weight: normal !important;';
+        }
+
+        const subjectElement = emailItem.querySelector('.email-subject');
+        if (subjectElement) {
+            subjectElement.style.cssText = 'color: #9ca3af !important;';
+        }
+    }
 
     // Call original function
     if (originalExpandEmail) {
