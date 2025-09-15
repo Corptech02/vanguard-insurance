@@ -82,7 +82,7 @@ const apiService = {
     generateLeads: async function(criteria) {
         try {
             console.log('Generating leads with criteria:', criteria);
-            
+
             // Use the real FMCSA API for expiring insurance leads
             const params = new URLSearchParams({
                 days: criteria.expiryDays || criteria.insurance_expiring_days || 30,
@@ -90,6 +90,12 @@ const apiService = {
                 state: criteria.state || '',
                 min_premium: criteria.minPremium || 0
             });
+
+            // Add skip days for 5/30 filter
+            if (criteria.skipDays && criteria.skipDays > 0) {
+                params.append('skip_days', criteria.skipDays);
+                console.log(`Applying 5/30 filter: skipping first ${criteria.skipDays} days`);
+            }
             
             // Add insurance companies filter if provided
             if (criteria.insuranceCompanies && criteria.insuranceCompanies.length > 0) {
@@ -151,11 +157,31 @@ const apiService = {
             const allLeads = [...existingLeads, ...transformedLeads];
             localStorage.setItem('leads', JSON.stringify(allLeads));
             
-            console.log(`Generated ${transformedLeads.length} real insurance leads from FMCSA database`);
+            // Apply 5/30 filter if skipDays is specified
+            let finalLeads = transformedLeads;
+            if (criteria.skipDays && criteria.skipDays > 0) {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const skipUntil = new Date(today);
+                skipUntil.setDate(skipUntil.getDate() + criteria.skipDays);
+
+                const showUntil = new Date(today);
+                showUntil.setDate(showUntil.getDate() + criteria.expiryDays);
+
+                finalLeads = transformedLeads.filter(lead => {
+                    const renewalDate = new Date(lead.renewalDate);
+                    return renewalDate > skipUntil && renewalDate <= showUntil;
+                });
+
+                console.log(`Applied 5/30 filter: ${finalLeads.length} of ${transformedLeads.length} leads (skipped first ${criteria.skipDays} days)`);
+            }
+
+            console.log(`Generated ${finalLeads.length} real insurance leads from FMCSA database`);
             return {
                 success: true,
-                total: transformedLeads.length,
-                leads: transformedLeads
+                total: finalLeads.length,
+                leads: finalLeads
             };
         } catch (error) {
             console.error('Error generating leads:', error);

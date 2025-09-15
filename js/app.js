@@ -11985,48 +11985,26 @@ let generatedLeadsData = [];
 
 // Display generated leads in the results table
 function displayGeneratedLeads(leads) {
-    // Check if 5/30 filter is active
+    // Check if 5/30 filter is active for display purposes
     const expiryValue = document.getElementById('genExpiry')?.value;
-    let filteredLeads = leads;
-
-    if (expiryValue === '5/30') {
-        // Apply 5/30 filter: skip leads expiring in 1-5 days, show 6-30 days
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        const skipUntil = new Date(today);
-        skipUntil.setDate(skipUntil.getDate() + 5);
-
-        const showUntil = new Date(today);
-        showUntil.setDate(showUntil.getDate() + 30);
-
-        filteredLeads = leads.filter(lead => {
-            const expiryDate = lead.expiry || lead.policy_renewal_date;
-            if (!expiryDate || expiryDate === 'N/A') return false;
-
-            const expDate = new Date(expiryDate);
-            return expDate > skipUntil && expDate <= showUntil;
-        });
-
-        console.log(`Applied 5/30 filter: ${filteredLeads.length} of ${leads.length} leads shown (skipped first 5 days)`);
-    }
 
     // Don't switch tabs - stay on Generate Leads tab
     // Update the lead count on the Generate Leads tab
     const genLeadsCount = document.querySelector('#generateLeads .lead-count');
     if (genLeadsCount) {
         if (expiryValue === '5/30') {
-            genLeadsCount.textContent = `${filteredLeads.length} leads (Days 6-30 of ${leads.length} total)`;
+            // The leads are already filtered at API level, just show the count
+            genLeadsCount.textContent = `${leads.length} leads (Days 6-30, skipped first 5 days)`;
         } else {
-            genLeadsCount.textContent = `${filteredLeads.length} total leads found`;
+            genLeadsCount.textContent = `${leads.length} total leads found`;
         }
     }
 
     // Store the generated leads for when user switches to lookup tab
-    window.generatedLeads = filteredLeads;
+    window.generatedLeads = leads;
 
     // Use the existing displayLeadResults function
-    const formattedLeads = filteredLeads.map(lead => ({
+    const formattedLeads = leads.map(lead => ({
         usdot: lead.usdot_number,
         company: lead.legal_name || lead.dba_name,
         location: lead.location,
@@ -12044,9 +12022,9 @@ function displayGeneratedLeads(leads) {
     const resultsCount = document.querySelector('.results-count');
     if (resultsCount) {
         if (expiryValue === '5/30') {
-            resultsCount.textContent = `${filteredLeads.length} leads expiring in days 6-30 (skipped ${leads.length - filteredLeads.length} leads expiring in 1-5 days)`;
+            resultsCount.textContent = `${leads.length} leads expiring in days 6-30 (first 5 days excluded)`;
         } else {
-            resultsCount.textContent = `${filteredLeads.length} qualified leads generated (filtered by insurance criteria)`;
+            resultsCount.textContent = `${leads.length} qualified leads generated (filtered by insurance criteria)`;
         }
     }
 }
@@ -12208,19 +12186,35 @@ function generateMockLeadData(count, state, expiry) {
         'IL': ['Chicago', 'Springfield', 'Rockford', 'Peoria'],
         'OH': ['Columbus', 'Cleveland', 'Cincinnati', 'Toledo']
     };
-    
+
     const selectedCities = cities[state] || ['City A', 'City B', 'City C'];
-    
-    for (let i = 0; i < count; i++) {
+
+    // For 5/30 filter, generate more leads to account for filtering
+    let actualCount = count;
+    if (expiry === '5/30') {
+        actualCount = Math.ceil(count * 1.5); // Generate 50% more to account for filtered out leads
+    }
+
+    for (let i = 0; i < actualCount; i++) {
         const companyName = companies[Math.floor(Math.random() * companies.length)] + ' ' + (i + 1);
         const usdot = Math.floor(Math.random() * 9000000) + 1000000;
         const mc = Math.floor(Math.random() * 900000) + 100000;
         const fleet = Math.floor(Math.random() * 100) + 1;
         const city = selectedCities[Math.floor(Math.random() * selectedCities.length)];
-        
+
         const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + Math.floor(Math.random() * parseInt(expiry)));
-        
+
+        // Handle 5/30 filter specially - distribute dates across 1-30 days
+        if (expiry === '5/30') {
+            // Generate dates across full 30 day range (some will be filtered out)
+            const daysAhead = Math.floor(Math.random() * 30) + 1;
+            expiryDate.setDate(expiryDate.getDate() + daysAhead);
+        } else {
+            // Normal expiry date generation
+            const maxDays = parseInt(expiry) || 30;
+            expiryDate.setDate(expiryDate.getDate() + Math.floor(Math.random() * maxDays) + 1);
+        }
+
         leads.push({
             usdot_number: usdot.toString(),
             mc_number: 'MC-' + mc,
