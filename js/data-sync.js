@@ -5,6 +5,8 @@ const DataSync = {
     // Backend API URL - Update this when deploying
     API_URL: window.location.hostname === 'localhost'
         ? 'http://localhost:3001/api'
+        : window.location.hostname.includes('github.io')
+        ? 'https://vanguard-backend.loca.lt/api'
         : 'http://192.168.40.232:3001/api',
 
     // Initialize data sync

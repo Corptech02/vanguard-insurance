@@ -63,8 +63,8 @@
         // Listen for storage events
         setupStorageListeners();
         
-        // Add sync status indicator to UI
-        addSyncStatusIndicator();
+        // Add sync status indicator to UI - DISABLED to remove popup
+        // addSyncStatusIndicator();
         
         console.log('✅ Cloud sync initialized');
     }

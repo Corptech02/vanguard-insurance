@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test 5/30 Filter Fix</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .error { background-color: #f8d7da; color: #721c24; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <h1>Test 5/30 Filter Fix for Vicidial Upload</h1>
+
+    <div class="test-section">
+        <h2>Test Steps:</h2>
+        <ol>
+            <li>Generate leads with 5/30 filter (should skip days 1-5)</li>
+            <li>Check the API request to Vicidial includes skip_days parameter</li>
+            <li>Verify the backend filters correctly</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <button onclick="testDirectAPI()">Test Direct API Call</button>
+        <div id="apiResult"></div>
+    </div>
+
+    <script>
+    async function testDirectAPI() {
+        const resultDiv = document.getElementById('apiResult');
+        resultDiv.innerHTML = '<p>Testing API with 5/30 filter...</p>';
+
+        try {
+            // Test the API directly with skip_days parameter
+            const params = new URLSearchParams({
+                list_id: 'TEST_LIST',
+                state: 'OH',
+                insurance_company: 'Progressive',
+                days_until_expiry: '30',
+                skip_days: '5',  // This is the key parameter for 5/30 filter
+                limit: '10'
+            });
+
+            const API_URL = window.location.hostname === 'localhost'
+                ? 'http://localhost:8897'
+                : 'https://0ef6f73c45be.ngrok-free.app';
+
+            resultDiv.innerHTML += `<p class="info">Calling: ${API_URL}/api/vicidial/overwrite?${params}</p>`;
+
+            const response = await fetch(`${API_URL}/api/vicidial/overwrite?${params}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                resultDiv.innerHTML += `
+                    <div class="success">
+                        <h3>✓ API Call Successful!</h3>
+                        <p><strong>Response:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p>The skip_days parameter is being accepted by the API.</p>
+                        <p>Check the backend logs to verify filtering is working correctly.</p>
+                    </div>
+                `;
+            } else {
+                const errorText = await response.text();
+                resultDiv.innerHTML += `
+                    <div class="error">
+                        <h3>✗ API Error</h3>
+                        <p>Status: ${response.status}</p>
+                        <p>Error: ${errorText}</p>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            resultDiv.innerHTML += `
+                <div class="error">
+                    <h3>✗ Connection Error</h3>
+                    <p>${error.message}</p>
+                    <p>Make sure the backend API is running on port 8897</p>
+                </div>
+            `;
+        }
+    }
+
+    // Also test the frontend integration
+    function checkFrontendIntegration() {
+        // Check if the frontend is passing skip_days
+        const testCriteria = {
+            state: 'OH',
+            insuranceCompanies: ['Progressive'],
+            daysUntilExpiry: 30,
+            skipDays: 5,
+            displayExpiry: '5/30'
+        };
+
+        console.log('Frontend should send these parameters:', testCriteria);
+        console.log('The key fix is that skipDays=5 must be sent to the backend');
+        console.log('This will cause the backend to query for days 6-30, not 1-30');
+    }
+
+    checkFrontendIntegration();
+    </script>
+</body>
+</html>

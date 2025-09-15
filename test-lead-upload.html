@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Lead Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .valid { background-color: #d4edda; }
+        .invalid { background-color: #f8d7da; }
+        .summary { margin: 20px 0; padding: 15px; background: #f8f9fa; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Lead Upload Diagnostic Test</h1>
+    <button onclick="testLeadUpload()">Analyze Generated Leads</button>
+    <div id="results"></div>
+
+    <script>
+    function testLeadUpload() {
+        const results = document.getElementById('results');
+
+        // Get the generated leads from localStorage or window
+        const generatedLeads = window.generatedLeads || JSON.parse(localStorage.getItem('generated_leads') || '[]');
+
+        if (generatedLeads.length === 0) {
+            results.innerHTML = '<p style="color: red;">No generated leads found. Please generate leads first.</p>';
+            return;
+        }
+
+        // Analyze lead quality
+        let validForUpload = 0;
+        let missingPhone = 0;
+        let invalidPhone = 0;
+        let missingDOT = 0;
+        let duplicateDOT = new Set();
+        let seenDOTs = new Set();
+        let missingInsuranceData = 0;
+        let missingRequiredFields = 0;
+
+        let html = '<div class="summary">';
+        html += `<h2>Lead Analysis Results</h2>`;
+        html += `<p><strong>Total Generated Leads:</strong> ${generatedLeads.length}</p>`;
+        html += '</div>';
+
+        html += '<h3>Lead Details</h3>';
+        html += '<table>';
+        html += '<tr><th>DOT#</th><th>Company</th><th>Phone</th><th>Insurance</th><th>Expiry</th><th>Issues</th></tr>';
+
+        generatedLeads.forEach((lead, index) => {
+            let issues = [];
+            let isValid = true;
+
+            // Check DOT number
+            const dotNumber = lead.usdot || lead.usdot_number || lead.dot_number || lead.usdotNumber;
+            if (!dotNumber) {
+                missingDOT++;
+                issues.push('No DOT#');
+                isValid = false;
+            } else if (seenDOTs.has(dotNumber)) {
+                duplicateDOT.add(dotNumber);
+                issues.push('Duplicate DOT');
+                isValid = false;
+            } else {
+                seenDOTs.add(dotNumber);
+            }
+
+            // Check phone
+            const phone = lead.phone;
+            if (!phone || phone === 'N/A' || phone === '') {
+                missingPhone++;
+                issues.push('No phone');
+                isValid = false;
+            } else {
+                // Check if phone looks valid (has at least 10 digits)
+                const cleanPhone = phone.replace(/\D/g, '');
+                if (cleanPhone.length < 10) {
+                    invalidPhone++;
+                    issues.push('Invalid phone');
+                    isValid = false;
+                }
+            }
+
+            // Check insurance data
+            const insuranceCompany = lead.insuranceCompany || lead.insurance_company || lead.insurance_carrier;
+            const expiryDate = lead.renewalDate || lead.insurance_expiry || lead.expiry;
+
+            if (!insuranceCompany || insuranceCompany === 'Unknown') {
+                missingInsuranceData++;
+                issues.push('No insurance company');
+                isValid = false;
+            }
+
+            if (!expiryDate || expiryDate === 'N/A') {
+                missingInsuranceData++;
+                issues.push('No expiry date');
+                isValid = false;
+            }
+
+            // Check other required fields
+            const company = lead.name || lead.company || lead.legal_name;
+            if (!company || company === 'N/A' || company === 'Unknown Carrier') {
+                missingRequiredFields++;
+                issues.push('No company name');
+                isValid = false;
+            }
+
+            if (isValid) {
+                validForUpload++;
+            }
+
+            // Only show first 20 for brevity
+            if (index < 20) {
+                html += `<tr class="${isValid ? 'valid' : 'invalid'}">`;
+                html += `<td>${dotNumber || 'N/A'}</td>`;
+                html += `<td>${company || 'N/A'}</td>`;
+                html += `<td>${phone || 'N/A'}</td>`;
+                html += `<td>${insuranceCompany || 'N/A'}</td>`;
+                html += `<td>${expiryDate || 'N/A'}</td>`;
+                html += `<td>${issues.length > 0 ? issues.join(', ') : '✓ Valid'}</td>`;
+                html += '</tr>';
+            }
+        });
+
+        if (generatedLeads.length > 20) {
+            html += `<tr><td colspan="6" style="text-align: center;">... and ${generatedLeads.length - 20} more leads</td></tr>`;
+        }
+
+        html += '</table>';
+
+        // Summary statistics
+        html += '<div class="summary">';
+        html += '<h3>Upload Eligibility Summary</h3>';
+        html += `<p style="color: green;"><strong>✓ Valid for Upload:</strong> ${validForUpload} leads (${Math.round(validForUpload/generatedLeads.length*100)}%)</p>`;
+        html += `<p style="color: red;"><strong>✗ Will be filtered out:</strong> ${generatedLeads.length - validForUpload} leads (${Math.round((generatedLeads.length - validForUpload)/generatedLeads.length*100)}%)</p>`;
+        html += '<h4>Reasons for Filtering:</h4>';
+        html += '<ul>';
+        html += `<li>Missing phone numbers: ${missingPhone}</li>`;
+        html += `<li>Invalid phone numbers: ${invalidPhone}</li>`;
+        html += `<li>Missing DOT numbers: ${missingDOT}</li>`;
+        html += `<li>Duplicate DOT numbers: ${duplicateDOT.size}</li>`;
+        html += `<li>Missing insurance data: ${missingInsuranceData}</li>`;
+        html += `<li>Missing required fields: ${missingRequiredFields}</li>`;
+        html += '</ul>';
+
+        html += '<h4>Likely Explanation:</h4>';
+        if (validForUpload < generatedLeads.length * 0.5) {
+            html += '<p style="color: orange;">⚠️ <strong>Many leads are being filtered due to missing or invalid contact information.</strong></p>';
+            html += '<p>The FMCSA database often has incomplete phone numbers. Vicidial requires valid phone numbers to dial.</p>';
+        }
+
+        html += '</div>';
+
+        results.innerHTML = html;
+
+        // Store analysis for debugging
+        console.log('Lead Analysis:', {
+            total: generatedLeads.length,
+            valid: validForUpload,
+            filtered: generatedLeads.length - validForUpload,
+            reasons: {
+                missingPhone,
+                invalidPhone,
+                missingDOT,
+                duplicates: duplicateDOT.size,
+                missingInsurance: missingInsuranceData,
+                missingRequired: missingRequiredFields
+            }
+        });
+    }
+
+    // Auto-run if leads are available
+    window.addEventListener('load', () => {
+        if (window.generatedLeads && window.generatedLeads.length > 0) {
+            setTimeout(testLeadUpload, 500);
+        }
+    });
+    </script>
+</body>
+</html>

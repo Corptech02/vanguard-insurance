@@ -5,7 +5,7 @@ const vicidialUploader = {
     // Test connection to Vicidial
     testConnection: async function() {
         try {
-            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'https://0ef6f73c45be.ngrok-free.app';
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : window.location.hostname.includes('github.io') ? 'https://vanguard-api-fmcsa.loca.lt' : 'http://192.168.40.232:8897';
             const response = await fetch(`${API_URL}/api/vicidial/test`, {
                 method: 'GET',
                 headers: {
@@ -50,7 +50,7 @@ const vicidialUploader = {
                 campaign_id: criteria.campaignId || 'TEST'
             });
             
-            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'https://0ef6f73c45be.ngrok-free.app';
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : window.location.hostname.includes('github.io') ? 'https://vanguard-api-fmcsa.loca.lt' : 'http://192.168.40.232:8897';
             const response = await fetch(`${API_URL}/api/vicidial/upload?${params}`, {
                 method: 'POST',
                 headers: {
@@ -74,7 +74,7 @@ const vicidialUploader = {
     // Get existing Vicidial lists
     getVicidialLists: async function() {
         try {
-            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'https://0ef6f73c45be.ngrok-free.app';
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : window.location.hostname.includes('github.io') ? 'https://vanguard-api-fmcsa.loca.lt' : 'http://192.168.40.232:8897';
             const response = await fetch(`${API_URL}/api/vicidial/lists`, {
                 method: 'GET',
                 headers: {
@@ -120,7 +120,7 @@ const vicidialUploader = {
             
             console.log('Request URL:', `/api/vicidial/overwrite?${params.toString()}`);
             
-            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : 'https://0ef6f73c45be.ngrok-free.app';
+            const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:8897' : window.location.hostname.includes('github.io') ? 'https://vanguard-api-fmcsa.loca.lt' : 'http://192.168.40.232:8897';
             const response = await fetch(`${API_URL}/api/vicidial/overwrite?${params}`, {
                 method: 'POST',
                 headers: {

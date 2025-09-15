@@ -1,7 +1,9 @@
 // API Service for connecting to FMCSA Database
-const API_BASE_URL = window.location.hostname === 'localhost' 
+const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8897'
-    : 'https://0ef6f73c45be.ngrok-free.app';
+    : window.location.hostname.includes('github.io')
+    ? 'https://vanguard-api-fmcsa.loca.lt'
+    : 'http://192.168.40.232:8897';
 
 const apiService = {
     // Search carriers with filters
