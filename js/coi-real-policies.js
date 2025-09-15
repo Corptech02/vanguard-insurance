@@ -52,10 +52,16 @@ window.loadRealPolicyList = function() {
                         if (policy.coverageLimit) {
                             coverageDisplay = typeof policy.coverageLimit === 'number' ?
                                 `$${(policy.coverageLimit / 1000000).toFixed(0)}M` : policy.coverageLimit;
-                        } else if (policy.coverage) {
+                        } else if (policy.coverage?.['Liability Limit']) {
+                            coverageDisplay = policy.coverage['Liability Limit'];
+                        } else if (policy.coverage?.['Combined Single Limit']) {
+                            coverageDisplay = policy.coverage['Combined Single Limit'];
+                        } else if (typeof policy.coverage === 'string') {
                             coverageDisplay = policy.coverage;
-                        } else if (policy.coverageDetails && policy.coverageDetails.liabilityLimit) {
+                        } else if (policy.coverageDetails?.liabilityLimit) {
                             coverageDisplay = `$${Math.round(policy.coverageDetails.liabilityLimit / 1000)}K`;
+                        } else if (policy.coverageDetails?.['Liability Limit']) {
+                            coverageDisplay = policy.coverageDetails['Liability Limit'];
                         }
 
                         // Get policy type
@@ -150,30 +156,40 @@ window.viewPolicyProfileCOI = function(policyId) {
                     <div class="info-grid">
                         <div class="info-item">
                             <label>Policy Number:</label>
-                            <span><strong>${policy.policyNumber || policy.id}</strong></span>
+                            <span><strong>${policy.policyNumber || policy.overview?.['Policy Number'] || policy.id}</strong></span>
                         </div>
                         <div class="info-item">
                             <label>Policy Type:</label>
-                            <span>${policy.policyType || policy.type || 'Commercial Auto'}</span>
+                            <span>${policy.policyType || policy.overview?.['Policy Type'] || policy.type || 'Commercial Auto'}</span>
                         </div>
                         <div class="info-item">
                             <label>Insurance Carrier:</label>
-                            <span>${policy.carrier || policy.insuranceCarrier || policy.financial?.carrier || 'GEICO'}</span>
+                            <span>${policy.carrier || policy.overview?.['Carrier'] || policy.overview?.carrier || policy.insuranceCarrier || policy.financial?.carrier || 'GEICO'}</span>
                         </div>
                         <div class="info-item">
                             <label>Policy Status:</label>
-                            <span class="status-badge ${policy.status === 'Active' ? 'status-active' : 'status-inactive'}">
-                                ${policy.status || 'Active'}
+                            <span class="status-badge ${(policy.policyStatus || policy.status || policy.overview?.['Status'] || 'Active') === 'Active' ? 'status-active' : 'status-inactive'}">
+                                ${policy.policyStatus || policy.status || policy.overview?.['Status'] || policy.overview?.status || 'Active'}
                             </span>
                         </div>
                         <div class="info-item">
                             <label>Effective Date:</label>
-                            <span>${new Date(policy.effectiveDate || policy.startDate || new Date()).toLocaleDateString()}</span>
+                            <span>${policy.effectiveDate || policy.overview?.['Effective Date'] || policy.overview?.effectiveDate || policy.startDate ? new Date(policy.effectiveDate || policy.overview?.['Effective Date'] || policy.overview?.effectiveDate || policy.startDate).toLocaleDateString() : 'N/A'}</span>
                         </div>
                         <div class="info-item">
                             <label>Expiration Date:</label>
-                            <span>${new Date(policy.expiryDate || policy.expirationDate).toLocaleDateString()}</span>
+                            <span>${policy.expirationDate || policy.overview?.['Expiration Date'] || policy.overview?.expirationDate || policy.expiryDate ? new Date(policy.expirationDate || policy.overview?.['Expiration Date'] || policy.overview?.expirationDate || policy.expiryDate).toLocaleDateString() : 'N/A'}</span>
                         </div>
+                        ${policy.dotNumber || policy.overview?.['DOT Number'] || policy.overview?.['DOT#'] ? `
+                        <div class="info-item">
+                            <label>DOT Number:</label>
+                            <span>${policy.dotNumber || policy.overview?.['DOT Number'] || policy.overview?.['DOT#'] || 'N/A'}</span>
+                        </div>` : ''}
+                        ${policy.mcNumber || policy.overview?.['MC Number'] || policy.overview?.['MC#'] ? `
+                        <div class="info-item">
+                            <label>MC Number:</label>
+                            <span>${policy.mcNumber || policy.overview?.['MC Number'] || policy.overview?.['MC#'] || 'N/A'}</span>
+                        </div>` : ''}
                     </div>
                 </div>
 
@@ -183,21 +199,31 @@ window.viewPolicyProfileCOI = function(policyId) {
                     <div class="info-grid">
                         <div class="info-item">
                             <label>Annual Premium:</label>
-                            <span><strong>$${(policy.annualPremium || policy.premium || policy.financial?.annualPremium || 0).toLocaleString()}</strong></span>
+                            <span><strong>$${(policy.annualPremium || policy.premium || policy.financial?.['Annual Premium'] || policy.financial?.['Premium'] || policy.financial?.annualPremium || policy.financial?.premium || 0).toLocaleString()}</strong></span>
                         </div>
                         <div class="info-item">
                             <label>Monthly Payment:</label>
-                            <span>$${((policy.annualPremium || policy.premium || 0) / 12).toFixed(2).toLocaleString()}</span>
+                            <span>$${((policy.annualPremium || policy.premium || policy.financial?.['Annual Premium'] || policy.financial?.['Premium'] || policy.financial?.annualPremium || policy.financial?.premium || 0) / 12).toFixed(2).toLocaleString()}</span>
                         </div>
-                        ${policy.financial?.deductible || policy.deductible ? `
+                        ${policy.financial?.deductible || policy.financial?.['Deductible'] || policy.financial?.['Collision Deductible'] || policy.deductible ? `
                         <div class="info-item">
                             <label>Deductible:</label>
-                            <span>$${(policy.financial?.deductible || policy.deductible || 0).toLocaleString()}</span>
+                            <span>$${(policy.financial?.deductible || policy.financial?.['Deductible'] || policy.financial?.['Collision Deductible'] || policy.deductible || 0).toLocaleString()}</span>
                         </div>` : ''}
-                        ${policy.financial?.downPayment || policy.downPayment ? `
+                        ${policy.financial?.downPayment || policy.financial?.['Down Payment'] || policy.financial?.['Down payment'] || policy.downPayment ? `
                         <div class="info-item">
                             <label>Down Payment:</label>
-                            <span>$${(policy.financial?.downPayment || policy.downPayment || 0).toLocaleString()}</span>
+                            <span>$${(policy.financial?.downPayment || policy.financial?.['Down Payment'] || policy.financial?.['Down payment'] || policy.downPayment || 0).toLocaleString()}</span>
+                        </div>` : ''}
+                        ${policy.financial?.['Payment Frequency'] ? `
+                        <div class="info-item">
+                            <label>Payment Frequency:</label>
+                            <span>${policy.financial['Payment Frequency']}</span>
+                        </div>` : ''}
+                        ${policy.financial?.['Finance Company'] ? `
+                        <div class="info-item">
+                            <label>Finance Company:</label>
+                            <span>${policy.financial['Finance Company']}</span>
                         </div>` : ''}
                     </div>
                 </div>
@@ -220,15 +246,35 @@ window.viewPolicyProfileCOI = function(policyId) {
                             <label>DBA Name:</label>
                             <span>${policy.insured['DBA Name']}</span>
                         </div>` : ''}
-                        ${policy.contact?.phone || policy.insured?.phone ? `
+                        ${policy.insured?.['Mailing Address'] ? `
+                        <div class="info-item">
+                            <label>Mailing Address:</label>
+                            <span>${policy.insured['Mailing Address']}</span>
+                        </div>` : ''}
+                        ${policy.insured?.['Garaging Address'] ? `
+                        <div class="info-item">
+                            <label>Garaging Address:</label>
+                            <span>${policy.insured['Garaging Address']}</span>
+                        </div>` : ''}
+                        ${policy.contact?.phone || policy.insured?.phone || policy.insured?.['Phone'] ? `
                         <div class="info-item">
                             <label>Phone:</label>
-                            <span>${policy.contact?.phone || policy.insured?.phone || 'N/A'}</span>
+                            <span>${policy.contact?.phone || policy.insured?.phone || policy.insured?.['Phone'] || 'N/A'}</span>
                         </div>` : ''}
-                        ${policy.contact?.email || policy.insured?.email ? `
+                        ${policy.contact?.email || policy.insured?.email || policy.insured?.['Email'] ? `
                         <div class="info-item">
                             <label>Email:</label>
-                            <span>${policy.contact?.email || policy.insured?.email || 'N/A'}</span>
+                            <span>${policy.contact?.email || policy.insured?.email || policy.insured?.['Email'] || 'N/A'}</span>
+                        </div>` : ''}
+                        ${policy.insured?.['FEIN'] ? `
+                        <div class="info-item">
+                            <label>FEIN:</label>
+                            <span>${policy.insured['FEIN']}</span>
+                        </div>` : ''}
+                        ${policy.insured?.['Entity Type'] ? `
+                        <div class="info-item">
+                            <label>Entity Type:</label>
+                            <span>${policy.insured['Entity Type']}</span>
                         </div>` : ''}
                     </div>
                 </div>
@@ -237,20 +283,24 @@ window.viewPolicyProfileCOI = function(policyId) {
                 <div class="profile-section">
                     <h3><i class="fas fa-shield-alt"></i> Coverage Details</h3>
                     <div class="coverage-grid">
-                        ${policy.coverage || policy.coverageDetails ?
+                        ${policy.coverage || policy.coverageDetails || policy.coverages ?
                             (policy.coverage ?
-                                // If coverage is an object
-                                Object.entries(policy.coverage).map(([key, value]) => `
+                                // If coverage is an object, display all fields
+                                Object.entries(policy.coverage).filter(([key, value]) => value && value !== '').map(([key, value]) => `
                                     <div class="coverage-item">
-                                        <label>${key.replace(/([A-Z])/g, ' $1').trim()}:</label>
-                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
+                                        <label>${key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ').trim()}:</label>
+                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` :
+                                               typeof value === 'string' && value.match(/^\d+$/) ? `$${parseInt(value).toLocaleString()}` :
+                                               value}</span>
                                     </div>
                                 `).join('') :
-                                // If coverageDetails exists
-                                Object.entries(policy.coverageDetails || {}).map(([key, value]) => `
+                                // If coverageDetails or coverages exists
+                                Object.entries(policy.coverageDetails || policy.coverages || {}).filter(([key, value]) => value && value !== '').map(([key, value]) => `
                                     <div class="coverage-item">
                                         <label>${key}:</label>
-                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
+                                        <span>${typeof value === 'number' ? `$${value.toLocaleString()}` :
+                                               typeof value === 'string' && value.match(/^\d+$/) ? `$${parseInt(value).toLocaleString()}` :
+                                               value}</span>
                                     </div>
                                 `).join('')
                             ) :
@@ -264,10 +314,25 @@ window.viewPolicyProfileCOI = function(policyId) {
                                 <span>${policy.policyType || 'Commercial Auto'}</span>
                             </div>`
                         }
-                        ${policy.operations?.radiusOfOperation || policy.radiusOfOperation ? `
+                        ${policy.operations?.radiusOfOperation || policy.operations?.['Radius of Operation'] || policy.radiusOfOperation ? `
                         <div class="coverage-item">
                             <label>Radius of Operation:</label>
-                            <span>${policy.operations?.radiusOfOperation || policy.radiusOfOperation}</span>
+                            <span>${policy.operations?.radiusOfOperation || policy.operations?.['Radius of Operation'] || policy.radiusOfOperation}</span>
+                        </div>` : ''}
+                        ${policy.operations?.['Hazmat'] ? `
+                        <div class="coverage-item">
+                            <label>Hazmat:</label>
+                            <span>${policy.operations['Hazmat']}</span>
+                        </div>` : ''}
+                        ${policy.operations?.['List of Commodities'] ? `
+                        <div class="coverage-item">
+                            <label>Commodities:</label>
+                            <span>${policy.operations['List of Commodities']}</span>
+                        </div>` : ''}
+                        ${policy.operations?.['States of Operation'] ? `
+                        <div class="coverage-item">
+                            <label>States of Operation:</label>
+                            <span>${policy.operations['States of Operation']}</span>
                         </div>` : ''}
                     </div>
                 </div>
@@ -290,11 +355,11 @@ window.viewPolicyProfileCOI = function(policyId) {
                             <tbody>
                                 ${policy.vehicles.map(vehicle => `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 8px;">${vehicle.year || vehicle.Year || 'N/A'}</td>
-                                        <td style="padding: 8px;">${vehicle.make || vehicle.Make || 'N/A'}</td>
-                                        <td style="padding: 8px;">${vehicle.model || vehicle.Model || 'N/A'}</td>
-                                        <td style="padding: 8px; font-size: 12px;">${vehicle.vin || vehicle.VIN || 'N/A'}</td>
-                                        <td style="padding: 8px;">${vehicle.type || vehicle.Type || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.year || vehicle.Year || vehicle['Year'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.make || vehicle.Make || vehicle['Make'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.model || vehicle.Model || vehicle['Model'] || 'N/A'}</td>
+                                        <td style="padding: 8px; font-size: 12px;">${vehicle.vin || vehicle.VIN || vehicle['VIN'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${vehicle.type || vehicle.Type || vehicle['Type'] || vehicle['Vehicle Type'] || 'N/A'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -320,11 +385,11 @@ window.viewPolicyProfileCOI = function(policyId) {
                             <tbody>
                                 ${policy.drivers.map(driver => `
                                     <tr style="border-bottom: 1px solid #e5e7eb;">
-                                        <td style="padding: 8px;">${driver.name || driver['Full Name'] || driver.Name || 'N/A'}</td>
-                                        <td style="padding: 8px;">${driver.licenseNumber || driver['License Number'] || 'N/A'}</td>
-                                        <td style="padding: 8px;">${driver.dob || driver.DOB || driver['Date of Birth'] || 'N/A'}</td>
-                                        <td style="padding: 8px;">${driver.experience || driver.Experience || 'N/A'}</td>
-                                        <td style="padding: 8px;">${driver.cdl || driver.CDL || driver.hasCDL ? 'Yes' : 'No'}</td>
+                                        <td style="padding: 8px;">${driver.name || driver['Full Name'] || driver['Driver Name'] || driver.Name || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.licenseNumber || driver['License Number'] || driver['License #'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.dob || driver.DOB || driver['Date of Birth'] || driver['DOB'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.experience || driver.Experience || driver['Years of Experience'] || driver['Experience (years)'] || 'N/A'}</td>
+                                        <td style="padding: 8px;">${driver.cdl || driver.CDL || driver['CDL'] || driver.hasCDL || driver['Has CDL'] ? 'Yes' : 'No'}</td>
                                     </tr>
                                 `).join('')}
                             </tbody>
@@ -332,12 +397,43 @@ window.viewPolicyProfileCOI = function(policyId) {
                     </div>
                 </div>` : ''}
 
+                <!-- Operations Section (if applicable) -->
+                ${policy.operations && Object.keys(policy.operations).length > 0 ? `
+                <div class="profile-section">
+                    <h3><i class="fas fa-truck-loading"></i> Operations</h3>
+                    <div class="info-grid">
+                        ${Object.entries(policy.operations).filter(([key, value]) =>
+                            value && value !== '' &&
+                            !['radiusOfOperation', 'Radius of Operation', 'Hazmat', 'List of Commodities', 'States of Operation'].includes(key)
+                        ).map(([key, value]) => `
+                            <div class="info-item">
+                                <label>${key}:</label>
+                                <span>${value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
+
+                <!-- Additional Documents Section (if applicable) -->
+                ${policy.documents && Object.keys(policy.documents).length > 0 ? `
+                <div class="profile-section">
+                    <h3><i class="fas fa-file-pdf"></i> Documents</h3>
+                    <div class="info-grid">
+                        ${Object.entries(policy.documents).filter(([key, value]) => value && value !== '').map(([key, value]) => `
+                            <div class="info-item">
+                                <label>${key}:</label>
+                                <span>${value}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>` : ''}
+
                 <!-- Additional Information Section -->
-                ${policy.notes || policy.additionalInfo ? `
+                ${policy.notes || policy.additionalInfo || policy['Additional Notes'] ? `
                 <div class="profile-section">
                     <h3><i class="fas fa-info-circle"></i> Additional Information</h3>
                     <div style="background: #f9fafb; padding: 15px; border-radius: 6px;">
-                        <p style="margin: 0; white-space: pre-wrap;">${policy.notes || policy.additionalInfo}</p>
+                        <p style="margin: 0; white-space: pre-wrap;">${policy.notes || policy.additionalInfo || policy['Additional Notes']}</p>
                     </div>
                 </div>` : ''}
 
