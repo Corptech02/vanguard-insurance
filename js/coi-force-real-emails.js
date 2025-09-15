@@ -256,10 +256,23 @@ window.expandEmail = async function(emailId) {
 
 // Back to inbox
 window.backToInbox = function() {
+    console.log('Going back to inbox...');
     const coiInbox = document.getElementById('coiInbox');
-    if (coiInbox && window.previousInboxContent) {
+    if (!coiInbox) return;
+
+    // If we have saved content, restore it immediately
+    if (window.previousInboxContent) {
+        console.log('Restoring previous inbox content');
         coiInbox.innerHTML = window.previousInboxContent;
+
+        // Re-attach hover effects
+        document.querySelectorAll('.email-item').forEach(item => {
+            item.onmouseover = () => item.style.background = '#f9fafb';
+            item.onmouseout = () => item.style.background = 'white';
+        });
     } else {
+        // Only load fresh if we don't have saved content
+        console.log('No saved content, loading fresh emails');
         loadRealEmails();
     }
 };
