@@ -1,7 +1,7 @@
 // FORCE REAL EMAILS IN COI - Ultra aggressive override
 console.log('🔥 FORCING REAL EMAILS IN COI MANAGEMENT...');
 
-const REAL_GMAIL_API = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
+const REAL_GMAIL_API = 'https://upset-loops-joke.loca.lt/api/gmail';
 
 // Function to load real emails
 async function loadRealEmails() {

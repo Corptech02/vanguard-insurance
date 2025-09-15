@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check Policy Data</title>
+</head>
+<body>
+    <h1>Policy Data Structure Check</h1>
+    <pre id="output"></pre>
+
+    <script>
+        // Get all policies from localStorage
+        const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+
+        console.log('Total policies:', policies.length);
+
+        // Find a policy with the most data
+        let mostCompletePolicy = null;
+        let maxFields = 0;
+
+        policies.forEach(policy => {
+            const fieldCount = JSON.stringify(policy).length;
+            if (fieldCount > maxFields) {
+                maxFields = fieldCount;
+                mostCompletePolicy = policy;
+            }
+        });
+
+        if (mostCompletePolicy) {
+            console.log('Most complete policy:', mostCompletePolicy);
+
+            // Display structure
+            const output = document.getElementById('output');
+            output.textContent = JSON.stringify(mostCompletePolicy, null, 2);
+
+            // Log available fields
+            console.log('Top-level fields:', Object.keys(mostCompletePolicy));
+
+            // Check for nested structures
+            if (mostCompletePolicy.overview) {
+                console.log('Overview fields:', Object.keys(mostCompletePolicy.overview));
+            }
+            if (mostCompletePolicy.financial) {
+                console.log('Financial fields:', Object.keys(mostCompletePolicy.financial));
+            }
+            if (mostCompletePolicy.insured) {
+                console.log('Insured fields:', Object.keys(mostCompletePolicy.insured));
+            }
+            if (mostCompletePolicy.coverage) {
+                console.log('Coverage fields:', Object.keys(mostCompletePolicy.coverage));
+            }
+            if (mostCompletePolicy.vehicles) {
+                console.log('Vehicles count:', mostCompletePolicy.vehicles.length);
+                if (mostCompletePolicy.vehicles[0]) {
+                    console.log('Vehicle fields:', Object.keys(mostCompletePolicy.vehicles[0]));
+                }
+            }
+            if (mostCompletePolicy.drivers) {
+                console.log('Drivers count:', mostCompletePolicy.drivers.length);
+                if (mostCompletePolicy.drivers[0]) {
+                    console.log('Driver fields:', Object.keys(mostCompletePolicy.drivers[0]));
+                }
+            }
+        } else {
+            console.log('No policies found');
+            document.getElementById('output').textContent = 'No policies found in localStorage';
+        }
+    </script>
+</body>
+</html>

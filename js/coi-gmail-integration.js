@@ -2,7 +2,7 @@
 console.log('Initializing COI Gmail Integration...');
 
 // Backend API URL - Now using HTTPS tunnel via localtunnel
-const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
+const GMAIL_API_URL = 'https://upset-loops-joke.loca.lt/api/gmail';
 
 // DISABLED: Now handled by coi-gmail-override.js
 // Override the loadCOIView function to use real Gmail data (this is what app.js calls)

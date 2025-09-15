@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>DU ROAD TRUCKING LLC - Complete Information</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #555;
+            margin-top: 30px;
+            background: #f8f9fa;
+            padding: 10px;
+            border-left: 4px solid #007bff;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #fafafa;
+            border-radius: 5px;
+        }
+        .field {
+            margin: 10px 0;
+            display: flex;
+            align-items: flex-start;
+        }
+        .label {
+            font-weight: bold;
+            min-width: 200px;
+            color: #666;
+        }
+        .value {
+            flex: 1;
+            color: #333;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .json-view {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>DU ROAD TRUCKING LLC - Complete Information</h1>
+        <div id="output"></div>
+        <h2>Raw Data (JSON)</h2>
+        <pre class="json-view" id="json-output"></pre>
+    </div>
+
+    <script>
+        // Get all data from localStorage
+        const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
+        const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+
+        // Find DU ROAD TRUCKING LLC client
+        const duRoadClient = clients.find(c =>
+            c.name?.includes('DU ROAD') ||
+            c.contactName?.includes('DU ROAD')
+        );
+
+        // Find DU ROAD TRUCKING LLC policies
+        const duRoadPolicies = policies.filter(p =>
+            p.clientName?.includes('DU ROAD') ||
+            p.name?.includes('DU ROAD') ||
+            p.insured?.['Name/Business Name']?.includes('DU ROAD') ||
+            p.insured?.['Primary Named Insured']?.includes('DU ROAD') ||
+            p.insuredName?.includes('DU ROAD')
+        );
+
+        let html = '';
+
+        // Display Client Information
+        if (duRoadClient) {
+            html += '<h2>Client Information</h2><div class="section">';
+            html += `<div class="field"><span class="label">Client ID:</span><span class="value">${duRoadClient.id || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Business Name:</span><span class="value">${duRoadClient.name || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Contact Name:</span><span class="value">${duRoadClient.contactName || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Phone:</span><span class="value">${duRoadClient.phone || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Email:</span><span class="value">${duRoadClient.email || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Address:</span><span class="value">${duRoadClient.address || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">DOT Number:</span><span class="value">${duRoadClient.dotNumber || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">MC Number:</span><span class="value">${duRoadClient.mcNumber || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Status:</span><span class="value">${duRoadClient.status || 'N/A'}</span></div>`;
+            html += `<div class="field"><span class="label">Total Premium:</span><span class="value">$${(duRoadClient.totalPremium || 0).toLocaleString()}</span></div>`;
+            html += '</div>';
+        }
+
+        // Display Policy Information
+        if (duRoadPolicies.length > 0) {
+            duRoadPolicies.forEach((policy, index) => {
+                html += `<h2>Policy ${index + 1}: ${policy.policyNumber || policy.id}</h2>`;
+
+                // Overview Information
+                html += '<h3>Overview</h3><div class="section">';
+                html += `<div class="field"><span class="label">Policy Number:</span><span class="value">${policy.policyNumber || policy.overview?.['Policy Number'] || policy.id || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">Policy Type:</span><span class="value">${policy.policyType || policy.overview?.['Policy Type'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">Carrier:</span><span class="value">${policy.carrier || policy.overview?.['Carrier'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">Status:</span><span class="value">${policy.policyStatus || policy.status || policy.overview?.['Status'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">Effective Date:</span><span class="value">${policy.effectiveDate || policy.overview?.['Effective Date'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">Expiration Date:</span><span class="value">${policy.expirationDate || policy.overview?.['Expiration Date'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">DOT Number:</span><span class="value">${policy.dotNumber || policy.overview?.['DOT Number'] || 'N/A'}</span></div>`;
+                html += `<div class="field"><span class="label">MC Number:</span><span class="value">${policy.mcNumber || policy.overview?.['MC Number'] || 'N/A'}</span></div>`;
+                html += '</div>';
+
+                // Financial Information
+                html += '<h3>Financial Information</h3><div class="section">';
+                const premium = policy.annualPremium || policy.premium || policy.financial?.['Annual Premium'] || policy.financial?.['Premium'] || 0;
+                html += `<div class="field"><span class="label">Annual Premium:</span><span class="value">$${Number(premium).toLocaleString()}</span></div>`;
+                html += `<div class="field"><span class="label">Monthly Payment:</span><span class="value">$${(Number(premium) / 12).toFixed(2)}</span></div>`;
+                if (policy.financial) {
+                    Object.entries(policy.financial).forEach(([key, value]) => {
+                        if (value && !['Annual Premium', 'Premium'].includes(key)) {
+                            html += `<div class="field"><span class="label">${key}:</span><span class="value">${value}</span></div>`;
+                        }
+                    });
+                }
+                html += '</div>';
+
+                // Insured Information
+                html += '<h3>Insured Information</h3><div class="section">';
+                if (policy.insured) {
+                    Object.entries(policy.insured).forEach(([key, value]) => {
+                        if (value) {
+                            html += `<div class="field"><span class="label">${key}:</span><span class="value">${value}</span></div>`;
+                        }
+                    });
+                } else {
+                    html += `<div class="field"><span class="label">Primary Insured:</span><span class="value">${policy.clientName || policy.insuredName || 'N/A'}</span></div>`;
+                }
+                html += '</div>';
+
+                // Coverage Information
+                html += '<h3>Coverage Details</h3><div class="section">';
+                if (policy.coverage) {
+                    Object.entries(policy.coverage).forEach(([key, value]) => {
+                        if (value) {
+                            const displayValue = typeof value === 'number' ? '$' + value.toLocaleString() : value;
+                            html += `<div class="field"><span class="label">${key}:</span><span class="value">${displayValue}</span></div>`;
+                        }
+                    });
+                }
+                html += '</div>';
+
+                // Operations Information
+                if (policy.operations) {
+                    html += '<h3>Operations</h3><div class="section">';
+                    Object.entries(policy.operations).forEach(([key, value]) => {
+                        if (value) {
+                            html += `<div class="field"><span class="label">${key}:</span><span class="value">${value}</span></div>`;
+                        }
+                    });
+                    html += '</div>';
+                }
+
+                // Vehicles
+                if (policy.vehicles && policy.vehicles.length > 0) {
+                    html += '<h3>Vehicles</h3>';
+                    html += '<table>';
+                    html += '<tr><th>Year</th><th>Make</th><th>Model</th><th>VIN</th><th>Type</th><th>Value</th></tr>';
+                    policy.vehicles.forEach(vehicle => {
+                        html += '<tr>';
+                        html += `<td>${vehicle.Year || vehicle.year || 'N/A'}</td>`;
+                        html += `<td>${vehicle.Make || vehicle.make || 'N/A'}</td>`;
+                        html += `<td>${vehicle.Model || vehicle.model || 'N/A'}</td>`;
+                        html += `<td>${vehicle.VIN || vehicle.vin || 'N/A'}</td>`;
+                        html += `<td>${vehicle.Type || vehicle.type || 'N/A'}</td>`;
+                        html += `<td>${vehicle.Value ? '$' + Number(vehicle.Value).toLocaleString() : 'N/A'}</td>`;
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                }
+
+                // Drivers
+                if (policy.drivers && policy.drivers.length > 0) {
+                    html += '<h3>Drivers</h3>';
+                    html += '<table>';
+                    html += '<tr><th>Name</th><th>License #</th><th>DOB</th><th>Experience</th><th>CDL</th></tr>';
+                    policy.drivers.forEach(driver => {
+                        html += '<tr>';
+                        html += `<td>${driver['Full Name'] || driver.name || driver.Name || 'N/A'}</td>`;
+                        html += `<td>${driver['License Number'] || driver.licenseNumber || 'N/A'}</td>`;
+                        html += `<td>${driver['Date of Birth'] || driver.DOB || driver.dob || 'N/A'}</td>`;
+                        html += `<td>${driver['Years of Experience'] || driver.Experience || driver.experience || 'N/A'}</td>`;
+                        html += `<td>${driver.CDL || driver.cdl || driver.hasCDL ? 'Yes' : 'No'}</td>`;
+                        html += '</tr>';
+                    });
+                    html += '</table>';
+                }
+
+                // Display all other fields not yet shown
+                html += '<h3>Additional Fields</h3><div class="section">';
+                Object.entries(policy).forEach(([key, value]) => {
+                    if (!['overview', 'financial', 'insured', 'coverage', 'operations', 'vehicles', 'drivers'].includes(key) &&
+                        !['policyNumber', 'policyType', 'carrier', 'status', 'effectiveDate', 'expirationDate', 'premium', 'annualPremium'].includes(key)) {
+                        if (value && typeof value !== 'object') {
+                            html += `<div class="field"><span class="label">${key}:</span><span class="value">${value}</span></div>`;
+                        }
+                    }
+                });
+                html += '</div>';
+            });
+        } else {
+            html += '<p>No policies found for DU ROAD TRUCKING LLC</p>';
+        }
+
+        // Display the formatted information
+        document.getElementById('output').innerHTML = html;
+
+        // Display raw JSON data
+        const allData = {
+            client: duRoadClient,
+            policies: duRoadPolicies
+        };
+        document.getElementById('json-output').textContent = JSON.stringify(allData, null, 2);
+
+        // Log to console for debugging
+        console.log('DU ROAD TRUCKING LLC - Complete Data:', allData);
+    </script>
+</body>
+</html>

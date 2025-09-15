@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Policy Structure</title>
+</head>
+<body>
+    <h1>DU ROAD TRUCKING LLC Policy Structure</h1>
+    <pre id="output"></pre>
+
+    <script>
+        // Get all policies from localStorage
+        const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+
+        // Find DU ROAD TRUCKING LLC policy
+        const duRoadPolicy = policies.find(p =>
+            p.clientName?.includes('DU ROAD') ||
+            p.name?.includes('DU ROAD') ||
+            p.insured?.['Name/Business Name']?.includes('DU ROAD') ||
+            p.insured?.['Primary Named Insured']?.includes('DU ROAD') ||
+            p.insuredName?.includes('DU ROAD')
+        );
+
+        if (duRoadPolicy) {
+            console.log('Found DU ROAD TRUCKING LLC policy:', duRoadPolicy);
+
+            // Display full structure
+            document.getElementById('output').textContent = JSON.stringify(duRoadPolicy, null, 2);
+
+            // Log specific fields for debugging
+            console.log('=== Policy Structure Analysis ===');
+            console.log('Root level keys:', Object.keys(duRoadPolicy));
+
+            // Check for tab data
+            if (duRoadPolicy.overview) {
+                console.log('Overview tab keys:', Object.keys(duRoadPolicy.overview));
+                console.log('Overview data:', duRoadPolicy.overview);
+            }
+
+            if (duRoadPolicy.financial) {
+                console.log('Financial tab keys:', Object.keys(duRoadPolicy.financial));
+                console.log('Financial data:', duRoadPolicy.financial);
+                console.log('Annual Premium:', duRoadPolicy.financial['Annual Premium'] || duRoadPolicy.financial.annualPremium);
+            }
+
+            if (duRoadPolicy.coverage) {
+                console.log('Coverage tab keys:', Object.keys(duRoadPolicy.coverage));
+                console.log('Coverage data:', duRoadPolicy.coverage);
+            }
+
+            if (duRoadPolicy.insured) {
+                console.log('Insured tab keys:', Object.keys(duRoadPolicy.insured));
+                console.log('Insured data:', duRoadPolicy.insured);
+            }
+
+            if (duRoadPolicy.vehicles) {
+                console.log('Vehicles count:', duRoadPolicy.vehicles.length);
+                if (duRoadPolicy.vehicles[0]) {
+                    console.log('First vehicle:', duRoadPolicy.vehicles[0]);
+                }
+            }
+
+            if (duRoadPolicy.drivers) {
+                console.log('Drivers count:', duRoadPolicy.drivers.length);
+                if (duRoadPolicy.drivers[0]) {
+                    console.log('First driver:', duRoadPolicy.drivers[0]);
+                }
+            }
+
+            // Check premium fields at different locations
+            console.log('=== Premium Field Locations ===');
+            console.log('Root premium:', duRoadPolicy.premium);
+            console.log('Root annualPremium:', duRoadPolicy.annualPremium);
+            console.log('Financial.Annual Premium:', duRoadPolicy.financial?.['Annual Premium']);
+            console.log('Financial.Premium:', duRoadPolicy.financial?.['Premium']);
+            console.log('Financial.annualPremium:', duRoadPolicy.financial?.annualPremium);
+            console.log('Financial.premium:', duRoadPolicy.financial?.premium);
+
+            // Check coverage fields at different locations
+            console.log('=== Coverage Field Locations ===');
+            console.log('Coverage object:', duRoadPolicy.coverage);
+            console.log('Coverage.Liability Limit:', duRoadPolicy.coverage?.['Liability Limit']);
+            console.log('Coverage.Combined Single Limit:', duRoadPolicy.coverage?.['Combined Single Limit']);
+            console.log('Coverage.Cargo Limit:', duRoadPolicy.coverage?.['Cargo Limit']);
+
+        } else {
+            console.log('DU ROAD TRUCKING LLC policy not found');
+            console.log('All policies:', policies);
+            document.getElementById('output').textContent = 'DU ROAD TRUCKING LLC policy not found. Check console for all policies.';
+        }
+    </script>
+</body>
+</html>

@@ -64,7 +64,7 @@ window.expandEmail = function(emailId) {
     `;
 
     // Fetch email details
-    const API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
+    const API_URL = 'https://upset-loops-joke.loca.lt/api/gmail';
 
     fetch(`${API_URL}/messages/${emailId}`, {
         headers: {
