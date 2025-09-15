@@ -89,12 +89,17 @@ window.loadRealPolicyList = function() {
 window.viewPolicyProfileCOI = function(policyId) {
     console.log('View policy profile:', policyId);
 
-    const policyViewer = document.getElementById('policyViewer');
+    // Get the policyViewer element (the container that holds policyList)
+    let policyViewer = document.getElementById('policyViewer');
     if (!policyViewer) {
-        // If policyViewer doesn't exist, use policyList area
+        // If policyViewer doesn't exist, use policyList's parent
         const policyList = document.getElementById('policyList');
-        if (!policyList) return;
-        policyViewer = policyList.parentElement;
+        if (policyList && policyList.parentElement) {
+            policyViewer = policyList.parentElement;
+        } else {
+            console.error('Cannot find policy viewer element');
+            return;
+        }
     }
 
     // Get all policies from localStorage
@@ -199,6 +204,15 @@ window.viewPolicyProfileCOI = function(policyId) {
 // Back to policy list
 window.backToPolicyList = function() {
     console.log('Back to policy list');
+
+    // Find the policyViewer element
+    const policyViewer = document.getElementById('policyViewer');
+
+    if (policyViewer) {
+        // Clear the policy profile and restore the list container
+        policyViewer.innerHTML = '<div class="policy-list" id="policyList"></div>';
+    }
+
     // Reload the policy list
     if (window.loadRealPolicyList) {
         window.loadRealPolicyList();
