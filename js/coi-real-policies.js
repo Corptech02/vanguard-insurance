@@ -9,6 +9,7 @@ window.loadRealPolicyList = function() {
     if (!policyList) return;
 
     // Get policies from localStorage (same as Policies tab)
+    // This will always get the current state of policies
     const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
     console.log(`Loaded ${policies.length} real policies from localStorage`);
 
