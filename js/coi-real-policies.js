@@ -1,38 +1,16 @@
-// COI Real Policies - Fetch and display real policies from database
+// COI Real Policies - Fetch and display real policies from localStorage
 console.log('COI Real Policies loading...');
 
-// API URL - Using the same localtunnel as Gmail
-const API_URL = 'https://shaggy-dingos-divide.loca.lt';
-
-// Override loadPolicyList to fetch real policies
-window.loadPolicyList = async function() {
-    console.log('Loading real policies from database...');
+// Override loadPolicyList to fetch real policies from localStorage
+window.loadPolicyList = function() {
+    console.log('Loading real policies from localStorage...');
 
     const policyList = document.getElementById('policyList');
     if (!policyList) return;
 
-    // Show loading state
-    policyList.innerHTML = `
-        <div style="text-align: center; padding: 20px;">
-            <i class="fas fa-spinner fa-spin" style="font-size: 24px; color: #667eea;"></i>
-            <p>Loading policies...</p>
-        </div>
-    `;
-
-    try {
-        // Fetch real policies from backend
-        const response = await fetch(`${API_URL}/api/policies`, {
-            headers: {
-                'Bypass-Tunnel-Reminder': 'true'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-
-        const policies = await response.json();
-        console.log(`Loaded ${policies.length} real policies`);
+    // Get policies from localStorage (same as Policies tab)
+    const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+    console.log(`Loaded ${policies.length} real policies from localStorage`);
 
         if (policies.length === 0) {
             policyList.innerHTML = `
@@ -80,6 +58,13 @@ window.loadPolicyList = async function() {
                             statusIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="Active"></i>';
                         }
 
+                        // Format coverage limit
+                        const coverageDisplay = policy.coverageLimit ?
+                            (typeof policy.coverageLimit === 'number' ?
+                                `$${(policy.coverageLimit / 1000000).toFixed(1)}M` :
+                                policy.coverageLimit) :
+                            'N/A';
+
                         return `
                             <tr class="policy-row ${statusClass}" data-policy-id="${policy.policyNumber}">
                                 <td>
@@ -87,8 +72,8 @@ window.loadPolicyList = async function() {
                                     <strong>${policy.policyNumber}</strong>
                                 </td>
                                 <td>${policy.clientName}</td>
-                                <td><span class="policy-type">${policy.type}</span></td>
-                                <td><strong>${policy.coverageDisplay}</strong></td>
+                                <td><span class="policy-type">${policy.policyType}</span></td>
+                                <td><strong>${coverageDisplay}</strong></td>
                                 <td>${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                 <td>
                                     <button class="btn-icon" onclick="viewPolicyDetails('${policy.policyNumber}')" title="View Details">
@@ -133,20 +118,6 @@ window.loadPolicyList = async function() {
                 </div>
             </div>
         `;
-
-    } catch (error) {
-        console.error('Error loading policies:', error);
-        policyList.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #ef4444;">
-                <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 16px;"></i>
-                <p>Error loading policies</p>
-                <p style="font-size: 14px; margin-top: 8px;">${error.message}</p>
-                <button class="btn-primary" onclick="loadPolicyList()" style="margin-top: 16px;">
-                    <i class="fas fa-sync"></i> Retry
-                </button>
-            </div>
-        `;
-    }
 };
 
 // View policy details
