@@ -1,8 +1,8 @@
 // COI Real Policies - Fetch and display real policies from localStorage
 console.log('COI Real Policies loading...');
 
-// Override loadPolicyList to fetch real policies from localStorage
-window.loadPolicyList = function() {
+// Create a new function to load real policies from localStorage
+window.loadRealPolicyList = function() {
     console.log('Loading real policies from localStorage...');
 
     const policyList = document.getElementById('policyList');
@@ -162,9 +162,8 @@ window.refreshPolicies = function() {
     notification.innerHTML = '<i class="fas fa-sync fa-spin"></i> Refreshing policies...';
     document.body.appendChild(notification);
 
-    loadPolicyList().finally(() => {
-        setTimeout(() => notification.remove(), 1000);
-    });
+    window.loadRealPolicyList();
+    setTimeout(() => notification.remove(), 1000);
 };
 
 console.log('COI Real Policies ready');

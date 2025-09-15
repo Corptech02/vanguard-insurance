@@ -63,8 +63,10 @@ const GMAIL_API_URL = 'https://shaggy-dingos-divide.loca.lt/api/gmail';
             </div>
         `;
 
-        // Load the policy list (keep existing functionality)
-        if (window.loadPolicyList) {
+        // Load the real policy list from localStorage
+        if (window.loadRealPolicyList) {
+            window.loadRealPolicyList();
+        } else if (window.loadPolicyList) {
             window.loadPolicyList();
         }
 
