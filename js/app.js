@@ -12102,10 +12102,20 @@ async function generateLeadsFromForm() {
         const data = await apiService.generateLeads(criteria);
         
         // Store the criteria for Vicidial upload (with ALL insurance companies)
+        // Handle 5/30 filter specially
+        let vicidialExpiry = expiry;
+        let displayExpiry = expiry;
+        if (expiry === '5/30') {
+            vicidialExpiry = 30;  // Use 30 days for actual filtering
+            displayExpiry = '5/30 (Days 6-30)';  // Display description
+        }
+
         lastGeneratedCriteria = {
             state: state,
             insuranceCompanies: insuranceCompanies,  // Pass ALL selected companies
-            daysUntilExpiry: parseInt(expiry) || 30
+            daysUntilExpiry: parseInt(vicidialExpiry) || 30,
+            displayExpiry: displayExpiry,  // For display purposes
+            skipDays: skipDays  // Include skip days for proper filtering
         };
         
         // Store generated leads data for export - use data.leads not data.carriers

@@ -44,6 +44,7 @@ const vicidialUploader = {
                 state: criteria.state || '',
                 insurance_company: criteria.insuranceCompany || '',
                 days_until_expiry: criteria.daysUntilExpiry || 30,
+                skip_days: criteria.skipDays || 0,  // Add skip days for 5/30 filter
                 limit: criteria.limit || 100,
                 list_name: criteria.listName || '',
                 campaign_id: criteria.campaignId || 'TEST'
@@ -113,6 +114,7 @@ const vicidialUploader = {
                 state: criteria.state || '',
                 insurance_company: insuranceCompaniesStr,  // Pass comma-separated companies
                 days_until_expiry: String(criteria.daysUntilExpiry || 30),
+                skip_days: String(criteria.skipDays || 0),  // Add skip days for 5/30 filter
                 limit: String(criteria.limit || 100)
             });
             
@@ -250,7 +252,14 @@ const vicidialUploader = {
                     }
                 }
                 if (daysDisplay) {
-                    daysDisplay.textContent = criteria.daysUntilExpiry || 30;
+                    // Handle 5/30 filter display
+                    if (criteria.displayExpiry) {
+                        daysDisplay.textContent = criteria.displayExpiry;
+                    } else if (criteria.skipDays && criteria.skipDays > 0) {
+                        daysDisplay.textContent = `Days ${criteria.skipDays + 1}-${criteria.daysUntilExpiry} (skipping first ${criteria.skipDays} days)`;
+                    } else {
+                        daysDisplay.textContent = criteria.daysUntilExpiry || 30;
+                    }
                 }
             }, 100);
         }
@@ -391,6 +400,7 @@ const vicidialUploader = {
                 state: this.uploadCriteria?.state || '',
                 insuranceCompanies: this.uploadCriteria?.insuranceCompanies || [],  // Pass ALL companies
                 daysUntilExpiry: this.uploadCriteria?.daysUntilExpiry || 30,
+                skipDays: this.uploadCriteria?.skipDays || 0,  // Include skip days for 5/30 filter
                 limit: 5000  // Max 5000 leads per upload for Vicidial stability
             };
             
