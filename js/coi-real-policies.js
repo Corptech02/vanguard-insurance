@@ -89,17 +89,11 @@ window.loadRealPolicyList = function() {
 window.viewPolicyProfileCOI = function(policyId) {
     console.log('View policy profile:', policyId);
 
-    // Get the policyViewer element (the container that holds policyList)
-    let policyViewer = document.getElementById('policyViewer');
+    // Always use policyViewer as the container
+    const policyViewer = document.getElementById('policyViewer');
     if (!policyViewer) {
-        // If policyViewer doesn't exist, use policyList's parent
-        const policyList = document.getElementById('policyList');
-        if (policyList && policyList.parentElement) {
-            policyViewer = policyList.parentElement;
-        } else {
-            console.error('Cannot find policy viewer element');
-            return;
-        }
+        console.error('policyViewer element not found');
+        return;
     }
 
     // Get all policies from localStorage
@@ -112,6 +106,9 @@ window.viewPolicyProfileCOI = function(policyId) {
         console.error('Policy not found:', policyId);
         return;
     }
+
+    // Store the current HTML for back navigation
+    window.originalPolicyListHTML = policyViewer.innerHTML;
 
     // Display policy details in the same design as demo
     policyViewer.innerHTML = `
@@ -209,13 +206,21 @@ window.backToPolicyList = function() {
     const policyViewer = document.getElementById('policyViewer');
 
     if (policyViewer) {
-        // Clear the policy profile and restore the list container
-        policyViewer.innerHTML = '<div class="policy-list" id="policyList"></div>';
-    }
-
-    // Reload the policy list
-    if (window.loadRealPolicyList) {
-        window.loadRealPolicyList();
+        if (window.originalPolicyListHTML) {
+            // Restore the saved HTML
+            policyViewer.innerHTML = window.originalPolicyListHTML;
+            // Clear the saved HTML for next time
+            window.originalPolicyListHTML = null;
+        } else {
+            // Fallback: recreate the structure
+            policyViewer.innerHTML = '<div class="policy-list" id="policyList"></div>';
+            // Reload the policy list
+            if (window.loadRealPolicyList) {
+                window.loadRealPolicyList();
+            }
+        }
+    } else {
+        console.error('policyViewer not found');
     }
 };
 
