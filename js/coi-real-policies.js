@@ -61,10 +61,19 @@ window.loadRealPolicyList = function() {
                         // Get policy type
                         const policyType = policy.policyType || policy.type || 'Commercial Auto';
 
+                        // Get client name - check multiple possible field locations
+                        let clientName = policy.clientName ||
+                                        policy.name ||
+                                        policy.insured?.['Name/Business Name'] ||
+                                        policy.insured?.['Primary Named Insured'] ||
+                                        policy.insured?.name ||
+                                        policy.insuredName ||
+                                        'Unknown';
+
                         return `
                             <tr class="policy-row" data-policy-id="${policy.policyNumber || policy.id}">
                                 <td><strong>${policy.policyNumber || policy.id}</strong></td>
-                                <td>${policy.clientName || policy.name || 'Unknown'}</td>
+                                <td>${clientName}</td>
                                 <td><span class="policy-type">${policyType}</span></td>
                                 <td>${coverageDisplay}</td>
                                 <td>
@@ -159,7 +168,13 @@ window.viewPolicyProfileCOI = function(policyId) {
                 <div class="profile-section">
                     <h3>Named Insured</h3>
                     <ul class="insured-list">
-                        <li>${policy.clientName || policy.name || 'Primary Insured'}</li>
+                        <li>${policy.clientName ||
+                              policy.name ||
+                              policy.insured?.['Name/Business Name'] ||
+                              policy.insured?.['Primary Named Insured'] ||
+                              policy.insured?.name ||
+                              policy.insuredName ||
+                              'Primary Insured'}</li>
                         ${policy.namedInsured ? policy.namedInsured.map(name => `<li>${name}</li>`).join('') : ''}
                     </ul>
                 </div>
