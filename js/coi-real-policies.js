@@ -26,7 +26,7 @@ window.loadRealPolicyList = function() {
             return;
         }
 
-        // Display policies in a table
+        // Display policies using exact demo design
         policyList.innerHTML = `
             <table class="policy-table">
                 <thead>
@@ -41,50 +41,40 @@ window.loadRealPolicyList = function() {
                 </thead>
                 <tbody>
                     ${policies.map(policy => {
-                        // Check expiry status
-                        const expiryDate = new Date(policy.expiryDate);
+                        // Determine status based on expiry
+                        const expiryDate = new Date(policy.expiryDate || policy.expirationDate);
                         const today = new Date();
                         const daysUntilExpiry = Math.floor((expiryDate - today) / (1000 * 60 * 60 * 24));
-                        let statusClass = '';
-                        let statusIcon = '';
+                        let status = daysUntilExpiry < 0 ? 'expired' : (daysUntilExpiry < 30 ? 'expiring' : 'active');
 
-                        if (daysUntilExpiry < 0) {
-                            statusClass = 'expired';
-                            statusIcon = '<i class="fas fa-exclamation-circle" style="color: #ef4444;" title="Expired"></i>';
-                        } else if (daysUntilExpiry < 30) {
-                            statusClass = 'expiring';
-                            statusIcon = '<i class="fas fa-exclamation-triangle" style="color: #f59e0b;" title="Expiring Soon"></i>';
-                        } else {
-                            statusClass = 'active';
-                            statusIcon = '<i class="fas fa-check-circle" style="color: #10b981;" title="Active"></i>';
+                        // Format coverage - check various property names
+                        let coverageDisplay = '$1M'; // default
+                        if (policy.coverageLimit) {
+                            coverageDisplay = typeof policy.coverageLimit === 'number' ?
+                                `$${(policy.coverageLimit / 1000000).toFixed(0)}M` : policy.coverageLimit;
+                        } else if (policy.coverage) {
+                            coverageDisplay = policy.coverage;
+                        } else if (policy.coverageDetails && policy.coverageDetails.liabilityLimit) {
+                            coverageDisplay = `$${Math.round(policy.coverageDetails.liabilityLimit / 1000)}K`;
                         }
 
-                        // Format coverage limit
-                        const coverageDisplay = policy.coverageLimit ?
-                            (typeof policy.coverageLimit === 'number' ?
-                                `$${(policy.coverageLimit / 1000000).toFixed(1)}M` :
-                                policy.coverageLimit) :
-                            'N/A';
+                        // Get policy type
+                        const policyType = policy.policyType || policy.type || 'Commercial Auto';
 
                         return `
-                            <tr class="policy-row ${statusClass}" data-policy-id="${policy.policyNumber}">
+                            <tr class="policy-row" data-policy-id="${policy.policyNumber || policy.id}">
+                                <td><strong>${policy.policyNumber || policy.id}</strong></td>
+                                <td>${policy.clientName || policy.name || 'Unknown'}</td>
+                                <td><span class="policy-type">${policyType}</span></td>
+                                <td>${coverageDisplay}</td>
                                 <td>
-                                    ${statusIcon}
-                                    <strong>${policy.policyNumber}</strong>
+                                    <span class="status-badge ${status === 'expiring' ? 'status-warning' : status === 'expired' ? 'status-expired' : 'status-active'}">
+                                        ${expiryDate.toLocaleDateString()}
+                                    </span>
                                 </td>
-                                <td>${policy.clientName}</td>
-                                <td><span class="policy-type">${policy.policyType}</span></td>
-                                <td><strong>${coverageDisplay}</strong></td>
-                                <td>${expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
                                 <td>
-                                    <button class="btn-icon" onclick="viewPolicyDetails('${policy.policyNumber}')" title="View Details">
+                                    <button class="btn-icon" onclick="viewPolicyProfileCOI('${policy.policyNumber || policy.id}')" title="View Profile">
                                         <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn-icon" onclick="generateCOI('${policy.policyNumber}')" title="Generate COI">
-                                        <i class="fas fa-file-export"></i>
-                                    </button>
-                                    <button class="btn-icon" onclick="renewPolicy('${policy.policyNumber}')" title="Renew Policy">
-                                        <i class="fas fa-sync"></i>
                                     </button>
                                 </td>
                             </tr>
@@ -92,40 +82,127 @@ window.loadRealPolicyList = function() {
                     }).join('')}
                 </tbody>
             </table>
-
-            <div style="margin-top: 20px; padding: 15px; background: #f9fafb; border-radius: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="font-size: 14px; color: #6b7280;">
-                        Total Policies: <strong>${policies.length}</strong> |
-                        Active: <strong style="color: #10b981;">${policies.filter(p => {
-                            const exp = new Date(p.expiryDate);
-                            const days = Math.floor((exp - new Date()) / (1000 * 60 * 60 * 24));
-                            return days >= 30;
-                        }).length}</strong> |
-                        Expiring: <strong style="color: #f59e0b;">${policies.filter(p => {
-                            const exp = new Date(p.expiryDate);
-                            const days = Math.floor((exp - new Date()) / (1000 * 60 * 60 * 24));
-                            return days >= 0 && days < 30;
-                        }).length}</strong> |
-                        Expired: <strong style="color: #ef4444;">${policies.filter(p => {
-                            const exp = new Date(p.expiryDate);
-                            const days = Math.floor((exp - new Date()) / (1000 * 60 * 60 * 24));
-                            return days < 0;
-                        }).length}</strong>
-                    </div>
-                    <button class="btn-primary btn-small" onclick="exportPolicies()">
-                        <i class="fas fa-download"></i> Export
-                    </button>
-                </div>
-            </div>
         `;
 };
 
-// View policy details
-window.viewPolicyDetails = function(policyId) {
-    console.log('View policy details:', policyId);
-    // Could open a modal or expand inline with full policy details
-    alert(`Policy Details: ${policyId}\n\nFull details view coming soon!`);
+// View policy profile in COI panel (like demo)
+window.viewPolicyProfileCOI = function(policyId) {
+    console.log('View policy profile:', policyId);
+
+    const policyViewer = document.getElementById('policyViewer');
+    if (!policyViewer) {
+        // If policyViewer doesn't exist, use policyList area
+        const policyList = document.getElementById('policyList');
+        if (!policyList) return;
+        policyViewer = policyList.parentElement;
+    }
+
+    // Get all policies from localStorage
+    const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
+
+    // Find the specific policy
+    const policy = policies.find(p => p.policyNumber === policyId || p.id === policyId);
+
+    if (!policy) {
+        console.error('Policy not found:', policyId);
+        return;
+    }
+
+    // Display policy details in the same design as demo
+    policyViewer.innerHTML = `
+        <div class="policy-profile">
+            <div class="profile-header">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <button class="btn-back" onclick="backToPolicyList()" title="Back to Policy List">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2>Policy Profile: ${policy.policyNumber || policy.id}</h2>
+                </div>
+                <button class="btn-primary" onclick="prepareCOI('${policy.policyNumber || policy.id}')">
+                    <i class="fas fa-file-alt"></i> Prepare COI
+                </button>
+            </div>
+
+            <div class="profile-content">
+                <div class="profile-section">
+                    <h3>Policy Information</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Policy Number:</label>
+                            <span>${policy.policyNumber || policy.id}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Type:</label>
+                            <span>${policy.policyType || policy.type || 'Commercial Auto'}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Carrier:</label>
+                            <span>${policy.carrier || policy.insuranceCarrier || 'GEICO'}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Premium:</label>
+                            <span>$${policy.premium || policy.annualPremium || '0'}/year</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Effective Date:</label>
+                            <span>${new Date(policy.effectiveDate || policy.startDate || new Date()).toLocaleDateString()}</span>
+                        </div>
+                        <div class="info-item">
+                            <label>Expiry Date:</label>
+                            <span>${new Date(policy.expiryDate || policy.expirationDate).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Named Insured</h3>
+                    <ul class="insured-list">
+                        <li>${policy.clientName || policy.name || 'Primary Insured'}</li>
+                        ${policy.namedInsured ? policy.namedInsured.map(name => `<li>${name}</li>`).join('') : ''}
+                    </ul>
+                </div>
+
+                <div class="profile-section">
+                    <h3>Coverage Details</h3>
+                    <div class="coverage-grid">
+                        ${policy.coverageDetails ?
+                            Object.entries(policy.coverageDetails).map(([key, value]) => `
+                                <div class="coverage-item">
+                                    <label>${key}:</label>
+                                    <span>${typeof value === 'number' ? `$${value.toLocaleString()}` : value}</span>
+                                </div>
+                            `).join('') :
+                            `<div class="coverage-item">
+                                <label>Liability Limit:</label>
+                                <span>${policy.coverageLimit || policy.coverage || '$1,000,000'}</span>
+                            </div>`
+                        }
+                    </div>
+                </div>
+
+                <div class="profile-actions">
+                    <button class="btn-secondary" onclick="editPolicy('${policy.policyNumber || policy.id}')">
+                        <i class="fas fa-edit"></i> Edit Policy
+                    </button>
+                    <button class="btn-secondary" onclick="downloadPolicy('${policy.policyNumber || policy.id}')">
+                        <i class="fas fa-download"></i> Download
+                    </button>
+                    <button class="btn-secondary" onclick="emailPolicy('${policy.policyNumber || policy.id}')">
+                        <i class="fas fa-envelope"></i> Email
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// Back to policy list
+window.backToPolicyList = function() {
+    console.log('Back to policy list');
+    // Reload the policy list
+    if (window.loadRealPolicyList) {
+        window.loadRealPolicyList();
+    }
 };
 
 // Generate COI for policy
