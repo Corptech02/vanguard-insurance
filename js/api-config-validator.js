@@ -57,17 +57,16 @@ class APIConfigValidator {
     }
 
     validateEndpointConfiguration() {
+        // Using direct IP since localtunnel requires authentication
         const apiBaseUrl = window.location.hostname === 'localhost'
             ? 'http://localhost:8897'
-            : window.location.hostname.includes('github.io')
-            ? 'https://vanguard-insurance-api.loca.lt'
             : 'http://192.168.40.232:8897';
 
         this.addValidation('✅ API Base URL', apiBaseUrl, 'info');
 
         // Validate endpoint configuration
-        if (apiBaseUrl.includes('loca.lt')) {
-            this.addValidation('✅ ngrok Configuration', 'Using ngrok tunnel for production', 'success');
+        if (apiBaseUrl.includes('192.168')) {
+            this.addValidation('✅ Direct IP Configuration', 'Using direct server IP (no tunnel auth required)', 'success');
         } else if (apiBaseUrl.includes('localhost')) {
             this.addValidation('✅ Local Configuration', 'Using localhost for development', 'success');
         } else {
@@ -111,10 +110,9 @@ class APIConfigValidator {
     }
 
     async validateAPIConnectivity() {
+        // Using direct IP since localtunnel requires authentication
         const apiBaseUrl = window.location.hostname === 'localhost'
             ? 'http://localhost:8897'
-            : window.location.hostname.includes('github.io')
-            ? 'https://vanguard-insurance-api.loca.lt'
             : 'http://192.168.40.232:8897';
 
         for (const endpoint of this.expectedEndpoints) {
