@@ -2,7 +2,7 @@
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8897'
     : window.location.hostname.includes('github.io')
-    ? 'https://stars-blocking-molecules-ones.trycloudflare.com'
+    ? 'https://vanguard-api-fmcsa.loca.lt'
     : 'http://192.168.40.232:8897';
 
 const apiService = {
