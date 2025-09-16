@@ -2,13 +2,11 @@ services:
   - type: web
     name: vanguard-insurance
     runtime: python
-    buildCommand: "pip install -r requirements.txt"
-    startCommand: "uvicorn api_main:app --host 0.0.0.0 --port $PORT"
+    buildCommand: "pip install -r requirements_simple.txt"
+    startCommand: "python api_main_simple.py"
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
-      - key: DATABASE_URL
-        value: https://drive.google.com/uc?export=download&id=1rSi12hZkU8yNVmiRCVnL4ZfXcDfn5wHQ
       - key: DATABASE_PATH
         value: fmcsa_complete.db
     autoDeploy: true
