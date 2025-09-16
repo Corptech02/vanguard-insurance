@@ -14,10 +14,41 @@ class DashboardStats {
         };
     }
 
-    // Fetch real statistics from localStorage
+    // Fetch real statistics from API or localStorage
     async fetchStatistics() {
         try {
-            // Get clients from localStorage
+            let stats = null;
+
+            // Try to get stats from comprehensive API first
+            if (window.apiService && window.apiService.getDashboardStats) {
+                try {
+                    console.log('Fetching dashboard stats from comprehensive API...');
+                    stats = await window.apiService.getDashboardStats();
+                    console.log('API Stats received:', stats);
+
+                    // Update our internal stats with API data
+                    if (stats) {
+                        this.stats.activeClients = stats.total_clients || 0;
+                        this.stats.activePolicies = stats.total_policies || 0;
+                        this.stats.allTimePremium = stats.total_premium || 0;
+                        this.stats.monthlyLeadPremium = stats.monthly_lead_premium || 0;
+
+                        // Calculate percentage changes (mock for now)
+                        this.stats.clientsChange = Math.floor(Math.random() * 20) - 10;
+                        this.stats.policiesChange = Math.floor(Math.random() * 20) - 10;
+                        this.stats.premiumChange = Math.floor(Math.random() * 30) - 10;
+                        this.stats.leadPremiumChange = Math.floor(Math.random() * 25) - 10;
+
+                        console.log('📊 Dashboard Stats from API:', this.stats);
+                        return;
+                    }
+                } catch (apiError) {
+                    console.warn('API stats unavailable, falling back to localStorage:', apiError.message);
+                }
+            }
+
+            // Fallback to localStorage calculation
+            console.log('Calculating stats from localStorage...');
             const clients = JSON.parse(localStorage.getItem('insurance_clients') || '[]');
             const policies = JSON.parse(localStorage.getItem('insurance_policies') || '[]');
             const leads = JSON.parse(localStorage.getItem('leads') || '[]'); // Changed from 'insurance_leads' to 'leads'

@@ -1,9 +1,21 @@
-// API Service for connecting to FMCSA Database
+// API Service for comprehensive Vanguard Insurance API
+// Using direct IP since localtunnel requires authentication
 const API_BASE_URL = window.location.hostname === 'localhost'
     ? 'http://localhost:8897'
-    : window.location.hostname.includes('github.io')
-    ? 'https://vanguard-api-fmcsa.loca.lt'
     : 'http://192.168.40.232:8897';
+
+// Helper function to get auth headers
+function getAuthHeaders() {
+    const token = localStorage.getItem('authToken');
+    const headers = {
+        'Content-Type': 'application/json',
+        'ngrok-skip-browser-warning': 'true'
+    };
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+    return headers;
+}
 
 const apiService = {
     // Search carriers with filters
@@ -263,6 +275,340 @@ const apiService = {
             detailedError.diagnostics = debugInfo;
             detailedError.originalError = error;
             throw detailedError;
+        }
+    },
+
+    // Lead Management Functions
+    async getLeads() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/leads`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching leads:', error);
+            // Fallback to localStorage
+            return JSON.parse(localStorage.getItem('leads') || '[]');
+        }
+    },
+
+    async createLead(leadData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/leads`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(leadData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Also save to localStorage for offline support
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            localLeads.push(data);
+            localStorage.setItem('leads', JSON.stringify(localLeads));
+
+            return data;
+        } catch (error) {
+            console.error('Error creating lead:', error);
+            // Fallback to localStorage
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const newLead = {
+                id: `LEAD_${Date.now()}`,
+                ...leadData,
+                created: new Date().toLocaleDateString(),
+                createdAt: new Date().toISOString()
+            };
+            localLeads.push(newLead);
+            localStorage.setItem('leads', JSON.stringify(localLeads));
+            return newLead;
+        }
+    },
+
+    async updateLead(leadId, leadData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(leadData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Also update localStorage
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const index = localLeads.findIndex(lead => lead.id === leadId);
+            if (index !== -1) {
+                localLeads[index] = { ...localLeads[index], ...leadData };
+                localStorage.setItem('leads', JSON.stringify(localLeads));
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error updating lead:', error);
+            // Fallback to localStorage
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const index = localLeads.findIndex(lead => lead.id === leadId);
+            if (index !== -1) {
+                localLeads[index] = { ...localLeads[index], ...leadData };
+                localStorage.setItem('leads', JSON.stringify(localLeads));
+                return localLeads[index];
+            }
+            throw error;
+        }
+    },
+
+    async deleteLead(leadId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/leads/${leadId}`, {
+                method: 'DELETE',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            // Also remove from localStorage
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const filteredLeads = localLeads.filter(lead => lead.id !== leadId);
+            localStorage.setItem('leads', JSON.stringify(filteredLeads));
+
+            return { success: true };
+        } catch (error) {
+            console.error('Error deleting lead:', error);
+            // Fallback to localStorage
+            const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const filteredLeads = localLeads.filter(lead => lead.id !== leadId);
+            localStorage.setItem('leads', JSON.stringify(filteredLeads));
+            return { success: true };
+        }
+    },
+
+    // Policy Management Functions
+    async getPolicies() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/policies`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching policies:', error);
+            // Fallback to localStorage
+            return JSON.parse(localStorage.getItem('policies') || '[]');
+        }
+    },
+
+    async createPolicy(policyData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/policies`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(policyData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Also save to localStorage
+            const localPolicies = JSON.parse(localStorage.getItem('policies') || '[]');
+            localPolicies.push(data);
+            localStorage.setItem('policies', JSON.stringify(localPolicies));
+
+            return data;
+        } catch (error) {
+            console.error('Error creating policy:', error);
+            // Fallback to localStorage
+            const localPolicies = JSON.parse(localStorage.getItem('policies') || '[]');
+            const newPolicy = {
+                id: `POLICY_${Date.now()}`,
+                ...policyData,
+                created: new Date().toLocaleDateString(),
+                createdAt: new Date().toISOString()
+            };
+            localPolicies.push(newPolicy);
+            localStorage.setItem('policies', JSON.stringify(localPolicies));
+            return newPolicy;
+        }
+    },
+
+    async updatePolicy(policyId, policyData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/policies/${policyId}`, {
+                method: 'PUT',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(policyData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Also update localStorage
+            const localPolicies = JSON.parse(localStorage.getItem('policies') || '[]');
+            const index = localPolicies.findIndex(policy => policy.id === policyId);
+            if (index !== -1) {
+                localPolicies[index] = { ...localPolicies[index], ...policyData };
+                localStorage.setItem('policies', JSON.stringify(localPolicies));
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error updating policy:', error);
+            throw error;
+        }
+    },
+
+    // Reminders/Tasks Functions
+    async getReminders() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/reminders`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching reminders:', error);
+            // Fallback to localStorage
+            const personalTodos = JSON.parse(localStorage.getItem('personalTodos') || '[]');
+            const agencyTodos = JSON.parse(localStorage.getItem('agencyTodos') || '[]');
+            return [...personalTodos, ...agencyTodos];
+        }
+    },
+
+    async createReminder(reminderData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/reminders`, {
+                method: 'POST',
+                headers: getAuthHeaders(),
+                body: JSON.stringify(reminderData)
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error creating reminder:', error);
+            throw error;
+        }
+    },
+
+    // Authentication Functions
+    async login(username, password) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/users/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Login failed');
+            }
+
+            const data = await response.json();
+
+            // Store token and user info
+            localStorage.setItem('authToken', data.access_token);
+            localStorage.setItem('userInfo', JSON.stringify(data.user));
+
+            return data;
+        } catch (error) {
+            console.error('Error during login:', error);
+            throw error;
+        }
+    },
+
+    async register(userData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/users/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Registration failed');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Error during registration:', error);
+            throw error;
+        }
+    },
+
+    // Dashboard Statistics
+    async getDashboardStats() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/stats/dashboard`, {
+                method: 'GET',
+                headers: getAuthHeaders()
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching dashboard stats:', error);
+            // Fallback to calculating from localStorage
+            const leads = JSON.parse(localStorage.getItem('leads') || '[]');
+            const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+            const policies = JSON.parse(localStorage.getItem('policies') || '[]');
+
+            return {
+                total_leads: leads.length,
+                total_clients: clients.length,
+                total_policies: policies.length,
+                total_premium: policies.reduce((sum, policy) => sum + (parseFloat(policy.premium) || 0), 0),
+                monthly_lead_premium: leads.reduce((sum, lead) => sum + (parseFloat(lead.premium) || 0), 0)
+            };
         }
     }
 };

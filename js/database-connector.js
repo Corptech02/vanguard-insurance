@@ -47,42 +47,59 @@ window.addEventListener('DOMContentLoaded', function() {
             
             console.log('Sending request to API:', searchBody);
             
-            // Call API through the backend server
+            // Call API through the comprehensive API service
             let response;
+            let data;
+
             try {
-                // Use the actual backend server URL
-                const API_URL = window.location.hostname === 'localhost'
-                    ? 'http://localhost:8897/api/search'
-                    : window.location.hostname.includes('github.io')
-                    ? 'https://vanguard-insurance-api.loca.lt/api/search'
-                    : 'http://192.168.40.232:8897/api/search';
-                    
-                response = await fetch(API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'ngrok-skip-browser-warning': 'true'
-                    },
-                    body: JSON.stringify(searchBody)
-                });
+                // Use the new comprehensive API service
+                if (window.apiService && window.apiService.searchCarriers) {
+                    console.log('Using comprehensive API service for search');
+                    data = await window.apiService.searchCarriers({
+                        usdot: usdot,
+                        mc: mc,
+                        company: company,
+                        state: state,
+                        page: 1,
+                        limit: 100
+                    });
+
+                    // Convert API response format
+                    if (data.results) {
+                        data.carriers = data.results;
+                    }
+                } else {
+                    // Fallback to direct API call
+                    // Use direct IP for now since localtunnel requires authentication
+                    const API_URL = window.location.hostname === 'localhost'
+                        ? 'http://localhost:8897/api/search'
+                        : 'http://192.168.40.232:8897/api/search';
+
+                    response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'ngrok-skip-browser-warning': 'true'
+                        },
+                        body: JSON.stringify(searchBody)
+                    });
+
+                    if (response && response.ok) {
+                        data = await response.json();
+                    } else {
+                        throw new Error('API response not ok');
+                    }
+                }
             } catch (fetchError) {
-                console.log('API not available, using mock data');
-                // Fallback to mock data if API is not available
-                response = null;
+                console.log('Comprehensive API not available, using mock data:', fetchError.message);
+                data = null;
             }
             
-            let data;
-            
-            if (!response || !response.ok) {
+            if (!data || !data.carriers) {
                 console.log('API not available, generating mock data');
                 // Generate mock data based on search criteria
                 data = generateMockCarrierData(usdot, mc, company, state);
             } else {
-                data = await response.json();
-                // Map API response to expected format
-                if (data.results) {
-                    data.carriers = data.results;
-                }
                 console.log(`API returned ${data.carriers?.length || 0} carriers out of ${data.total}`);
             }
             
@@ -156,11 +173,30 @@ window.addEventListener('DOMContentLoaded', function() {
     // Load stats on page load
     async function loadStats() {
         try {
-            const response = await fetch('/api/stats/summary');
-            const stats = await response.json();
-            
+            let stats;
+
+            // Try to use the comprehensive API service first
+            if (window.apiService && window.apiService.getStats) {
+                console.log('Using comprehensive API service for stats');
+                stats = await window.apiService.getStats();
+            } else {
+                // Fallback to direct API call
+                const API_URL = window.location.hostname === 'localhost'
+                    ? 'http://localhost:8897/api/stats/summary'
+                    : window.location.hostname.includes('github.io')
+                    ? 'https://vanguard-insurance-api.loca.lt/api/stats/summary'
+                    : 'http://192.168.40.232:8897/api/stats/summary';
+
+                const response = await fetch(API_URL, {
+                    headers: {
+                        'ngrok-skip-browser-warning': 'true'
+                    }
+                });
+                stats = await response.json();
+            }
+
             console.log('Database Stats:', stats);
-            
+
             // Update stats display if on lead generation page
             if (window.location.hash === '#lead-generation') {
                 const statsContainer = document.querySelector('.lead-generation-stats');
@@ -192,6 +228,22 @@ window.addEventListener('DOMContentLoaded', function() {
             }
         } catch (error) {
             console.error('Failed to load stats:', error);
+
+            // Show offline status
+            if (window.location.hash === '#lead-generation') {
+                const statsContainer = document.querySelector('.lead-generation-stats');
+                if (statsContainer) {
+                    statsContainer.innerHTML = `
+                        <div style="background: #fef2f2; border: 1px solid #ef4444; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h4 style="margin: 0 0 0.5rem 0; color: #dc2626;">📊 Database Status</h4>
+                            <div style="text-align: center;">
+                                <span style="font-size: 1.2rem; color: #dc2626;">⚠️ API Offline - Using Mock Data</span>
+                                <br><small>Real-time statistics unavailable</small>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
         }
     }
     

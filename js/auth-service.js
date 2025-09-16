@@ -1,9 +1,11 @@
 // Authentication Service for Vanguard Insurance
 const authService = {
-    // API URLs
-    AUTH_API_URL: window.location.hostname === 'localhost' 
-        ? 'http://localhost:8881'
-        : 'https://0ef6f73c45be.ngrok-free.app',  // Using same ngrok for now
+    // API URLs - Updated to use comprehensive API
+    AUTH_API_URL: window.location.hostname === 'localhost'
+        ? 'http://localhost:8897'
+        : window.location.hostname.includes('github.io')
+        ? 'https://vanguard-insurance-api.loca.lt'
+        : 'http://192.168.40.232:8897'
     
     // Check if user is authenticated
     isAuthenticated() {
@@ -42,49 +44,72 @@ const authService = {
     
     // Login
     async login(username, password) {
-        const formData = new FormData();
-        formData.append('username', username);
-        formData.append('password', password);
-        
-        const response = await fetch(`${this.AUTH_API_URL}/auth/token`, {
-            method: 'POST',
-            body: formData
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Login failed');
+        try {
+            // Use the new API service for login
+            if (window.apiService && window.apiService.login) {
+                return await window.apiService.login(username, password);
+            }
+
+            // Fallback to direct API call
+            const response = await fetch(`${this.AUTH_API_URL}/api/users/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Login failed');
+            }
+
+            const data = await response.json();
+
+            // Store token and user info
+            localStorage.setItem('authToken', data.access_token || data.token);
+            const userInfo = {
+                ...(data.user || data.user_info || {}),
+                loginTime: Date.now()
+            };
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+            return data;
+        } catch (error) {
+            console.error('Login error:', error);
+            throw error;
         }
-        
-        const data = await response.json();
-        
-        // Store token and user info
-        localStorage.setItem('authToken', data.access_token);
-        const userInfo = {
-            ...data.user_info,
-            loginTime: Date.now()
-        };
-        localStorage.setItem('userInfo', JSON.stringify(userInfo));
-        
-        return data;
     },
     
     // Register
     async register(userData) {
-        const response = await fetch(`${this.AUTH_API_URL}/auth/register`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(userData)
-        });
-        
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.detail || 'Registration failed');
+        try {
+            // Use the new API service for registration
+            if (window.apiService && window.apiService.register) {
+                return await window.apiService.register(userData);
+            }
+
+            // Fallback to direct API call
+            const response = await fetch(`${this.AUTH_API_URL}/api/users/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                },
+                body: JSON.stringify(userData)
+            });
+
+            if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.detail || 'Registration failed');
+            }
+
+            return await response.json();
+        } catch (error) {
+            console.error('Registration error:', error);
+            throw error;
         }
-        
-        return await response.json();
     },
     
     // Logout
@@ -259,45 +284,53 @@ const authService = {
     async migrateLocalData() {
         const user = this.getCurrentUser();
         if (!user) return;
-        
+
         try {
             // Get local data
             const localLeads = JSON.parse(localStorage.getItem('leads') || '[]');
             const localClients = JSON.parse(localStorage.getItem('clients') || '[]');
             const localPolicies = JSON.parse(localStorage.getItem('policies') || '[]');
-            
+
             // Only migrate if there's data
             if (localLeads.length || localClients.length || localPolicies.length) {
-                console.log('Migrating local data to server...');
-                
-                // Use CRM API to save data
-                const CRM_API = window.location.hostname === 'localhost'
-                    ? 'http://localhost:8880'
-                    : 'https://0ef6f73c45be.ngrok-free.app';
-                
+                console.log('Migrating local data to comprehensive API server...');
+
                 const headers = {
                     'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true',
                     ...this.getAuthHeaders()
                 };
-                
-                // Migrate leads
-                for (const lead of localLeads) {
-                    await fetch(`${CRM_API}/api/leads`, {
-                        method: 'POST',
-                        headers,
-                        body: JSON.stringify({
-                            ...lead,
-                            assigned_to: user.id
-                        })
-                    });
+
+                // Migrate leads using the new API service
+                if (window.apiService) {
+                    for (const lead of localLeads) {
+                        try {
+                            await window.apiService.createLead({
+                                ...lead,
+                                assigned_to: user.id
+                            });
+                        } catch (error) {
+                            console.warn('Failed to migrate lead:', lead.id, error);
+                        }
+                    }
+
+                    // Migrate policies
+                    for (const policy of localPolicies) {
+                        try {
+                            await window.apiService.createPolicy({
+                                ...policy,
+                                user_id: user.id
+                            });
+                        } catch (error) {
+                            console.warn('Failed to migrate policy:', policy.id, error);
+                        }
+                    }
                 }
-                
-                // Clear local storage after successful migration
-                localStorage.removeItem('leads');
-                localStorage.removeItem('clients');
-                localStorage.removeItem('policies');
-                
+
                 console.log('Data migration completed');
+
+                // Mark data as migrated but don't remove immediately
+                localStorage.setItem('dataMigrated', 'true');
             }
         } catch (error) {
             console.error('Data migration failed:', error);
