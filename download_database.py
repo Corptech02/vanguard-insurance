@@ -6,8 +6,13 @@ This script is used during deployment to fetch the large database file.
 
 import os
 import sys
-import urllib.request
 import hashlib
+import sqlite3
+try:
+    import requests
+except ImportError:
+    print("Warning: requests library not available, using urllib instead")
+    requests = None
 
 # Database configuration
 DB_NAME = "fmcsa_complete.db"
@@ -33,7 +38,6 @@ def download_database():
         print("⚠ DATABASE_URL environment variable not set")
         print("  Creating empty database for development...")
         # Create empty SQLite database for development
-        import sqlite3
         conn = sqlite3.connect(DB_NAME)
         conn.execute("""
             CREATE TABLE IF NOT EXISTS carriers (
@@ -62,37 +66,47 @@ def download_database():
     print(f"From: {DB_URL}")
 
     try:
-        # Use requests for better Google Drive handling
-        import requests
+        if requests:
+            # Use requests for better Google Drive handling
+            session = requests.Session()
+            response = session.get(DB_URL, stream=True)
 
-        # Handle Google Drive large file warning
-        session = requests.Session()
-        response = session.get(DB_URL, stream=True)
+            # Check if we got the warning page
+            if 'download_warning' in response.headers.get('Set-Cookie', ''):
+                # Extract confirmation token
+                for key, value in response.cookies.items():
+                    if key.startswith('download_warning'):
+                        params = {'confirm': value}
+                        response = session.get(DB_URL, params=params, stream=True)
+                        break
 
-        # Check if we got the warning page
-        if 'download_warning' in response.headers.get('Set-Cookie', ''):
-            # Extract confirmation token
-            for key, value in response.cookies.items():
-                if key.startswith('download_warning'):
-                    params = {'confirm': value}
-                    response = session.get(DB_URL, params=params, stream=True)
-                    break
+            # Download the file
+            total_size = int(response.headers.get('content-length', 0))
+            block_size = 8192
+            downloaded = 0
 
-        # Download the file
-        total_size = int(response.headers.get('content-length', 0))
-        block_size = 8192
-        downloaded = 0
+            with open(DB_NAME, 'wb') as f:
+                for data in response.iter_content(block_size):
+                    downloaded += len(data)
+                    f.write(data)
+                    if total_size > 0:
+                        percent = min(downloaded * 100 / total_size, 100)
+                        mb_downloaded = downloaded / (1024 * 1024)
+                        mb_total = total_size / (1024 * 1024)
+                        sys.stdout.write(f'\rProgress: {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)')
+                        sys.stdout.flush()
+        else:
+            # Fallback to urllib
+            import urllib.request
+            def download_progress(block_num, block_size, total_size):
+                downloaded = block_num * block_size
+                percent = min(downloaded * 100 / total_size, 100) if total_size > 0 else 0
+                mb_downloaded = downloaded / (1024 * 1024)
+                mb_total = total_size / (1024 * 1024) if total_size > 0 else 0
+                sys.stdout.write(f'\rProgress: {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)')
+                sys.stdout.flush()
 
-        with open(DB_NAME, 'wb') as f:
-            for data in response.iter_content(block_size):
-                downloaded += len(data)
-                f.write(data)
-                if total_size > 0:
-                    percent = min(downloaded * 100 / total_size, 100)
-                    mb_downloaded = downloaded / (1024 * 1024)
-                    mb_total = total_size / (1024 * 1024)
-                    sys.stdout.write(f'\rProgress: {percent:.1f}% ({mb_downloaded:.1f}/{mb_total:.1f} MB)')
-                    sys.stdout.flush()
+            urllib.request.urlretrieve(DB_URL, DB_NAME, download_progress)
 
         print("\n✓ Database downloaded successfully")
 
