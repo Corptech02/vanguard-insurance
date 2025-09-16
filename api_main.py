@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """
-Minimal FastAPI app for Render deployment
+Vanguard Insurance API with REAL database connection
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime, timedelta
-import random
+import sqlite3
+import os
+import json
 
 app = FastAPI(title="Vanguard Insurance API")
 
@@ -45,8 +47,7 @@ from fastapi import Request
 @app.post("/api/search")
 async def search_carriers(request: Request):
     """
-    Search endpoint that returns mock carrier data for now.
-    Will be connected to real database later.
+    Search endpoint that queries the REAL 2.2M carrier database
     """
     # Parse request body
     try:
@@ -54,65 +55,197 @@ async def search_carriers(request: Request):
     except:
         body = {}
 
-    # Generate mock carrier data
+    # Get search parameters
+    page = body.get('page', 1)
+    per_page = body.get('per_page', 100)
+    usdot = body.get('usdot_number', '')
+    mc = body.get('mc_number', '')
+    company = body.get('legal_name', '')
+    state = body.get('state', '')
+
+    # Database path - check if exists, otherwise create empty
+    db_path = 'fmcsa_complete.db'
+    if not os.path.exists(db_path):
+        # Create empty database with schema
+        conn = sqlite3.connect(db_path)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS carriers (
+                dot_number TEXT PRIMARY KEY,
+                legal_name TEXT,
+                dba_name TEXT,
+                street TEXT,
+                city TEXT,
+                state TEXT,
+                zip_code TEXT,
+                phone TEXT,
+                email_address TEXT,
+                power_units INTEGER,
+                drivers INTEGER,
+                insurance_carrier TEXT,
+                bipd_insurance_on_file_amount TEXT,
+                policy_renewal_date DATE
+            )
+        """)
+        conn.commit()
+        conn.close()
+
+    # Connect to database
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    # Build query
+    query = "SELECT * FROM carriers WHERE 1=1"
+    params = []
+
+    if usdot:
+        query += " AND dot_number LIKE ?"
+        params.append(f"%{usdot}%")
+
+    if mc:
+        query += " AND mc_number LIKE ?"
+        params.append(f"%{mc}%")
+
+    if company:
+        query += " AND (legal_name LIKE ? OR dba_name LIKE ?)"
+        params.append(f"%{company}%")
+        params.append(f"%{company}%")
+
+    if state:
+        query += " AND state = ?"
+        params.append(state.upper())
+
+    # Add pagination
+    offset = (page - 1) * per_page
+    query += f" LIMIT {per_page} OFFSET {offset}"
+
+    # Execute query
+    cursor.execute(query, params)
+    rows = cursor.fetchall()
+
+    # Get total count
+    count_query = "SELECT COUNT(*) FROM carriers WHERE 1=1"
+    count_params = []
+
+    if usdot:
+        count_query += " AND dot_number LIKE ?"
+        count_params.append(f"%{usdot}%")
+
+    if mc:
+        count_query += " AND mc_number LIKE ?"
+        count_params.append(f"%{mc}%")
+
+    if company:
+        count_query += " AND (legal_name LIKE ? OR dba_name LIKE ?)"
+        count_params.append(f"%{company}%")
+        count_params.append(f"%{company}%")
+
+    if state:
+        count_query += " AND state = ?"
+        count_params.append(state.upper())
+
+    cursor.execute(count_query, count_params)
+    total_count = cursor.fetchone()[0]
+
+    # Convert rows to list of dicts
     carriers = []
-    insurance_companies = [
-        "Progressive", "State Farm", "GEICO", "Allstate", "Liberty Mutual",
-        "Farmers", "Nationwide", "Travelers", "American Family", "USAA"
-    ]
+    for row in rows:
+        carrier = dict(row)
+        # Map database fields to expected frontend fields
+        carrier['physical_address'] = carrier.get('street', '')
+        carrier['physical_city'] = carrier.get('city', '')
+        carrier['physical_state'] = carrier.get('state', '')
+        carrier['physical_zip'] = carrier.get('zip_code', '')
+        carrier['insurance_company'] = carrier.get('insurance_carrier', '')
+        carrier['coverage_amount'] = carrier.get('bipd_insurance_on_file_amount', '')
+        carrier['insurance_expiry_date'] = carrier.get('policy_renewal_date', '')
+        carrier['insurance_expiry'] = carrier.get('policy_renewal_date', '')
 
-    states = ["TX", "FL", "CA", "NY", "IL", "PA", "OH", "GA", "NC", "MI"]
+        # Calculate days until expiry if date exists
+        if carrier.get('policy_renewal_date'):
+            try:
+                expiry = datetime.strptime(carrier['policy_renewal_date'], '%Y-%m-%d')
+                days_until = (expiry - datetime.now()).days
+                carrier['days_until_expiry'] = days_until
+            except:
+                carrier['days_until_expiry'] = None
+        else:
+            carrier['days_until_expiry'] = None
 
-    # Generate 10-50 mock results
-    num_results = random.randint(10, 50)
-
-    for i in range(num_results):
-        # Generate random dates for insurance expiry
-        days_until_expiry = random.randint(1, 90)
-        expiry_date = datetime.now() + timedelta(days=days_until_expiry)
-
-        carrier = {
-            "dot_number": str(random.randint(1000000, 9999999)),
-            "legal_name": f"Sample Carrier {i+1} LLC",
-            "dba_name": f"Carrier {i+1}",
-            "physical_address": f"{random.randint(100, 9999)} Main St",
-            "physical_city": f"City {i+1}",
-            "physical_state": random.choice(states),
-            "physical_zip": str(random.randint(10000, 99999)),
-            "phone": f"({random.randint(200, 999)}) {random.randint(100, 999)}-{random.randint(1000, 9999)}",
-            "email": f"contact{i+1}@carrier.com",
-            "mc_number": str(random.randint(100000, 999999)),
-            "power_units": random.randint(1, 100),
-            "drivers": random.randint(1, 50),
-            "insurance_company": random.choice(insurance_companies),
-            "coverage_amount": f"${random.randint(750, 2000) * 1000:,}",
-            "policy_renewal_date": expiry_date.strftime("%Y-%m-%d"),
-            "days_until_expiry": days_until_expiry,
-            "insurance_expiry_date": expiry_date.strftime("%Y-%m-%d"),
-            "insurance_expiry": expiry_date.strftime("%Y-%m-%d")
-        }
         carriers.append(carrier)
 
-    # Sort by days until expiry
-    carriers.sort(key=lambda x: x['days_until_expiry'])
+    conn.close()
 
     return {
         "success": True,
         "data": carriers,
-        "total": len(carriers),
-        "page": 1,
-        "message": "Mock data - Database connection pending"
+        "total": total_count,
+        "page": page,
+        "message": f"Real database - {total_count} carriers found"
     }
 
 @app.get("/api/stats/summary")
 async def get_stats():
-    """Return mock statistics for dashboard"""
+    """Return REAL statistics from database"""
+    db_path = 'fmcsa_complete.db'
+
+    # Default stats if no database
+    if not os.path.exists(db_path):
+        return {
+            "total_carriers": 0,
+            "carriers_with_insurance": 0,
+            "expiring_30_days": 0,
+            "expiring_60_days": 0,
+            "expiring_90_days": 0,
+            "last_updated": datetime.now().isoformat()
+        }
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # Get total carriers
+    cursor.execute("SELECT COUNT(*) FROM carriers")
+    total_carriers = cursor.fetchone()[0]
+
+    # Get carriers with insurance
+    cursor.execute("SELECT COUNT(*) FROM carriers WHERE insurance_carrier IS NOT NULL AND insurance_carrier != ''")
+    carriers_with_insurance = cursor.fetchone()[0]
+
+    # Get expiring counts
+    today = datetime.now().strftime('%Y-%m-%d')
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM carriers
+        WHERE policy_renewal_date IS NOT NULL
+        AND policy_renewal_date != ''
+        AND julianday(policy_renewal_date) - julianday(?) BETWEEN 0 AND 30
+    """, (today,))
+    expiring_30_days = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM carriers
+        WHERE policy_renewal_date IS NOT NULL
+        AND policy_renewal_date != ''
+        AND julianday(policy_renewal_date) - julianday(?) BETWEEN 0 AND 60
+    """, (today,))
+    expiring_60_days = cursor.fetchone()[0]
+
+    cursor.execute("""
+        SELECT COUNT(*) FROM carriers
+        WHERE policy_renewal_date IS NOT NULL
+        AND policy_renewal_date != ''
+        AND julianday(policy_renewal_date) - julianday(?) BETWEEN 0 AND 90
+    """, (today,))
+    expiring_90_days = cursor.fetchone()[0]
+
+    conn.close()
+
     return {
-        "total_carriers": 2200000,
-        "carriers_with_insurance": 1850000,
-        "expiring_30_days": 45678,
-        "expiring_60_days": 89012,
-        "expiring_90_days": 134567,
+        "total_carriers": total_carriers,
+        "carriers_with_insurance": carriers_with_insurance,
+        "expiring_30_days": expiring_30_days,
+        "expiring_60_days": expiring_60_days,
+        "expiring_90_days": expiring_90_days,
         "last_updated": datetime.now().isoformat()
     }
 
