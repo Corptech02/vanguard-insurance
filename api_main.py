@@ -165,14 +165,19 @@ async def search_carriers(request: Request):
     for row in rows:
         carrier = dict(row)
         # Map database fields to expected frontend fields
+        carrier['usdot_number'] = carrier.get('dot_number', '')
         carrier['physical_address'] = carrier.get('street', '')
         carrier['physical_city'] = carrier.get('city', '')
         carrier['physical_state'] = carrier.get('state', '')
         carrier['physical_zip'] = carrier.get('zip_code', '')
+        carrier['location'] = f"{carrier.get('city', '')}, {carrier.get('state', '')}"
         carrier['insurance_company'] = carrier.get('insurance_carrier', '')
         carrier['coverage_amount'] = carrier.get('bipd_insurance_on_file_amount', '')
         carrier['insurance_expiry_date'] = carrier.get('policy_renewal_date', '')
         carrier['insurance_expiry'] = carrier.get('policy_renewal_date', '')
+        carrier['expiry'] = carrier.get('policy_renewal_date', 'N/A')
+        carrier['fleet'] = carrier.get('power_units', 0)
+        carrier['status'] = 'Active' if carrier.get('insurance_carrier') else 'No Insurance'
 
         # Calculate days until expiry if date exists
         if carrier.get('policy_renewal_date'):
@@ -191,7 +196,8 @@ async def search_carriers(request: Request):
 
     return {
         "success": True,
-        "data": carriers,
+        "carriers": carriers,  # Changed from "data" to "carriers"
+        "data": carriers,  # Keep for backwards compatibility
         "total": total_count,
         "page": page,
         "message": f"Real database - {total_count} carriers found"
