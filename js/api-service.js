@@ -13,6 +13,11 @@ const getAPIBaseURL = () => {
         return 'http://localhost:8897';
     }
 
+    // Use vigagency.com subdomain if on that domain
+    if (window.location.hostname === 'vanguard.vigagency.com') {
+        return 'https://api.vigagency.com';
+    }
+
     // Try public IP if accessible
     if (window.location.hostname === '72.23.167.167') {
         return 'http://72.23.167.167:8897';

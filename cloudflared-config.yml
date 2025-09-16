@@ -1,0 +1,18 @@
+tunnel: 7b2f846a-8030-4cb9-91d3-db51a1fd85d5
+credentials-file: /etc/cloudflared/7b2f846a-8030-4cb9-91d3-db51a1fd85d5.json
+
+ingress:
+  # Vanguard Insurance System
+  - hostname: vanguard.vigagency.com
+    service: http://localhost:80
+  - hostname: api.vigagency.com
+    service: http://localhost:8897
+
+  # Original vigagency.com site
+  - hostname: vigagency.com
+    service: http://localhost:80
+  - hostname: www.vigagency.com
+    service: http://localhost:80
+
+  # Catch-all
+  - service: http_status:404
