@@ -3,6 +3,5 @@ uvicorn==0.24.0
 python-multipart==0.0.6
 aiofiles==23.2.1
 requests==2.31.0
-urllib3==1.26.18
 httpx==0.25.2
 pydantic==2.5.2

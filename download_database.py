@@ -8,6 +8,8 @@ import os
 import sys
 import hashlib
 import sqlite3
+import urllib.request
+
 try:
     import requests
 except ImportError:
@@ -97,7 +99,6 @@ def download_database():
                         sys.stdout.flush()
         else:
             # Fallback to urllib
-            import urllib.request
             def download_progress(block_num, block_size, total_size):
                 downloaded = block_num * block_size
                 percent = min(downloaded * 100 / total_size, 100) if total_size > 0 else 0
