@@ -2,9 +2,9 @@ services:
   - type: web
     name: vanguard-insurance
     runtime: python
-    buildCommand: "echo 'No build needed'"
+    buildCommand: "pip install --no-deps -r requirements.txt"
     startCommand: "python app.py"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.10.0
+        value: 3.11.0
     autoDeploy: true

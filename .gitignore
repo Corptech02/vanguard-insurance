@@ -49,3 +49,8 @@ uploaded_files/
 # Temporary files
 *.tmp
 .temp/
+
+# Old requirements files (not used)
+requirements_old.txt
+requirements_simple.txt
+requirements_minimal.txt
