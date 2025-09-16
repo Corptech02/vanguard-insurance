@@ -1,8 +1,44 @@
 // API Service for comprehensive Vanguard Insurance API
-// Using direct IP since localtunnel requires authentication
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:8897'
-    : 'http://192.168.40.232:8897';
+// Dynamic API URL configuration
+const getAPIBaseURL = () => {
+    // Check for manually set API URL first
+    const customAPI = localStorage.getItem('VANGUARD_API_URL');
+    if (customAPI) {
+        console.log('Using custom API URL:', customAPI);
+        return customAPI;
+    }
+
+    // Default URLs
+    if (window.location.hostname === 'localhost') {
+        return 'http://localhost:8897';
+    }
+
+    // For GitHub Pages, try to use a tunnel if available
+    if (window.location.protocol === 'https:') {
+        // Show setup instructions if no custom URL is set
+        if (!sessionStorage.getItem('api_warning_shown')) {
+            sessionStorage.setItem('api_warning_shown', 'true');
+            console.warn(`
+⚠️ DATABASE CONNECTION REQUIRED
+================================
+To connect to the 2.2M carrier database:
+
+1. Ask your admin for the current API tunnel URL
+2. Set it using: localStorage.setItem('VANGUARD_API_URL', 'https://your-tunnel-url')
+3. Refresh the page
+
+Or access from the local network at: http://192.168.40.232
+            `);
+        }
+        // Return a placeholder that will fail gracefully
+        return 'https://api-not-configured';
+    }
+
+    return 'http://192.168.40.232:8897';
+};
+
+const API_BASE_URL = getAPIBaseURL();
+console.log('API Service using:', API_BASE_URL);
 
 // Helper function to get auth headers
 function getAuthHeaders() {
