@@ -48,8 +48,43 @@ DB_PATH = os.environ.get('DATABASE_PATH', 'fmcsa_complete.db')
 
 # Ensure database is downloaded on startup
 if not os.path.exists(DB_PATH):
-    import subprocess
-    subprocess.run([sys.executable, 'download_database.py'], check=False)
+    logger.info(f"Database {DB_PATH} not found, attempting to download...")
+    try:
+        result = subprocess.run([sys.executable, 'download_database.py'],
+                              capture_output=True, text=True, check=True)
+        logger.info("Database download output:")
+        logger.info(result.stdout)
+        if result.stderr:
+            logger.warning(f"Download stderr: {result.stderr}")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"Failed to download database: {e}")
+        logger.error(f"stdout: {e.stdout}")
+        logger.error(f"stderr: {e.stderr}")
+        # Create empty database so app can at least start
+        logger.info("Creating empty database for app to start...")
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS carriers (
+                dot_number TEXT PRIMARY KEY,
+                legal_name TEXT,
+                dba_name TEXT,
+                street TEXT,
+                city TEXT,
+                state TEXT,
+                zip_code TEXT,
+                phone TEXT,
+                email_address TEXT,
+                power_units INTEGER,
+                drivers INTEGER,
+                insurance_carrier TEXT,
+                bipd_insurance_on_file_amount TEXT,
+                policy_renewal_date DATE
+            )
+        """)
+        conn.commit()
+        conn.close()
+        logger.info("Empty database created")
 
 @app.get("/")
 async def root():
