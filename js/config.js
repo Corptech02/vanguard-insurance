@@ -1,10 +1,9 @@
 // API Configuration
 const API_CONFIG = {
-    // Change this to your Render backend URL after deployment
-    // Example: 'https://insurance-leads-api.onrender.com'
-    API_BASE_URL: window.location.hostname === 'localhost' 
-        ? 'http://localhost:8898' 
-        : 'https://insurance-leads-api.onrender.com',
+    // Using Render backend URL for production
+    API_BASE_URL: window.location.hostname === 'localhost'
+        ? 'http://localhost:8897'
+        : 'https://vanguard-insurance.onrender.com',
     
     // API endpoints
     ENDPOINTS: {

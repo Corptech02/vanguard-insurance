@@ -242,6 +242,37 @@
         <h1>📤 Vanguard File Upload Portal</h1>
         <p class="subtitle">Upload insurance data, CSV files, or any documents to the server</p>
 
+        <!-- Download Section -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 15px; margin-bottom: 30px;">
+            <h2 style="color: white; margin-bottom: 20px;">🚀 Cloud Deployment Files</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <a href="/fmcsa_complete.db" download="fmcsa_complete.db"
+                   style="background: white; color: #667eea; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 600; transition: transform 0.3s;"
+                   onmouseover="this.style.transform='scale(1.05)'"
+                   onmouseout="this.style.transform='scale(1)'">
+                    🗄️ Download Database<br>
+                    <small style="color: #666; font-weight: normal;">521MB - FMCSA Data</small>
+                </a>
+                <a href="/insurance_leads_api.py" download="insurance_leads_api.py"
+                   style="background: white; color: #667eea; padding: 15px; border-radius: 10px; text-decoration: none; text-align: center; font-weight: 600; transition: transform 0.3s;"
+                   onmouseover="this.style.transform='scale(1.05)'"
+                   onmouseout="this.style.transform='scale(1)'">
+                    🐍 Download API Module<br>
+                    <small style="color: #666; font-weight: normal;">45KB - Lead Generation</small>
+                </a>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 10px; margin-top: 20px; color: white;">
+                <strong>📋 Deployment Steps:</strong>
+                <ol style="margin-top: 10px; margin-left: 20px;">
+                    <li>Download the database file</li>
+                    <li>Upload to Google Drive</li>
+                    <li>Make it public (Anyone with link)</li>
+                    <li>Convert URL format for direct download</li>
+                    <li>Add to Render environment variables</li>
+                </ol>
+            </div>
+        </div>
+
         <div class="upload-area" id="uploadArea">
             <div class="upload-icon">📁</div>
             <div class="upload-text">Drag & drop files here or click to browse</div>
