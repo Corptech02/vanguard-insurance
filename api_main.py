@@ -40,14 +40,19 @@ async def test():
         "database": "Not connected (deployment test mode)"
     }
 
+from fastapi import Request
+
 @app.post("/api/search")
-async def search_carriers(request: dict):
+async def search_carriers(request: Request):
     """
     Search endpoint that returns mock carrier data for now.
     Will be connected to real database later.
     """
-    import random
-    from datetime import datetime, timedelta
+    # Parse request body
+    try:
+        body = await request.json()
+    except:
+        body = {}
 
     # Generate mock carrier data
     carriers = []
@@ -116,6 +121,19 @@ async def get_expiring_leads(days: int = 30, limit: int = 100, state: str = None
     """Get carriers with expiring insurance"""
     # For now, return empty array
     return []
+
+@app.get("/api/all-data")
+async def get_all_data():
+    """Return all data for sync - mock implementation"""
+    return {
+        "clients": [],
+        "policies": [],
+        "quotes": [],
+        "notes": [],
+        "reminders": [],
+        "emails": [],
+        "documents": []
+    }
 
 if __name__ == "__main__":
     import uvicorn
