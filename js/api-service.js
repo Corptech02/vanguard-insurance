@@ -23,26 +23,14 @@ const getAPIBaseURL = () => {
         return 'http://72.23.167.167:8897';
     }
 
-    // For GitHub Pages, try to use a tunnel if available
+    // For GitHub Pages, use the api.vigagency.com endpoint
+    if (window.location.hostname.includes('github.io')) {
+        return 'https://api.vigagency.com';
+    }
+
+    // For other HTTPS sites, try to use api.vigagency.com as well
     if (window.location.protocol === 'https:') {
-        // Show setup instructions if no custom URL is set
-        if (!sessionStorage.getItem('api_warning_shown')) {
-            sessionStorage.setItem('api_warning_shown', 'true');
-            console.warn(`
-⚠️ DATABASE CONNECTION REQUIRED
-================================
-To connect to the 2.2M carrier database:
-
-Option 1: Access the HTTP version directly:
-http://72.23.167.167:8989
-
-Option 2: Set a custom API URL:
-localStorage.setItem('VANGUARD_API_URL', 'https://your-tunnel-url')
-Then refresh the page
-            `);
-        }
-        // Return a placeholder that will fail gracefully
-        return 'https://api-not-configured';
+        return 'https://api.vigagency.com';
     }
 
     return 'http://192.168.40.232:8897';
