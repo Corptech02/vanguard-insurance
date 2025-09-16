@@ -1,1 +1,2 @@
-# Empty requirements file - using Python standard library only
+fastapi
+uvicorn[standard]
