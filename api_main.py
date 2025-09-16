@@ -9,6 +9,19 @@ from datetime import datetime, timedelta
 import sqlite3
 import os
 import json
+import subprocess
+import sys
+
+# Setup database on startup
+try:
+    result = subprocess.run([sys.executable, 'setup_database.py'],
+                          capture_output=True, text=True, timeout=300)
+    print("Database setup output:")
+    print(result.stdout)
+    if result.stderr:
+        print("Setup errors:", result.stderr)
+except Exception as e:
+    print(f"Database setup failed: {e}")
 
 app = FastAPI(title="Vanguard Insurance API")
 
