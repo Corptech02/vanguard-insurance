@@ -57,15 +57,32 @@ class APIConfigValidator {
     }
 
     validateEndpointConfiguration() {
-        // Using direct IP since localtunnel requires authentication
-        const apiBaseUrl = window.location.hostname === 'localhost'
-            ? 'http://localhost:8897'
-            : 'http://192.168.40.232:8897';
+        // Use the same logic as api-service.js to get the API URL
+        const getAPIBaseURL = () => {
+            const customAPI = localStorage.getItem('VANGUARD_API_URL');
+            if (customAPI) {
+                return customAPI;
+            }
+            if (window.location.hostname === 'vanguard.vigagency.com') {
+                return 'https://api.vigagency.com';
+            }
+            if (window.location.hostname === 'localhost') {
+                return 'http://localhost:8897';
+            }
+            if (window.location.hostname.includes('github.io')) {
+                return 'https://api.vigagency.com';
+            }
+            return 'http://192.168.40.232:8897';
+        };
+
+        const apiBaseUrl = getAPIBaseURL();
 
         this.addValidation('✅ API Base URL', apiBaseUrl, 'info');
 
         // Validate endpoint configuration
-        if (apiBaseUrl.includes('192.168')) {
+        if (apiBaseUrl.includes('api.vigagency.com')) {
+            this.addValidation('✅ Cloudflare Configuration', 'Using secure HTTPS API via Cloudflare', 'success');
+        } else if (apiBaseUrl.includes('192.168')) {
             this.addValidation('✅ Direct IP Configuration', 'Using direct server IP (no tunnel auth required)', 'success');
         } else if (apiBaseUrl.includes('localhost')) {
             this.addValidation('✅ Local Configuration', 'Using localhost for development', 'success');
@@ -110,10 +127,25 @@ class APIConfigValidator {
     }
 
     async validateAPIConnectivity() {
-        // Using direct IP since localtunnel requires authentication
-        const apiBaseUrl = window.location.hostname === 'localhost'
-            ? 'http://localhost:8897'
-            : 'http://192.168.40.232:8897';
+        // Use the same logic as api-service.js to get the API URL
+        const getAPIBaseURL = () => {
+            const customAPI = localStorage.getItem('VANGUARD_API_URL');
+            if (customAPI) {
+                return customAPI;
+            }
+            if (window.location.hostname === 'vanguard.vigagency.com') {
+                return 'https://api.vigagency.com';
+            }
+            if (window.location.hostname === 'localhost') {
+                return 'http://localhost:8897';
+            }
+            if (window.location.hostname.includes('github.io')) {
+                return 'https://api.vigagency.com';
+            }
+            return 'http://192.168.40.232:8897';
+        };
+
+        const apiBaseUrl = getAPIBaseURL();
 
         for (const endpoint of this.expectedEndpoints) {
             try {
