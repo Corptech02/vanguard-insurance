@@ -54,7 +54,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 const API_URL = window.location.hostname === 'localhost'
                     ? 'http://localhost:8897/api/search'
                     : window.location.hostname.includes('github.io')
-                    ? 'https://vanguard-insurance.onrender.com/api/search'
+                    ? 'https://vanguard-insurance-api.loca.lt/api/search'
                     : 'http://192.168.40.232:8897/api/search';
                     
                 response = await fetch(API_URL, {
