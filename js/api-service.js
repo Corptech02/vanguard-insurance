@@ -13,6 +13,11 @@ const getAPIBaseURL = () => {
         return 'http://localhost:8897';
     }
 
+    // Try public IP if accessible
+    if (window.location.hostname === '72.23.167.167') {
+        return 'http://72.23.167.167:8897';
+    }
+
     // For GitHub Pages, try to use a tunnel if available
     if (window.location.protocol === 'https:') {
         // Show setup instructions if no custom URL is set
@@ -23,11 +28,12 @@ const getAPIBaseURL = () => {
 ================================
 To connect to the 2.2M carrier database:
 
-1. Ask your admin for the current API tunnel URL
-2. Set it using: localStorage.setItem('VANGUARD_API_URL', 'https://your-tunnel-url')
-3. Refresh the page
+Option 1: Access the HTTP version directly:
+http://72.23.167.167:8989
 
-Or access from the local network at: http://192.168.40.232
+Option 2: Set a custom API URL:
+localStorage.setItem('VANGUARD_API_URL', 'https://your-tunnel-url')
+Then refresh the page
             `);
         }
         // Return a placeholder that will fail gracefully
