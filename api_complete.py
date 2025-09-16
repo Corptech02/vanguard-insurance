@@ -4,7 +4,7 @@ Vanguard Insurance Complete API
 Handles all data operations for the comprehensive system
 """
 
-from fastapi import FastAPI, HTTPException, Request, Query, Depends
+from fastapi import FastAPI, HTTPException, Request, Query, Depends, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
@@ -15,6 +15,9 @@ import json
 import uvicorn
 import hashlib
 import secrets
+import os
+import shutil
+from pathlib import Path
 from contextlib import contextmanager
 
 # Initialize FastAPI app
@@ -606,6 +609,40 @@ def log_activity(table_name: str, action: str, record_id: str,
         ))
 
         conn.commit()
+
+# ==================== FILE UPLOAD ====================
+
+UPLOAD_DIR = Path("/home/corp06/uploaded_files")
+UPLOAD_DIR.mkdir(exist_ok=True)
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...)):
+    """Handle file uploads"""
+    try:
+        # Create unique filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        file_extension = os.path.splitext(file.filename)[1]
+        safe_filename = f"{timestamp}_{file.filename}"
+        file_path = UPLOAD_DIR / safe_filename
+
+        # Save the file
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # If it's a CSV, try to import to database
+        if file_extension.lower() == '.csv':
+            # Here you could add CSV processing logic
+            pass
+
+        return {
+            "message": "File uploaded successfully",
+            "filename": safe_filename,
+            "path": str(file_path),
+            "size": os.path.getsize(file_path)
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 # ==================== STATISTICS ====================
 

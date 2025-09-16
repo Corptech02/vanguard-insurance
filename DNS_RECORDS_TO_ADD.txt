@@ -1,0 +1,36 @@
+=================================================
+CLOUDFLARE DNS RECORDS TO ADD
+=================================================
+
+Go to: https://dash.cloudflare.com
+Select: vigagency.com
+Click: DNS (in left sidebar)
+Click: Add record
+
+ADD THESE TWO RECORDS:
+
+1. FRONTEND SUBDOMAIN:
+   Type: CNAME
+   Name: vanguard
+   Target: 7b2f846a-8030-4cb9-91d3-db51a1fd85d5.cfargotunnel.com
+   Proxy status: Proxied (orange cloud ON)
+   TTL: Auto
+
+2. API SUBDOMAIN:
+   Type: CNAME
+   Name: api
+   Target: 7b2f846a-8030-4cb9-91d3-db51a1fd85d5.cfargotunnel.com
+   Proxy status: Proxied (orange cloud ON)
+   TTL: Auto
+
+=================================================
+AFTER ADDING RECORDS:
+=================================================
+
+Your sites will be available at:
+- Frontend: https://vanguard.vigagency.com
+- API: https://api.vigagency.com
+
+The DNS should propagate instantly since you're using Cloudflare.
+
+Test by visiting: https://vanguard.vigagency.com
