@@ -231,6 +231,70 @@ async def get_leads(
 
         return {"leads": leads, "page": page, "per_page": per_page}
 
+@app.get("/api/leads/expiring-insurance")
+async def get_expiring_insurance_leads(
+    days: int = Query(30, description="Days until insurance expiry"),
+    limit: int = Query(2000, description="Maximum number of leads"),
+    state: Optional[str] = Query(None, description="State filter"),
+    min_premium: Optional[float] = Query(0, description="Minimum premium"),
+    insurance_companies: Optional[str] = Query(None, description="Insurance companies filter")
+):
+    """Get carriers with insurance information - simulated expiring leads"""
+    print(f"Getting insurance leads: days={days}, state={state}, companies={insurance_companies}")
+
+    with get_db(FMCSA_DB) as conn:
+        cursor = conn.cursor()
+
+        # Build the query - using actual column names that exist
+        query = """
+            SELECT dot_number, legal_name, dba_name,
+                   street, city, state, zip_code,
+                   phone, drivers, power_units, insurance_carrier,
+                   bipd_insurance_required_amount, bipd_insurance_on_file_amount,
+                   entity_type, operating_status
+            FROM carriers
+            WHERE insurance_carrier IS NOT NULL
+            AND insurance_carrier != ''
+        """
+        params = []
+
+        # Add state filter
+        if state:
+            query += " AND state = ?"
+            params.append(state)
+
+        # Add insurance companies filter
+        if insurance_companies:
+            companies = [c.strip() for c in insurance_companies.split(',')]
+            placeholders = ','.join(['?' for _ in companies])
+            query += f" AND insurance_carrier IN ({placeholders})"
+            params.extend(companies)
+
+        # Limit results
+        query += " LIMIT ?"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        results = []
+
+        import random
+        for row in cursor.fetchall():
+            carrier = dict(row)
+            # Simulate days until expiry for demonstration
+            carrier['days_until_expiry'] = random.randint(1, days)
+            carrier['estimated_premium'] = random.randint(5000, 50000)
+            results.append(carrier)
+
+        return {
+            "leads": results,
+            "total": len(results),
+            "criteria": {
+                "days": days,
+                "state": state,
+                "insurance_companies": insurance_companies
+            }
+        }
+
 @app.post("/api/leads")
 async def create_lead(lead: LeadCreate):
     """Create a new lead"""
