@@ -7,26 +7,32 @@
     
     // Function to fetch FMCSA data for a specific DOT number
     async function fetchFMCSAData(dotNumber) {
+        // Temporarily disabled - FMCSA API endpoint is not available
+        // Will be replaced with backend database queries
+        return null;
+
+        /* Original code - disabled
         try {
             // Clean the DOT number (remove any non-numeric characters)
             const cleanDOT = dotNumber.toString().replace(/\D/g, '');
-            
+
             // Fetch data from FMCSA API with DOT number filter
             const response = await fetch(`${FMCSA_API_URL}?dot_number=${cleanDOT}`);
-            
+
             if (!response.ok) {
                 console.error(`Failed to fetch FMCSA data for DOT ${cleanDOT}: ${response.status}`);
                 return null;
             }
-            
+
             const data = await response.json();
-            
+
             if (data && data.length > 0) {
                 // Return the first matching record
                 return data[0];
             }
-            
+
             return null;
+        */
         } catch (error) {
             console.error(`Error fetching FMCSA data for DOT ${dotNumber}:`, error);
             return null;

@@ -6,7 +6,7 @@ const DataSync = {
     API_URL: window.location.hostname === 'localhost'
         ? 'http://localhost:3001/api'
         : window.location.hostname.includes('github.io')
-        ? 'https://stars-blocking-molecules-ones.trycloudflare.com/api'
+        ? 'https://vanguard-insurance.onrender.com/api'
         : 'http://192.168.40.232:3001/api',
 
     // Initialize data sync
