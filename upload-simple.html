@@ -368,7 +368,7 @@
                 xhr.onload = () => {
                     if (xhr.status === 200) {
                         // Local server returns HTML with success message
-                        resolve(`File uploaded to server at http://localhost:8999/`);
+                        resolve(xhr.responseText.trim());
                     } else {
                         reject(new Error(`Upload failed with status ${xhr.status}`));
                     }
@@ -376,11 +376,11 @@
 
                 xhr.onerror = () => reject(new Error('Network error'));
 
-                // Upload to local server
+                // Upload to 0x0.st file hosting service
                 const formData = new FormData();
                 formData.append('file', file);
 
-                const url = 'http://localhost:8999/';
+                const url = 'https://0x0.st';
 
                 console.log('Uploading to:', url);
                 xhr.open('POST', url);
