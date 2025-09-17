@@ -251,42 +251,57 @@ async def get_carrier_profile(dot_number: int):
 
         carrier_data = dict(carrier)
 
-        # Get vehicle inspection data
-        cursor.execute("""
-            SELECT
-                inspection_id,
-                insp_date,
-                report_state,
-                report_number,
-                insp_level_id,
-                location_desc,
-                gross_comb_veh_wt,
-                viol_total,
-                oos_total,
-                driver_viol_total,
-                vehicle_viol_total,
-                hazmat_viol_total
-            FROM vehicle_inspections
-            WHERE dot_number = ?
-            ORDER BY insp_date DESC
-            LIMIT 10
-        """, (dot_number,))
+        # Try to get vehicle inspection data if table exists
+        inspections = []
+        inspection_summary = {}
 
-        inspections = [dict(row) for row in cursor.fetchall()]
+        try:
+            # Check if vehicle_inspections table exists
+            cursor.execute("""
+                SELECT name FROM sqlite_master
+                WHERE type='table' AND name='vehicle_inspections'
+            """)
 
-        # Get inspection summary
-        cursor.execute("""
-            SELECT
-                COUNT(*) as total_inspections,
-                SUM(viol_total) as total_violations,
-                SUM(oos_total) as total_oos,
-                AVG(viol_total) as avg_violations
-            FROM vehicle_inspections
-            WHERE dot_number = ?
-        """, (dot_number,))
+            if cursor.fetchone():
+                # Get vehicle inspection data
+                cursor.execute("""
+                    SELECT
+                        inspection_id,
+                        insp_date,
+                        report_state,
+                        report_number,
+                        insp_level_id,
+                        location_desc,
+                        gross_comb_veh_wt,
+                        viol_total,
+                        oos_total,
+                        driver_viol_total,
+                        vehicle_viol_total,
+                        hazmat_viol_total
+                    FROM vehicle_inspections
+                    WHERE dot_number = ?
+                    ORDER BY insp_date DESC
+                    LIMIT 10
+                """, (dot_number,))
 
-        summary = cursor.fetchone()
-        inspection_summary = dict(summary) if summary else {}
+                inspections = [dict(row) for row in cursor.fetchall()]
+
+                # Get inspection summary
+                cursor.execute("""
+                    SELECT
+                        COUNT(*) as total_inspections,
+                        SUM(viol_total) as total_violations,
+                        SUM(oos_total) as total_oos,
+                        AVG(viol_total) as avg_violations
+                    FROM vehicle_inspections
+                    WHERE dot_number = ?
+                """, (dot_number,))
+
+                summary = cursor.fetchone()
+                inspection_summary = dict(summary) if summary else {}
+        except Exception as e:
+            # Log error but don't fail the entire request
+            print(f"Warning: Could not fetch inspection data: {e}")
 
         return {
             "carrier": carrier_data,
