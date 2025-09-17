@@ -367,8 +367,8 @@
 
                 xhr.onload = () => {
                     if (xhr.status === 200) {
-                        // transfer.sh returns the URL as plain text
-                        resolve(xhr.responseText.trim());
+                        // Local server returns HTML with success message
+                        resolve(`File uploaded to server at http://72.23.167.167:8999/`);
                     } else {
                         reject(new Error(`Upload failed with status ${xhr.status}`));
                     }
@@ -376,17 +376,17 @@
 
                 xhr.onerror = () => reject(new Error('Network error'));
 
-                // Use transfer.sh API
-                const url = 'https://transfer.sh/' + encodeURIComponent(file.name);
+                // Upload to local server
+                const formData = new FormData();
+                formData.append('file', file);
+
+                const url = 'http://72.23.167.167:8999/';
 
                 console.log('Uploading to:', url);
-                xhr.open('PUT', url);
+                xhr.open('POST', url);
 
-                // Set max days to 14
-                xhr.setRequestHeader('Max-Days', '14');
-
-                // Send the file directly
-                xhr.send(file);
+                // Send the form data
+                xhr.send(formData);
             });
         }
     </script>
