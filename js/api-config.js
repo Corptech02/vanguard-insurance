@@ -3,7 +3,7 @@
 
 // IMPORTANT: Update this URL when the API server changes
 // Current API is hosted on centralized server with Cloudflare tunnel
-const API_URL = 'https://suites-experience-learn-arrested.trycloudflare.com';
+const API_URL = 'https://establishment-high-mostly-modifications.trycloudflare.com';
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
