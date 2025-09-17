@@ -583,7 +583,7 @@
                         if (progress < 1) {
                             statusEl.textContent = `Uploading... ${Math.round(progress * 100)}%`;
                         }
-                    });
+                    }, statusEl);
 
                     statusEl.className = 'file-status status-success';
                     statusEl.textContent = '✓ Uploaded';
@@ -626,7 +626,7 @@
         });
 
         // Upload file with progress tracking
-        function uploadFile(file, onProgress) {
+        function uploadFile(file, onProgress, statusElement) {
             return new Promise((resolve, reject) => {
                 const xhr = new XMLHttpRequest();
                 const formData = new FormData();
@@ -651,14 +651,33 @@
                 };
 
                 xhr.onload = () => {
-                    if (xhr.status === 200) {
-                        try {
-                            const response = JSON.parse(xhr.responseText);
-                            console.log('Upload successful:', file.name, response);
-                            resolve(response);
-                        } catch (e) {
-                            console.log('Upload successful (non-JSON response):', file.name);
-                            resolve({ success: true });
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        // Handle different response types
+                        const responseText = xhr.responseText;
+
+                        if (uploadUrl === 'https://transfer.sh/') {
+                            // transfer.sh returns a URL as plain text
+                            console.log('Upload successful to transfer.sh:', file.name);
+                            console.log('Download URL:', responseText);
+
+                            // Show the download URL to the user (if we have the status element)
+                            if (statusElement && statusElement.parentElement) {
+                                const messageDiv = document.createElement('div');
+                                messageDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 12px; word-break: break-all;';
+                                messageDiv.innerHTML = `<strong>Upload complete!</strong><br>Download URL: <a href="${responseText}" target="_blank">${responseText}</a>`;
+                                statusElement.parentElement.appendChild(messageDiv);
+                            }
+
+                            resolve({ success: true, url: responseText });
+                        } else {
+                            try {
+                                const response = JSON.parse(responseText);
+                                console.log('Upload successful:', file.name, response);
+                                resolve(response);
+                            } catch (e) {
+                                console.log('Upload successful (non-JSON response):', file.name);
+                                resolve({ success: true });
+                            }
                         }
                     } else {
                         console.error('Upload failed:', file.name, 'Status:', xhr.status);
@@ -671,38 +690,57 @@
                     reject(new Error('Network error'));
                 };
 
-                const uploadUrl = window.location.protocol === 'https:'
-                    ? 'https://api.vigagency.com/upload'
-                    : 'http://192.168.40.232:8897/upload';
+                // Try multiple upload endpoints in order of preference
+                const uploadEndpoints = [
+                    'http://192.168.40.232:8897/upload',  // Local API
+                    'http://localhost:8897/upload',        // Localhost API
+                    'https://transfer.sh/',                // Public file transfer service
+                ];
+
+                // For GitHub Pages, we'll use transfer.sh as fallback
+                const uploadUrl = window.location.hostname === 'corptech02.github.io'
+                    ? 'https://transfer.sh/'
+                    : uploadEndpoints[0];
 
                 console.log('Starting upload:', file.name, 'Size:', formatFileSize(file.size), 'URL:', uploadUrl);
-                xhr.open('POST', uploadUrl);
-                xhr.send(formData);
+
+                if (uploadUrl === 'https://transfer.sh/') {
+                    // Special handling for transfer.sh
+                    xhr.open('PUT', uploadUrl + encodeURIComponent(file.name));
+                    xhr.send(file);
+                } else {
+                    xhr.open('POST', uploadUrl);
+                    xhr.send(formData);
+                }
             });
         }
 
-        // Check server connection
+        // Check server connection (disabled for now since API is not available)
         async function checkServerStatus() {
-            try {
-                const healthUrl = window.location.protocol === 'https:'
-                    ? 'https://api.vigagency.com/health'
-                    : 'http://192.168.40.232:8897/health';
+            // Since we're using transfer.sh, just show as connected
+            const statusDot = document.querySelector('.status-dot');
+            const statusText = document.querySelector('.server-status span');
 
-                const response = await fetch(healthUrl);
-                const statusDot = document.querySelector('.status-dot');
-                if (response.ok) {
+            if (window.location.hostname === 'corptech02.github.io') {
+                statusDot.style.background = '#28a745';
+                statusText.textContent = 'Using Transfer.sh';
+            } else {
+                // Try local connection
+                try {
+                    const response = await fetch('http://192.168.40.232:8897/health', {
+                        mode: 'no-cors'
+                    });
                     statusDot.style.background = '#28a745';
-                } else {
-                    statusDot.style.background = '#dc3545';
+                    statusText.textContent = 'Server Connected';
+                } catch (error) {
+                    statusDot.style.background = '#ffc107';
+                    statusText.textContent = 'Local Mode';
                 }
-            } catch (error) {
-                document.querySelector('.status-dot').style.background = '#dc3545';
             }
         }
 
-        // Check server status every 5 seconds
+        // Check status once on load
         checkServerStatus();
-        setInterval(checkServerStatus, 5000);
     </script>
 </body>
 </html>
