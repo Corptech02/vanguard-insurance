@@ -42,7 +42,7 @@ router.post('/init', async (req, res) => {
  */
 router.get('/auth-url', (req, res) => {
     // Use the redirect URI from the client's credentials
-    const redirect_uri = req.query.redirect_uri || 'http://192.168.40.232:3001/api/gmail/callback';
+    const redirect_uri = req.query.redirect_uri || 'https://vanguard-gmail-backend.onrender.com/api/gmail/callback';
 
     const credentials = {
         client_id: process.env.GMAIL_CLIENT_ID || req.query.client_id,
@@ -92,7 +92,7 @@ router.get('/callback', async (req, res) => {
         const credentials = {
             client_id: process.env.GMAIL_CLIENT_ID,
             client_secret: process.env.GMAIL_CLIENT_SECRET,
-            redirect_uri: process.env.GMAIL_REDIRECT_URI || 'http://192.168.40.232:3001/api/gmail/callback'
+            redirect_uri: 'https://vanguard-gmail-backend.onrender.com/api/gmail/callback'
         };
 
         const tokens = await gmailService.getTokensFromCode(code, credentials);
