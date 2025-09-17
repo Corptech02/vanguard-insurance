@@ -3,12 +3,44 @@ const router = express.Router();
 const GmailService = require('./gmail-service');
 const sqlite3 = require('sqlite3').verbose();
 const db = new sqlite3.Database('./vanguard.db');
+const { requireGmailAuth, getAuthStatus } = require('./auth-check-middleware');
 
 // Initialize Gmail Service
 const gmailService = new GmailService();
 
-// Store credentials securely (in production, use environment variables or secure storage)
+// Store credentials securely in database for persistence
 let gmailCredentials = null;
+
+// Load stored credentials on startup
+async function loadStoredCredentials() {
+    return new Promise((resolve) => {
+        db.get('SELECT value FROM settings WHERE key = ?', ['gmail_tokens'], (err, row) => {
+            if (!err && row) {
+                try {
+                    gmailCredentials = JSON.parse(row.value);
+                    gmailService.initialize(gmailCredentials)
+                        .then(() => {
+                            console.log('Gmail service initialized with stored credentials');
+                            resolve(true);
+                        })
+                        .catch(err => {
+                            console.error('Failed to initialize with stored credentials:', err);
+                            resolve(false);
+                        });
+                } catch (parseErr) {
+                    console.error('Error parsing stored credentials:', parseErr);
+                    resolve(false);
+                }
+            } else {
+                console.log('No stored Gmail credentials found');
+                resolve(false);
+            }
+        });
+    });
+}
+
+// Initialize on startup
+loadStoredCredentials();
 
 /**
  * Initialize Gmail with credentials
@@ -29,12 +61,26 @@ router.post('/init', async (req, res) => {
 
         await gmailService.initialize(gmailCredentials);
 
+        // Store credentials in database for persistence
+        db.run(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+            ['gmail_tokens', JSON.stringify(gmailCredentials)], (err) => {
+                if (err) {
+                    console.error('Error storing Gmail credentials:', err);
+                }
+            });
+
         res.json({ success: true, message: 'Gmail API initialized successfully' });
     } catch (error) {
         console.error('Error initializing Gmail:', error);
         res.status(500).json({ error: error.message });
     }
 });
+
+/**
+ * Check Gmail authentication status
+ * GET /api/gmail/status
+ */
+router.get('/status', getAuthStatus);
 
 /**
  * Get OAuth URL for authorization
@@ -74,6 +120,14 @@ router.post('/exchange-code', async (req, res) => {
         gmailCredentials = { ...credentials, ...tokens };
         await gmailService.initialize(gmailCredentials);
 
+        // Store credentials in database for persistence
+        db.run(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+            ['gmail_tokens', JSON.stringify(gmailCredentials)], (err) => {
+                if (err) {
+                    console.error('Error storing Gmail credentials:', err);
+                }
+            });
+
         res.json({ success: true, tokens });
     } catch (error) {
         console.error('Error exchanging code:', error);
@@ -97,8 +151,13 @@ router.get('/callback', async (req, res) => {
 
         const tokens = await gmailService.getTokensFromCode(code, credentials);
 
-        // Store tokens securely
+        // Store tokens securely in database for persistence
         gmailCredentials = { ...credentials, ...tokens };
+
+        // Save tokens to database so they persist across server restarts
+        db.run(`INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)`,
+            ['gmail_tokens', JSON.stringify(gmailCredentials)]);
+
         await gmailService.initialize(gmailCredentials);
 
         // Redirect to COI management page with success message
@@ -115,6 +174,17 @@ router.get('/callback', async (req, res) => {
  */
 router.get('/messages', async (req, res) => {
     try {
+        // Check if Gmail is initialized, if not try to initialize with stored credentials
+        if (!gmailCredentials) {
+            const initialized = await loadStoredCredentials();
+            if (!initialized) {
+                return res.status(401).json({
+                    error: 'Gmail not authorized. Please authorize Gmail access first.',
+                    authRequired: true
+                });
+            }
+        }
+
         const { query, maxResults = 20 } = req.query;
         const messages = await gmailService.listMessages(query, parseInt(maxResults));
 

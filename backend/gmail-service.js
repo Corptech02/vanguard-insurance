@@ -10,7 +10,7 @@ class GmailService {
 
     /**
      * Initialize Gmail API with OAuth2
-     * For now, we'll use API key approach or OAuth2 with refresh token
+     * Includes automatic token refresh
      */
     async initialize(credentials) {
         try {
@@ -28,8 +28,27 @@ class GmailService {
                 expiry_date: credentials.expiry_date
             });
 
+            // Set up automatic token refresh
+            auth.on('tokens', (tokens) => {
+                console.log('Gmail tokens refreshed');
+                // Update stored credentials with new tokens
+                if (tokens.refresh_token) {
+                    credentials.refresh_token = tokens.refresh_token;
+                }
+                if (tokens.access_token) {
+                    credentials.access_token = tokens.access_token;
+                }
+                if (tokens.expiry_date) {
+                    credentials.expiry_date = tokens.expiry_date;
+                }
+
+                // Save updated credentials (this will be handled by the calling code)
+                this.credentials = credentials;
+            });
+
             this.auth = auth;
             this.gmail = google.gmail({ version: 'v1', auth });
+            this.credentials = credentials;
 
             console.log('Gmail API initialized successfully');
             return true;

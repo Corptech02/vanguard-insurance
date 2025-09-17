@@ -22,6 +22,37 @@ async function loadRealEmails() {
             </div>
         `;
 
+        // First check authentication status
+        const statusResponse = await fetch(`${REAL_GMAIL_API}/status`, {
+            headers: {
+                'Bypass-Tunnel-Reminder': 'true'
+            }
+        });
+
+        if (statusResponse.ok) {
+            const statusData = await statusResponse.json();
+            if (!statusData.authenticated) {
+                // Show authentication required message with link
+                coiInbox.innerHTML = `
+                    <div style="background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: center;">
+                        <i class="fas fa-key" style="font-size: 48px; color: #f59e0b; margin-bottom: 16px;"></i>
+                        <h3 style="color: #92400e; margin: 0 0 10px 0;">Gmail Authorization Required</h3>
+                        <p style="color: #92400e; margin: 0 0 16px 0;">
+                            To access real emails, you need to authorize Gmail access first.
+                        </p>
+                        <button onclick="window.open('${statusData.authUrl ? REAL_GMAIL_API + statusData.authUrl : 'https://vanguard-gmail-backend.onrender.com/api/gmail/auth-url'}', '_blank')"
+                                style="padding: 12px 24px; background: #f59e0b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px;">
+                            <i class="fas fa-unlock"></i> Authorize Gmail Access
+                        </button>
+                        <p style="color: #6b7280; font-size: 12px; margin-top: 16px;">
+                            This will open a new window for Google authorization
+                        </p>
+                    </div>
+                `;
+                return false;
+            }
+        }
+
         // Fetch real emails
         const response = await fetch(`${REAL_GMAIL_API}/messages?maxResults=20`, {
             headers: {
