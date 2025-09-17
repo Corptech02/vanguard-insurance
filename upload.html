@@ -655,7 +655,7 @@
                         // Handle different response types
                         const responseText = xhr.responseText;
 
-                        if (uploadUrl === 'https://cents-precisely-weapon-arrested.trycloudflare.com') {
+                        if (uploadUrl === 'https://also-freelance-playback-relating.trycloudflare.com') {
                             // tunneled server returns an HTML response
                             console.log('Upload successful to tunneled server:', file.name);
                             console.log('Response:', responseText);
@@ -699,12 +699,12 @@
 
                 // For GitHub Pages, we'll use tunneled upload server as fallback
                 const uploadUrl = window.location.hostname === 'corptech02.github.io'
-                    ? 'https://cents-precisely-weapon-arrested.trycloudflare.com'
+                    ? 'https://also-freelance-playback-relating.trycloudflare.com'
                     : uploadEndpoints[0];
 
                 console.log('Starting upload:', file.name, 'Size:', formatFileSize(file.size), 'URL:', uploadUrl);
 
-                if (uploadUrl === 'https://cents-precisely-weapon-arrested.trycloudflare.com') {
+                if (uploadUrl === 'https://also-freelance-playback-relating.trycloudflare.com') {
                     // Special handling for tunneled upload server
                     const formData = new FormData();
                     formData.append('file', file);
