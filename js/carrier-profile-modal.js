@@ -1,641 +1,521 @@
-// Carrier Profile Modal Component
-// Displays comprehensive carrier information including inspections
-
+// Carrier Profile Modal - Complete Carrier Information Display
 class CarrierProfileModal {
     constructor() {
-        this.modalId = 'carrierProfileModal';
+        this.modal = null;
         this.createModal();
     }
 
     createModal() {
-        // Remove existing modal if present
-        const existing = document.getElementById(this.modalId);
-        if (existing) existing.remove();
-
-        // Create modal HTML
-        const modal = document.createElement('div');
-        modal.id = this.modalId;
-        modal.className = 'modal fade';
-        modal.innerHTML = `
-            <div class="modal-dialog modal-xl">
-                <div class="modal-content">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="fas fa-truck-moving me-2"></i>
-                            Carrier Profile
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        // Create modal HTML structure
+        const modalHTML = `
+            <div id="carrierProfileModal" class="carrier-modal" style="display:none;">
+                <div class="carrier-modal-content">
+                    <div class="carrier-modal-header">
+                        <h2 id="modalCarrierName">Carrier Profile</h2>
+                        <span class="carrier-modal-close">&times;</span>
                     </div>
-                    <div class="modal-body" id="profileContent">
-                        <div class="text-center py-5">
-                            <div class="spinner-border text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <p class="mt-3">Loading carrier profile...</p>
+                    <div class="carrier-modal-body">
+                        <div class="carrier-profile-loading" style="display: block; text-align: center; padding: 40px;">
+                            <div class="spinner"></div>
+                            <p>Loading carrier information...</p>
                         </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" onclick="carrierProfile.exportProfile()">
-                            <i class="fas fa-download"></i> Export Profile
-                        </button>
+                        <div class="carrier-profile-content" style="display: none;"></div>
                     </div>
                 </div>
             </div>
         `;
 
-        document.body.appendChild(modal);
-        this.modal = new bootstrap.Modal(modal);
+        // Add modal to body
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.modal = document.getElementById('carrierProfileModal');
+
+        // Add modal styles
+        this.addStyles();
+
+        // Setup event listeners
+        this.setupEventListeners();
     }
 
-    async showProfile(dotNumber) {
-        this.modal.show();
-        const contentDiv = document.getElementById('profileContent');
+    addStyles() {
+        if (!document.getElementById('carrierModalStyles')) {
+            const styles = `
+                <style id="carrierModalStyles">
+                    .carrier-modal {
+                        position: fixed;
+                        z-index: 10000;
+                        left: 0;
+                        top: 0;
+                        width: 100%;
+                        height: 100%;
+                        background-color: rgba(0,0,0,0.5);
+                        animation: fadeIn 0.3s;
+                    }
+
+                    @keyframes fadeIn {
+                        from { opacity: 0; }
+                        to { opacity: 1; }
+                    }
+
+                    .carrier-modal-content {
+                        position: relative;
+                        background-color: #fefefe;
+                        margin: 2% auto;
+                        padding: 0;
+                        border-radius: 10px;
+                        width: 90%;
+                        max-width: 900px;
+                        max-height: 90vh;
+                        overflow: hidden;
+                        box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+                        animation: slideIn 0.3s;
+                    }
+
+                    @keyframes slideIn {
+                        from { transform: translateY(-30px); }
+                        to { transform: translateY(0); }
+                    }
+
+                    .carrier-modal-header {
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 20px;
+                        position: relative;
+                    }
+
+                    .carrier-modal-header h2 {
+                        margin: 0;
+                        font-size: 24px;
+                    }
+
+                    .carrier-modal-close {
+                        position: absolute;
+                        right: 20px;
+                        top: 50%;
+                        transform: translateY(-50%);
+                        font-size: 30px;
+                        font-weight: bold;
+                        color: white;
+                        cursor: pointer;
+                        transition: transform 0.2s;
+                    }
+
+                    .carrier-modal-close:hover {
+                        transform: translateY(-50%) scale(1.2);
+                    }
+
+                    .carrier-modal-body {
+                        padding: 20px;
+                        max-height: calc(90vh - 80px);
+                        overflow-y: auto;
+                    }
+
+                    .carrier-info-grid {
+                        display: grid;
+                        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                        gap: 20px;
+                        margin-bottom: 20px;
+                    }
+
+                    .carrier-info-section {
+                        background: #f8f9fa;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border: 1px solid #e0e0e0;
+                    }
+
+                    .carrier-info-section h3 {
+                        margin: 0 0 15px 0;
+                        color: #333;
+                        font-size: 18px;
+                        border-bottom: 2px solid #667eea;
+                        padding-bottom: 5px;
+                    }
+
+                    .info-row {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 8px 0;
+                        border-bottom: 1px solid #eee;
+                    }
+
+                    .info-row:last-child {
+                        border-bottom: none;
+                    }
+
+                    .info-label {
+                        font-weight: 600;
+                        color: #555;
+                        flex: 0 0 40%;
+                    }
+
+                    .info-value {
+                        color: #333;
+                        flex: 1;
+                        text-align: right;
+                    }
+
+                    .info-value.na {
+                        color: #999;
+                        font-style: italic;
+                    }
+
+                    .status-badge {
+                        display: inline-block;
+                        padding: 3px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        font-weight: 600;
+                    }
+
+                    .status-active {
+                        background: #d4edda;
+                        color: #155724;
+                    }
+
+                    .status-inactive {
+                        background: #f8d7da;
+                        color: #721c24;
+                    }
+
+                    .insurance-alert {
+                        background: #fff3cd;
+                        border: 1px solid #ffc107;
+                        padding: 10px;
+                        border-radius: 5px;
+                        margin-top: 10px;
+                    }
+
+                    .spinner {
+                        border: 4px solid #f3f3f3;
+                        border-top: 4px solid #667eea;
+                        border-radius: 50%;
+                        width: 40px;
+                        height: 40px;
+                        animation: spin 1s linear infinite;
+                        margin: 0 auto;
+                    }
+
+                    @keyframes spin {
+                        0% { transform: rotate(0deg); }
+                        100% { transform: rotate(360deg); }
+                    }
+
+                    .error-message {
+                        background: #f8d7da;
+                        color: #721c24;
+                        padding: 15px;
+                        border-radius: 5px;
+                        text-align: center;
+                    }
+                </style>
+            `;
+            document.head.insertAdjacentHTML('beforeend', styles);
+        }
+    }
+
+    setupEventListeners() {
+        // Close modal when clicking X
+        const closeBtn = this.modal.querySelector('.carrier-modal-close');
+        closeBtn.onclick = () => this.hide();
+
+        // Close modal when clicking outside
+        window.onclick = (event) => {
+            if (event.target === this.modal) {
+                this.hide();
+            }
+        };
+
+        // Close on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.modal.style.display === 'block') {
+                this.hide();
+            }
+        });
+    }
+
+    async show(dotNumber) {
+        this.modal.style.display = 'block';
+        const loadingDiv = this.modal.querySelector('.carrier-profile-loading');
+        const contentDiv = this.modal.querySelector('.carrier-profile-content');
+
+        loadingDiv.style.display = 'block';
+        contentDiv.style.display = 'none';
 
         try {
-            // Fetch carrier profile from API
-            const response = await apiService.getCarrierProfile(dotNumber);
+            // Get API base URL
+            const apiBase = window.apiService ? await window.apiService.getAPIBaseURL() : 'https://api.vigagency.com';
 
-            if (!response || !response.carrier) {
-                throw new Error('No carrier data found');
+            // Fetch carrier profile
+            const response = await fetch(`${apiBase}/api/carrier/profile/${dotNumber}`, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch carrier profile');
             }
 
-            const { carrier, inspection_summary, recent_inspections } = response;
+            const carrier = await response.json();
 
-            // Build profile HTML
-            contentDiv.innerHTML = `
-                <!-- Navigation Tabs -->
-                <ul class="nav nav-tabs mb-4" role="tablist">
-                    <li class="nav-item">
-                        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#overview">
-                            <i class="fas fa-info-circle"></i> Overview
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#inspections">
-                            <i class="fas fa-clipboard-check"></i> Inspections
-                            ${carrier.total_inspections ? `<span class="badge bg-danger ms-1">${carrier.total_inspections}</span>` : ''}
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#insurance">
-                            <i class="fas fa-shield-alt"></i> Insurance
-                        </button>
-                    </li>
-                    <li class="nav-item">
-                        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#safety">
-                            <i class="fas fa-hard-hat"></i> Safety Stats
-                        </button>
-                    </li>
-                </ul>
+            // Update modal header
+            const headerTitle = this.modal.querySelector('#modalCarrierName');
+            headerTitle.textContent = carrier.legal_name || `Carrier #${dotNumber}`;
 
-                <!-- Tab Content -->
-                <div class="tab-content">
-                    <!-- Overview Tab -->
-                    <div class="tab-pane fade show active" id="overview">
-                        ${this.renderOverview(carrier)}
-                    </div>
+            // Display carrier information
+            this.displayCarrierInfo(carrier);
 
-                    <!-- Inspections Tab -->
-                    <div class="tab-pane fade" id="inspections">
-                        ${this.renderInspections(carrier, inspection_summary, recent_inspections)}
-                    </div>
-
-                    <!-- Insurance Tab -->
-                    <div class="tab-pane fade" id="insurance">
-                        ${this.renderInsurance(carrier)}
-                    </div>
-
-                    <!-- Safety Tab -->
-                    <div class="tab-pane fade" id="safety">
-                        ${this.renderSafety(carrier, inspection_summary)}
-                    </div>
-                </div>
-            `;
-
-            // Store current profile data for export
-            this.currentProfile = response;
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
 
         } catch (error) {
             console.error('Error loading carrier profile:', error);
+            loadingDiv.style.display = 'none';
+            contentDiv.style.display = 'block';
             contentDiv.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    Failed to load carrier profile: ${error.message}
+                <div class="error-message">
+                    <p>Failed to load carrier profile. Please try again.</p>
+                    <small>${error.message}</small>
                 </div>
             `;
         }
     }
 
-    renderOverview(carrier) {
-        return `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-building me-2"></i>Company Information</h6>
-                        </div>
-                        <div class="card-body">
-                            <dl class="row mb-0">
-                                <dt class="col-sm-5">Legal Name:</dt>
-                                <dd class="col-sm-7">${carrier.legal_name || 'N/A'}</dd>
+    displayCarrierInfo(carrier) {
+        const contentDiv = this.modal.querySelector('.carrier-profile-content');
 
-                                <dt class="col-sm-5">DBA Name:</dt>
-                                <dd class="col-sm-7">${carrier.dba_name || 'N/A'}</dd>
-
-                                <dt class="col-sm-5">DOT Number:</dt>
-                                <dd class="col-sm-7">
-                                    <span class="badge bg-primary">${carrier.dot_number}</span>
-                                </dd>
-
-                                <dt class="col-sm-5">MC Number:</dt>
-                                <dd class="col-sm-7">${carrier.mc_number || 'N/A'}</dd>
-
-                                <dt class="col-sm-5">Entity Type:</dt>
-                                <dd class="col-sm-7">${carrier.entity_type || 'N/A'}</dd>
-
-                                <dt class="col-sm-5">Operating Status:</dt>
-                                <dd class="col-sm-7">
-                                    <span class="badge ${carrier.operating_status === 'Active' ? 'bg-success' : 'bg-warning'}">
-                                        ${carrier.operating_status || 'Unknown'}
-                                    </span>
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card mb-4">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-map-marker-alt me-2"></i>Contact Information</h6>
-                        </div>
-                        <div class="card-body">
-                            <dl class="row mb-0">
-                                <dt class="col-sm-4">Address:</dt>
-                                <dd class="col-sm-8">
-                                    ${carrier.street || ''}<br>
-                                    ${carrier.city || ''}, ${carrier.state || ''} ${carrier.zip_code || ''}
-                                </dd>
-
-                                <dt class="col-sm-4">Phone:</dt>
-                                <dd class="col-sm-8">
-                                    ${carrier.phone ? `<a href="tel:${carrier.phone}">${carrier.phone}</a>` : 'N/A'}
-                                </dd>
-
-                                <dt class="col-sm-4">Email:</dt>
-                                <dd class="col-sm-8">
-                                    ${carrier.email ? `<a href="mailto:${carrier.email}">${carrier.email}</a>` : 'N/A'}
-                                </dd>
-
-                                <dt class="col-sm-4">Website:</dt>
-                                <dd class="col-sm-8">
-                                    ${carrier.website ? `<a href="${carrier.website}" target="_blank">${carrier.website}</a>` : 'N/A'}
-                                </dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-truck me-2"></i>Fleet Information</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-3 text-center">
-                                    <h4 class="text-primary">${carrier.drivers || 0}</h4>
-                                    <small class="text-muted">Drivers</small>
-                                </div>
-                                <div class="col-md-3 text-center">
-                                    <h4 class="text-info">${carrier.power_units || 0}</h4>
-                                    <small class="text-muted">Power Units</small>
-                                </div>
-                                <div class="col-md-3 text-center">
-                                    <h4 class="text-success">${carrier.total_inspections || 0}</h4>
-                                    <small class="text-muted">Total Inspections</small>
-                                </div>
-                                <div class="col-md-3 text-center">
-                                    <h4 class="text-warning">${carrier.total_violations || 0}</h4>
-                                    <small class="text-muted">Total Violations</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    renderInspections(carrier, summary, inspections) {
-        if (!inspections || inspections.length === 0) {
-            return `
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle me-2"></i>
-                    No inspection records found for this carrier.
-                </div>
-            `;
-        }
-
-        return `
-            <!-- Inspection Summary -->
-            <div class="row mb-4">
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="text-primary">${carrier.total_inspections || 0}</h3>
-                            <small>Total Inspections</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="text-warning">${carrier.total_violations || 0}</h3>
-                            <small>Total Violations</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="text-danger">${carrier.total_oos || 0}</h3>
-                            <small>Out of Service</small>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="card text-center">
-                        <div class="card-body">
-                            <h3 class="text-info">${carrier.avg_violations_per_inspection ? carrier.avg_violations_per_inspection.toFixed(2) : '0'}</h3>
-                            <small>Avg Violations/Inspection</small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Recent Inspections Table -->
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0">
-                        <i class="fas fa-history me-2"></i>
-                        Recent Inspections (Last ${inspections.length} Records)
-                    </h6>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-sm table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Inspection ID</th>
-                                    <th>Location</th>
-                                    <th>Level</th>
-                                    <th>Violations</th>
-                                    <th>OOS</th>
-                                    <th>Vehicle Weight</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${inspections.map(insp => `
-                                    <tr>
-                                        <td>${this.formatDate(insp.insp_date)}</td>
-                                        <td><small>${insp.inspection_id}</small></td>
-                                        <td>${insp.location_desc || 'N/A'}, ${insp.report_state || ''}</td>
-                                        <td>
-                                            <span class="badge bg-secondary">Level ${insp.insp_level_id}</span>
-                                        </td>
-                                        <td>
-                                            ${insp.viol_total > 0 ?
-                                                `<span class="badge bg-warning">${insp.viol_total}</span>` :
-                                                '<span class="badge bg-success">0</span>'}
-                                        </td>
-                                        <td>
-                                            ${insp.oos_total > 0 ?
-                                                `<span class="badge bg-danger">${insp.oos_total}</span>` :
-                                                '<span class="badge bg-success">0</span>'}
-                                        </td>
-                                        <td>${insp.gross_comb_veh_wt || 'N/A'} lbs</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Violation Breakdown -->
-            ${this.renderViolationBreakdown(inspections)}
-        `;
-    }
-
-    renderViolationBreakdown(inspections) {
-        const totalDriverViol = inspections.reduce((sum, i) => sum + (i.driver_viol_total || 0), 0);
-        const totalVehicleViol = inspections.reduce((sum, i) => sum + (i.vehicle_viol_total || 0), 0);
-        const totalHazmatViol = inspections.reduce((sum, i) => sum + (i.hazmat_viol_total || 0), 0);
-
-        return `
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Violation Breakdown</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-user-tie fa-2x text-primary me-3"></i>
-                                <div>
-                                    <h5 class="mb-0">${totalDriverViol}</h5>
-                                    <small class="text-muted">Driver Violations</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-truck fa-2x text-warning me-3"></i>
-                                <div>
-                                    <h5 class="mb-0">${totalVehicleViol}</h5>
-                                    <small class="text-muted">Vehicle Violations</small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="d-flex align-items-center">
-                                <i class="fas fa-radiation fa-2x text-danger me-3"></i>
-                                <div>
-                                    <h5 class="mb-0">${totalHazmatViol}</h5>
-                                    <small class="text-muted">Hazmat Violations</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    renderInsurance(carrier) {
-        return `
-            <div class="card">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-shield-alt me-2"></i>Insurance Information</h6>
-                </div>
-                <div class="card-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Insurance Carrier:</dt>
-                        <dd class="col-sm-8">
-                            <strong>${carrier.insurance_carrier || 'Not Available'}</strong>
-                        </dd>
-
-                        <dt class="col-sm-4">Policy Number:</dt>
-                        <dd class="col-sm-8">${carrier.policy_number || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Coverage Type:</dt>
-                        <dd class="col-sm-8">${carrier.coverage_type || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Required Coverage:</dt>
-                        <dd class="col-sm-8">
-                            ${carrier.bipd_insurance_required_amount ?
-                                `$${Number(carrier.bipd_insurance_required_amount).toLocaleString()}` :
-                                'N/A'}
-                        </dd>
-
-                        <dt class="col-sm-4">Coverage on File:</dt>
-                        <dd class="col-sm-8">
-                            ${carrier.bipd_insurance_on_file_amount ?
-                                `$${Number(carrier.bipd_insurance_on_file_amount).toLocaleString()}` :
-                                'N/A'}
-                        </dd>
-
-                        <dt class="col-sm-4">Coverage Status:</dt>
-                        <dd class="col-sm-8">
-                            ${this.getInsuranceStatus(carrier)}
-                        </dd>
-                    </dl>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Coverage Analysis</h6>
-                </div>
-                <div class="card-body">
-                    ${this.analyzeInsuranceCoverage(carrier)}
-                </div>
-            </div>
-        `;
-    }
-
-    renderSafety(carrier, summary) {
-        return `
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>Safety Performance</h6>
-                        </div>
-                        <div class="card-body">
-                            <dl class="row">
-                                <dt class="col-sm-6">Safety Rating:</dt>
-                                <dd class="col-sm-6">
-                                    ${carrier.safety_rating ?
-                                        `<span class="badge bg-${this.getSafetyColor(carrier.safety_rating)}">${carrier.safety_rating}</span>` :
-                                        'Not Rated'}
-                                </dd>
-
-                                <dt class="col-sm-6">Last Inspection:</dt>
-                                <dd class="col-sm-6">${carrier.last_inspection_date ? this.formatDate(carrier.last_inspection_date) : 'N/A'}</dd>
-
-                                <dt class="col-sm-6">Inspection Frequency:</dt>
-                                <dd class="col-sm-6">${this.calculateInspectionFrequency(carrier)}</dd>
-
-                                <dt class="col-sm-6">Violation Rate:</dt>
-                                <dd class="col-sm-6">${this.calculateViolationRate(carrier)}</dd>
-                            </dl>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-header bg-light">
-                            <h6 class="mb-0"><i class="fas fa-award me-2"></i>Compliance Score</h6>
-                        </div>
-                        <div class="card-body">
-                            <div class="text-center">
-                                <h1 class="${this.getComplianceColor(carrier)}">${this.calculateComplianceScore(carrier)}%</h1>
-                                <p class="text-muted">Based on violations and OOS records</p>
-                                <div class="progress">
-                                    <div class="progress-bar ${this.getComplianceBarColor(carrier)}"
-                                         style="width: ${this.calculateComplianceScore(carrier)}%">
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mt-4">
-                <div class="card-header bg-light">
-                    <h6 class="mb-0"><i class="fas fa-clipboard-list me-2"></i>Recommendations</h6>
-                </div>
-                <div class="card-body">
-                    ${this.generateRecommendations(carrier)}
-                </div>
-            </div>
-        `;
-    }
-
-    // Helper methods
-    formatDate(dateStr) {
-        if (!dateStr) return 'N/A';
-        const year = dateStr.substring(0, 4);
-        const month = dateStr.substring(4, 6);
-        const day = dateStr.substring(6, 8);
-        return `${month}/${day}/${year}`;
-    }
-
-    getInsuranceStatus(carrier) {
-        const required = carrier.bipd_insurance_required_amount || 0;
-        const onFile = carrier.bipd_insurance_on_file_amount || 0;
-
-        if (onFile >= required && required > 0) {
-            return '<span class="badge bg-success">Adequate Coverage</span>';
-        } else if (onFile > 0 && onFile < required) {
-            return '<span class="badge bg-warning">Insufficient Coverage</span>';
-        } else {
-            return '<span class="badge bg-danger">No Coverage on File</span>';
-        }
-    }
-
-    analyzeInsuranceCoverage(carrier) {
-        const required = carrier.bipd_insurance_required_amount || 0;
-        const onFile = carrier.bipd_insurance_on_file_amount || 0;
-        const difference = onFile - required;
-
-        let analysis = '<ul class="mb-0">';
-
-        if (onFile >= required && required > 0) {
-            analysis += `<li class="text-success">✓ Carrier meets minimum insurance requirements</li>`;
-            if (difference > 0) {
-                analysis += `<li class="text-success">✓ Coverage exceeds requirement by $${difference.toLocaleString()}</li>`;
+        // Format values helper
+        const formatValue = (value) => {
+            if (value === null || value === undefined || value === '') {
+                return '<span class="info-value na">N/A</span>';
             }
-        } else if (onFile > 0 && onFile < required) {
-            analysis += `<li class="text-warning">⚠ Coverage is $${Math.abs(difference).toLocaleString()} below requirement</li>`;
-            analysis += `<li class="text-warning">⚠ Carrier should update insurance to meet requirements</li>`;
-        } else {
-            analysis += `<li class="text-danger">✗ No insurance coverage on file</li>`;
-            analysis += `<li class="text-danger">✗ Requires immediate attention</li>`;
-        }
+            return value;
+        };
 
-        analysis += '</ul>';
-        return analysis;
+        // Format currency
+        const formatCurrency = (value) => {
+            if (!value) return '<span class="info-value na">N/A</span>';
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        };
+
+        // Build the HTML content
+        const html = `
+            <div class="carrier-info-grid">
+                <!-- Basic Information -->
+                <div class="carrier-info-section">
+                    <h3>📋 Basic Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">DOT Number:</span>
+                        <span class="info-value"><strong>${carrier.dot_number}</strong></span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Legal Name:</span>
+                        <span class="info-value">${formatValue(carrier.legal_name)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">DBA Name:</span>
+                        <span class="info-value">${formatValue(carrier.dba_name)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Entity Type:</span>
+                        <span class="info-value">${formatValue(carrier.entity_type)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Operating Status:</span>
+                        <span class="info-value">
+                            ${carrier.operating_status === 'Active'
+                                ? '<span class="status-badge status-active">Active</span>'
+                                : '<span class="status-badge status-inactive">' + (carrier.operating_status || 'Unknown') + '</span>'
+                            }
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Docket Number:</span>
+                        <span class="info-value">${formatValue(carrier.docket)}</span>
+                    </div>
+                </div>
+
+                <!-- Contact Information -->
+                <div class="carrier-info-section">
+                    <h3>📞 Contact Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Phone:</span>
+                        <span class="info-value">${formatValue(carrier.phone)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Email:</span>
+                        <span class="info-value">${formatValue(carrier.email_address)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Street:</span>
+                        <span class="info-value">${formatValue(carrier.street)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">City:</span>
+                        <span class="info-value">${formatValue(carrier.city)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">State:</span>
+                        <span class="info-value">${formatValue(carrier.state)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Zip Code:</span>
+                        <span class="info-value">${formatValue(carrier.zip_code)}</span>
+                    </div>
+                </div>
+
+                <!-- Fleet Information -->
+                <div class="carrier-info-section">
+                    <h3>🚚 Fleet Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Drivers:</span>
+                        <span class="info-value">${formatValue(carrier.drivers)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Power Units:</span>
+                        <span class="info-value">${formatValue(carrier.power_units)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Carrier Operation:</span>
+                        <span class="info-value">${formatValue(carrier.carrier_operation)}</span>
+                    </div>
+                </div>
+
+                <!-- Insurance Information -->
+                <div class="carrier-info-section">
+                    <h3>🛡️ Insurance Information</h3>
+                    <div class="info-row">
+                        <span class="info-label">Insurance Carrier:</span>
+                        <span class="info-value">${formatValue(carrier.insurance_carrier)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Policy Number:</span>
+                        <span class="info-value">${formatValue(carrier.policy_number)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">BIPD Required:</span>
+                        <span class="info-value">${formatCurrency(carrier.bipd_insurance_required_amount)}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">BIPD On File:</span>
+                        <span class="info-value">${formatCurrency(carrier.bipd_insurance_on_file_amount)}</span>
+                    </div>
+                    ${carrier.bipd_insurance_required_amount > carrier.bipd_insurance_on_file_amount
+                        ? `<div class="insurance-alert">
+                            ⚠️ Insurance on file is below required amount
+                          </div>`
+                        : ''
+                    }
+                </div>
+
+                <!-- Additional Data (if any) -->
+                ${this.displayAdditionalData(carrier)}
+            </div>
+
+            <!-- Action Buttons -->
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e0e0e0; text-align: center;">
+                <button onclick="window.createLeadFromCarrier(${carrier.dot_number})" style="
+                    background: #28a745;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 0 5px;
+                    font-size: 14px;
+                ">📝 Create Lead</button>
+
+                <button onclick="window.open('tel:${carrier.phone}')" style="
+                    background: #17a2b8;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 0 5px;
+                    font-size: 14px;
+                " ${!carrier.phone ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>📞 Call</button>
+
+                <button onclick="window.open('mailto:${carrier.email_address}')" style="
+                    background: #6c757d;
+                    color: white;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    margin: 0 5px;
+                    font-size: 14px;
+                " ${!carrier.email_address ? 'disabled style="opacity: 0.5; cursor: not-allowed;"' : ''}>✉️ Email</button>
+            </div>
+        `;
+
+        contentDiv.innerHTML = html;
     }
 
-    getSafetyColor(rating) {
-        switch(rating) {
-            case 'Satisfactory': return 'success';
-            case 'Conditional': return 'warning';
-            case 'Unsatisfactory': return 'danger';
-            default: return 'secondary';
-        }
+    displayAdditionalData(carrier) {
+        // Check for any additional fields not already displayed
+        const displayedFields = [
+            'id', 'dot_number', 'legal_name', 'dba_name', 'docket', 'street', 'city',
+            'state', 'zip_code', 'phone', 'email_address', 'entity_type', 'operating_status',
+            'carrier_operation', 'bipd_insurance_required_amount', 'bipd_insurance_on_file_amount',
+            'insurance_carrier', 'policy_number', 'drivers', 'power_units'
+        ];
+
+        const additionalFields = Object.keys(carrier).filter(key => !displayedFields.includes(key));
+
+        if (additionalFields.length === 0) return '';
+
+        const formatValue = (value) => {
+            if (value === null || value === undefined || value === '') {
+                return '<span class="info-value na">N/A</span>';
+            }
+            return value;
+        };
+
+        let html = '<div class="carrier-info-section"><h3>📊 Additional Information</h3>';
+
+        additionalFields.forEach(field => {
+            const label = field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            html += `
+                <div class="info-row">
+                    <span class="info-label">${label}:</span>
+                    <span class="info-value">${formatValue(carrier[field])}</span>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        return html;
     }
 
-    calculateInspectionFrequency(carrier) {
-        if (!carrier.total_inspections) return 'No inspections';
-        // This is simplified - you'd calculate based on date range
-        if (carrier.total_inspections > 20) return 'High (20+ inspections)';
-        if (carrier.total_inspections > 10) return 'Medium (10-20 inspections)';
-        return 'Low (<10 inspections)';
-    }
-
-    calculateViolationRate(carrier) {
-        if (!carrier.total_inspections || carrier.total_inspections === 0) return 'N/A';
-        const rate = (carrier.total_violations / carrier.total_inspections).toFixed(2);
-        return `${rate} violations per inspection`;
-    }
-
-    calculateComplianceScore(carrier) {
-        if (!carrier.total_inspections) return 100;
-
-        const violationPenalty = (carrier.total_violations || 0) * 2;
-        const oosPenalty = (carrier.total_oos || 0) * 5;
-
-        let score = 100 - violationPenalty - oosPenalty;
-        score = Math.max(0, Math.min(100, score));
-
-        return Math.round(score);
-    }
-
-    getComplianceColor(carrier) {
-        const score = this.calculateComplianceScore(carrier);
-        if (score >= 80) return 'text-success';
-        if (score >= 60) return 'text-warning';
-        return 'text-danger';
-    }
-
-    getComplianceBarColor(carrier) {
-        const score = this.calculateComplianceScore(carrier);
-        if (score >= 80) return 'bg-success';
-        if (score >= 60) return 'bg-warning';
-        return 'bg-danger';
-    }
-
-    generateRecommendations(carrier) {
-        const recommendations = [];
-        const score = this.calculateComplianceScore(carrier);
-
-        if (score < 60) {
-            recommendations.push('⚠️ <strong>High Priority:</strong> Schedule safety training for drivers');
-            recommendations.push('⚠️ <strong>High Priority:</strong> Implement vehicle maintenance program');
-        }
-
-        if (carrier.total_oos > 5) {
-            recommendations.push('🔧 Review and improve pre-trip inspection procedures');
-        }
-
-        if (carrier.avg_violations_per_inspection > 2) {
-            recommendations.push('📋 Conduct internal compliance audit');
-        }
-
-        if (!carrier.insurance_carrier) {
-            recommendations.push('🛡️ <strong>Critical:</strong> Update insurance information');
-        }
-
-        if (recommendations.length === 0) {
-            recommendations.push('✅ Carrier shows good compliance - maintain current practices');
-        }
-
-        return '<ul class="mb-0">' + recommendations.map(r => `<li>${r}</li>`).join('') + '</ul>';
-    }
-
-    exportProfile() {
-        if (!this.currentProfile) {
-            alert('No profile data to export');
-            return;
-        }
-
-        const { carrier } = this.currentProfile;
-        const filename = `carrier_profile_${carrier.dot_number}_${new Date().toISOString().split('T')[0]}.json`;
-
-        const dataStr = JSON.stringify(this.currentProfile, null, 2);
-        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-
-        const link = document.createElement('a');
-        link.setAttribute('href', dataUri);
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+    hide() {
+        this.modal.style.display = 'none';
     }
 }
 
-// Initialize the carrier profile modal
-const carrierProfile = new CarrierProfileModal();
+// Initialize modal when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        window.carrierProfileModal = new CarrierProfileModal();
+    });
+} else {
+    window.carrierProfileModal = new CarrierProfileModal();
+}
 
-// Add to window for global access
-window.carrierProfile = carrierProfile;
+// Helper function to create lead from carrier
+window.createLeadFromCarrier = function(dotNumber) {
+    // Close the modal
+    if (window.carrierProfileModal) {
+        window.carrierProfileModal.hide();
+    }
+
+    // You can implement lead creation logic here
+    alert(`Creating lead for DOT #${dotNumber}`);
+    // This would typically call your lead creation API
+};

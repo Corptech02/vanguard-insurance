@@ -297,6 +297,21 @@ async def get_carrier_profile(dot_number: int):
             "total_inspection_records": len(inspections)
         }
 
+@app.get("/api/carrier/profile/{dot_number}")
+async def get_carrier_profile(dot_number: int):
+    """Get complete carrier profile by DOT number"""
+    with get_db(FMCSA_DB) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT * FROM carriers WHERE dot_number = ?
+        """, (dot_number,))
+
+        carrier = cursor.fetchone()
+        if not carrier:
+            raise HTTPException(status_code=404, detail="Carrier not found")
+
+        return dict(carrier)
+
 @app.get("/api/leads/expiring-insurance")
 async def get_expiring_insurance_leads(
     days: int = Query(30, description="Days until insurance expiry"),

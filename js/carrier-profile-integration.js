@@ -1,135 +1,102 @@
 // Carrier Profile Integration
-// Links the eye icon to show detailed carrier profile with inspection data
+// This file integrates the carrier profile modal with the main application
 
-// Override the viewLeadDetails function to show carrier profile
-window.viewLeadDetails = function(usdotNumber) {
-    console.log('Viewing carrier profile for USDOT:', usdotNumber);
+// Function to view lead/carrier details
+window.viewLeadDetails = function(dotNumber) {
+    console.log('Viewing carrier profile for USDOT:', dotNumber);
 
-    // Extract DOT number (remove any prefixes)
-    let dotNumber = usdotNumber;
-    if (typeof dotNumber === 'string') {
-        dotNumber = dotNumber.replace(/\D/g, ''); // Remove non-digits
-    }
-
-    // Check if CarrierProfileModal class exists
-    if (typeof CarrierProfileModal !== 'undefined') {
-        // Create new instance if needed
-        if (!window.carrierProfile) {
-            window.carrierProfile = new CarrierProfileModal();
-        }
-        window.carrierProfile.showProfile(dotNumber);
+    // Check if modal is loaded
+    if (window.carrierProfileModal) {
+        window.carrierProfileModal.show(dotNumber);
     } else {
-        console.error('CarrierProfileModal class not loaded yet');
-        // Try to load it dynamically
-        setTimeout(() => {
-            if (typeof CarrierProfileModal !== 'undefined') {
-                if (!window.carrierProfile) {
-                    window.carrierProfile = new CarrierProfileModal();
-                }
-                window.carrierProfile.showProfile(dotNumber);
-            } else {
-                alert('Carrier profile viewer is loading. Please try again in a moment.');
+        console.error('Carrier profile modal not loaded');
+        // Try to load it
+        const script = document.createElement('script');
+        script.src = 'js/carrier-profile-modal.js?v=' + Date.now();
+        script.onload = function() {
+            if (window.carrierProfileModal) {
+                window.carrierProfileModal.show(dotNumber);
             }
-        }, 500);
+        };
+        document.head.appendChild(script);
     }
 };
 
-// Also handle viewLead function for lead tables
-window.viewLead = function(leadId) {
-    // Try to extract DOT number from lead
-    const lead = getLeadById(leadId);
-    if (lead && lead.usdotNumber) {
-        viewLeadDetails(lead.usdotNumber);
-    } else {
-        // Fallback to original lead view behavior
-        console.log('Viewing lead:', leadId);
-        showLeadDetailsModal(leadId);
-    }
+// Alias for compatibility
+window.viewCarrierProfile = window.viewLeadDetails;
+
+// Function to view carrier from search results
+window.viewCarrier = function(dotNumber) {
+    window.viewLeadDetails(dotNumber);
 };
 
-// Helper function to get lead by ID
-function getLeadById(leadId) {
-    const leads = JSON.parse(localStorage.getItem('leads') || '[]');
-    return leads.find(lead => lead.id === leadId);
-}
+// Function to create a lead from carrier data
+window.createLeadFromCarrierData = async function(dotNumber) {
+    try {
+        const apiBase = window.apiService ? await window.apiService.getAPIBaseURL() : 'https://api.vigagency.com';
 
-// Fallback modal for leads without DOT numbers
-function showLeadDetailsModal(leadId) {
-    const lead = getLeadById(leadId);
-    if (!lead) {
-        alert('Lead not found');
-        return;
-    }
+        // Fetch carrier data
+        const response = await fetch(`${apiBase}/api/carrier/profile/${dotNumber}`, {
+            headers: {
+                'Content-Type': 'application/json',
+                'ngrok-skip-browser-warning': 'true'
+            }
+        });
 
-    // Create a simple modal for lead details
-    const modal = document.createElement('div');
-    modal.className = 'modal fade show';
-    modal.style.display = 'block';
-    modal.innerHTML = `
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Lead Details</h5>
-                    <button type="button" class="btn-close" onclick="this.closest('.modal').remove()"></button>
-                </div>
-                <div class="modal-body">
-                    <dl class="row">
-                        <dt class="col-sm-4">Name:</dt>
-                        <dd class="col-sm-8">${lead.name || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Company:</dt>
-                        <dd class="col-sm-8">${lead.company || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Phone:</dt>
-                        <dd class="col-sm-8">${lead.phone || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Email:</dt>
-                        <dd class="col-sm-8">${lead.email || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Status:</dt>
-                        <dd class="col-sm-8">${lead.stage || 'N/A'}</dd>
-
-                        <dt class="col-sm-4">Premium:</dt>
-                        <dd class="col-sm-8">$${lead.premium || 0}</dd>
-
-                        ${lead.usdotNumber ? `
-                            <dt class="col-sm-4">DOT Number:</dt>
-                            <dd class="col-sm-8">${lead.usdotNumber}</dd>
-                        ` : ''}
-                    </dl>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="this.closest('.modal').remove()">Close</button>
-                    ${lead.usdotNumber ? `
-                        <button type="button" class="btn btn-primary" onclick="this.closest('.modal').remove(); viewLeadDetails('${lead.usdotNumber}')">
-                            <i class="fas fa-truck"></i> View Full Carrier Profile
-                        </button>
-                    ` : ''}
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.appendChild(modal);
-}
-
-// Initialize when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Carrier profile integration initialized');
-
-    // Wait a moment for all scripts to load, then initialize
-    setTimeout(() => {
-        if (typeof CarrierProfileModal !== 'undefined' && !window.carrierProfile) {
-            window.carrierProfile = new CarrierProfileModal();
-            console.log('CarrierProfileModal instance created');
+        if (!response.ok) {
+            throw new Error('Failed to fetch carrier data');
         }
-    }, 1000);
-});
 
-// Also try to initialize immediately if the modal class is already available
-if (typeof CarrierProfileModal !== 'undefined' && !window.carrierProfile) {
-    window.carrierProfile = new CarrierProfileModal();
-    console.log('CarrierProfileModal instance created immediately');
-}
+        const carrier = await response.json();
+
+        // Create lead data
+        const leadData = {
+            dot_number: carrier.dot_number,
+            mc_number: carrier.mc_number || '',
+            company_name: carrier.legal_name,
+            contact_name: '', // Will need to be filled manually
+            phone: carrier.phone || '',
+            email: carrier.email_address || '',
+            address: carrier.street || '',
+            city: carrier.city || '',
+            state: carrier.state || '',
+            zip_code: carrier.zip_code || '',
+            current_insurance: carrier.insurance_carrier || '',
+            coverage_amount: carrier.bipd_insurance_on_file_amount || 0,
+            notes: `Power Units: ${carrier.power_units || 0}, Drivers: ${carrier.drivers || 0}`,
+            status: 'new',
+            priority: 'normal',
+            source: 'carrier_lookup'
+        };
+
+        // Create the lead
+        if (window.apiService && window.apiService.createLead) {
+            const result = await window.apiService.createLead(leadData);
+
+            // Close the modal
+            if (window.carrierProfileModal) {
+                window.carrierProfileModal.hide();
+            }
+
+            // Show success message
+            alert(`Lead created successfully! Lead ID: ${result.lead_id}`);
+
+            // Refresh the leads list if on leads page
+            if (window.location.pathname.includes('leads') && window.loadLeads) {
+                window.loadLeads();
+            }
+        } else {
+            console.error('Lead creation service not available');
+            alert('Lead creation service not available. Please try again later.');
+        }
+
+    } catch (error) {
+        console.error('Error creating lead:', error);
+        alert('Failed to create lead. Please try again.');
+    }
+};
+
+// Override the createLeadFromCarrier function in the modal
+window.createLeadFromCarrier = window.createLeadFromCarrierData;
 
 console.log('Carrier profile integration loaded');
