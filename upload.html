@@ -655,29 +655,38 @@
                         // Handle different response types
                         const responseText = xhr.responseText;
 
-                        if (uploadUrl === 'https://also-freelance-playback-relating.trycloudflare.com') {
-                            // tunneled server returns an HTML response
-                            console.log('Upload successful to tunneled server:', file.name);
-                            console.log('Response:', responseText);
+                        // Try to parse JSON response
+                        try {
+                            const response = JSON.parse(responseText);
+                            console.log('Upload successful:', file.name, response);
 
-                            // Show the download URL to the user (if we have the status element)
+                            // Check if this is our custom server response
+                            if (response.success && response.data) {
+                                // Show the download URL to the user
+                                if (statusElement && statusElement.parentElement) {
+                                    const messageDiv = document.createElement('div');
+                                    messageDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 12px; word-break: break-all;';
+                                    messageDiv.innerHTML = `<strong>✅ Upload complete!</strong><br>
+                                        File: ${file.name}<br>
+                                        Size: ${formatFileSize(file.size)}<br>
+                                        ${response.data.url ? `URL: <a href="${response.data.url}" target="_blank">${response.data.url}</a>` : 'Status: Uploaded successfully'}`;
+                                    statusElement.parentElement.appendChild(messageDiv);
+                                }
+                                resolve(response.data);
+                            } else {
+                                // Legacy format or other services
+                                resolve(response);
+                            }
+                        } catch (e) {
+                            // Non-JSON response (shouldn't happen with our server)
+                            console.log('Upload successful (non-JSON response):', file.name);
                             if (statusElement && statusElement.parentElement) {
                                 const messageDiv = document.createElement('div');
-                                messageDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 12px; word-break: break-all;';
-                                messageDiv.innerHTML = `<strong>Upload complete!</strong><br>Download URL: <a href="${responseText}" target="_blank">${responseText}</a>`;
+                                messageDiv.style.cssText = 'margin-top: 10px; padding: 10px; background: #d4edda; color: #155724; border-radius: 5px; font-size: 12px;';
+                                messageDiv.innerHTML = `<strong>✅ Upload complete!</strong><br>File uploaded successfully`;
                                 statusElement.parentElement.appendChild(messageDiv);
                             }
-
-                            resolve({ success: true, url: responseText });
-                        } else {
-                            try {
-                                const response = JSON.parse(responseText);
-                                console.log('Upload successful:', file.name, response);
-                                resolve(response);
-                            } catch (e) {
-                                console.log('Upload successful (non-JSON response):', file.name);
-                                resolve({ success: true });
-                            }
+                            resolve({ success: true });
                         }
                     } else {
                         console.error('Upload failed:', file.name, 'Status:', xhr.status);
