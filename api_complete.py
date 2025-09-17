@@ -236,9 +236,11 @@ async def get_leads(
 
 @app.get("/api/carrier/profile/{dot_number}")
 async def get_carrier_profile(dot_number: int):
-    """Get complete carrier profile by DOT number"""
+    """Get complete carrier profile by DOT number including vehicle inspection data"""
     with get_db(FMCSA_DB) as conn:
         cursor = conn.cursor()
+
+        # Get carrier data
         cursor.execute("""
             SELECT * FROM carriers WHERE dot_number = ?
         """, (dot_number,))
@@ -247,7 +249,50 @@ async def get_carrier_profile(dot_number: int):
         if not carrier:
             raise HTTPException(status_code=404, detail="Carrier not found")
 
-        return dict(carrier)
+        carrier_data = dict(carrier)
+
+        # Get vehicle inspection data
+        cursor.execute("""
+            SELECT
+                inspection_id,
+                insp_date,
+                report_state,
+                report_number,
+                insp_level_id,
+                location_desc,
+                gross_comb_veh_wt,
+                viol_total,
+                oos_total,
+                driver_viol_total,
+                vehicle_viol_total,
+                hazmat_viol_total
+            FROM vehicle_inspections
+            WHERE dot_number = ?
+            ORDER BY insp_date DESC
+            LIMIT 10
+        """, (dot_number,))
+
+        inspections = [dict(row) for row in cursor.fetchall()]
+
+        # Get inspection summary
+        cursor.execute("""
+            SELECT
+                COUNT(*) as total_inspections,
+                SUM(viol_total) as total_violations,
+                SUM(oos_total) as total_oos,
+                AVG(viol_total) as avg_violations
+            FROM vehicle_inspections
+            WHERE dot_number = ?
+        """, (dot_number,))
+
+        summary = cursor.fetchone()
+        inspection_summary = dict(summary) if summary else {}
+
+        return {
+            "carrier": carrier_data,
+            "inspections": inspections,
+            "inspection_summary": inspection_summary
+        }
 
 @app.get("/api/leads/expiring-insurance")
 async def get_expiring_insurance_leads(
