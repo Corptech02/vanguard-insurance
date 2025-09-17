@@ -170,7 +170,7 @@
         const credentials = storedCreds ? JSON.parse(storedCreds) : {
             client_id: prompt('Enter Client ID:'),
             client_secret: prompt('Enter Client Secret:'),
-            redirect_uri: "https://corptech02.github.io/vanguard-insurance/api/gmail/callback.html"
+            redirect_uri: "https://corptech02.github.io/vanguard-insurance/complete-oauth.html"
         };
 
         if (!storedCreds && credentials.client_id && credentials.client_secret) {
