@@ -33,7 +33,24 @@ window.viewCarrier = function(dotNumber) {
 // Function to create a lead from carrier data
 window.createLeadFromCarrierData = async function(dotNumber) {
     try {
-        const apiBase = window.apiService ? await window.apiService.getAPIBaseURL() : 'https://api.vigagency.com';
+        // Get API base URL - use the same logic as api-service.js
+        let apiBase = 'https://api.vigagency.com';
+
+        // Check if we have a custom API URL in localStorage
+        const customAPI = localStorage.getItem('VANGUARD_API_URL');
+        if (customAPI) {
+            apiBase = customAPI;
+        } else if (window.location.hostname === 'vanguard.vigagency.com') {
+            apiBase = 'https://api.vigagency.com';
+        } else if (window.location.hostname === 'localhost') {
+            apiBase = 'http://localhost:8897';
+        } else if (window.location.hostname.includes('github.io')) {
+            apiBase = 'https://api.vigagency.com';
+        } else if (window.location.protocol === 'https:') {
+            apiBase = 'https://api.vigagency.com';
+        } else {
+            apiBase = 'http://192.168.40.232:8897';
+        }
 
         // Fetch carrier data
         const response = await fetch(`${apiBase}/api/carrier/profile/${dotNumber}`, {
