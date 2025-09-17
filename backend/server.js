@@ -7,6 +7,24 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'gmail-backend'
+    });
+});
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: 'Vanguard Gmail Backend API',
+        status: 'running',
+        endpoints: ['/api/health', '/api/gmail/*']
+    });
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
