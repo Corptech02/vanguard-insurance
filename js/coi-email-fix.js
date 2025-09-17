@@ -64,7 +64,7 @@ window.expandEmail = function(emailId) {
     `;
 
     // Fetch email details
-    const API_URL = 'https://upset-loops-joke.loca.lt/api/gmail';
+    const API_URL = 'https://vanguard-gmail-backend.onrender.com/api/gmail';
 
     fetch(`${API_URL}/messages/${emailId}`, {
         headers: {

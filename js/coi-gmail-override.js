@@ -2,7 +2,7 @@
 console.log('COI Gmail Override loading...');
 
 // Backend API URL - Using HTTPS tunnel
-const GMAIL_API_URL = 'https://upset-loops-joke.loca.lt/api/gmail';
+const GMAIL_API_URL = 'https://vanguard-gmail-backend.onrender.com/api/gmail';
 
 // Override immediately after script loads (don't wait for DOM)
 (function() {
