@@ -1,10 +1,18 @@
 services:
   - type: web
-    name: vanguard-insurance
-    runtime: python
-    buildCommand: "pip install --no-deps -r requirements.txt"
-    startCommand: "python app.py"
+    name: vanguard-backend
+    env: node
+    repo: https://github.com/Corptech02/vanguard-insurance.git
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    plan: free
+    healthCheckPath: /api/health
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
-    autoDeploy: true
+      - key: PORT
+        value: 10000
+      - key: NODE_ENV
+        value: production
+      - key: GMAIL_CLIENT_ID
+        sync: false
+      - key: GMAIL_CLIENT_SECRET
+        sync: false
