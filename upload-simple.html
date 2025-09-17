@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple File Upload</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+
+        .upload-area {
+            border: 3px dashed #ddd;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            background: #fafafa;
+            margin-bottom: 20px;
+        }
+
+        .upload-area:hover {
+            border-color: #667eea;
+            background: #f0f0ff;
+        }
+
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #e6e6ff;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-list {
+            margin: 20px 0;
+        }
+
+        .file-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat {
+            text-align: center;
+            padding: 15px;
+            background: #f0f4ff;
+            border-radius: 10px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .url-display {
+            background: #d4edda;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 Simple File Upload</h1>
+
+        <div class="info">
+            <strong>How it works:</strong>
+            <ul style="margin-top: 10px; margin-left: 20px;">
+                <li>Files are uploaded to transfer.sh</li>
+                <li>You get a download URL that works for 14 days</li>
+                <li>Maximum file size: 10 GB</li>
+                <li>Real-time progress tracking</li>
+            </ul>
+        </div>
+
+        <div class="upload-area" id="uploadArea">
+            <div style="font-size: 48px; margin-bottom: 20px;">📁</div>
+            <div>Drop files here or click to browse</div>
+            <input type="file" id="fileInput" multiple>
+        </div>
+
+        <div id="fileList" class="file-list"></div>
+
+        <div id="stats" class="stats" style="display: none;">
+            <div class="stat">
+                <div class="stat-value" id="totalSize">0 MB</div>
+                <div class="stat-label">Total Size</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="uploaded">0 MB</div>
+                <div class="stat-label">Uploaded</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="speed">0 KB/s</div>
+                <div class="stat-label">Speed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value" id="timeLeft">--:--</div>
+                <div class="stat-label">Time Left</div>
+            </div>
+        </div>
+
+        <div class="progress-bar" id="mainProgress" style="display: none;">
+            <div class="progress-fill" id="mainProgressFill">0%</div>
+        </div>
+
+        <button id="uploadBtn" style="display: none;">Upload Files</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let selectedFiles = [];
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const results = document.getElementById('results');
+        const stats = document.getElementById('stats');
+        const mainProgress = document.getElementById('mainProgress');
+
+        // File selection
+        uploadArea.onclick = () => fileInput.click();
+
+        uploadArea.ondragover = (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        };
+
+        uploadArea.ondragleave = () => {
+            uploadArea.classList.remove('dragover');
+        };
+
+        uploadArea.ondrop = (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        };
+
+        fileInput.onchange = (e) => handleFiles(e.target.files);
+
+        function handleFiles(files) {
+            selectedFiles = Array.from(files);
+            displayFiles();
+            uploadBtn.style.display = selectedFiles.length > 0 ? 'block' : 'none';
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(2) + ' ' + sizes[i];
+        }
+
+        function formatTime(seconds) {
+            if (!seconds || seconds === Infinity) return '--:--';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function displayFiles() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach(file => {
+                const item = document.createElement('div');
+                item.className = 'file-item';
+                item.innerHTML = `
+                    <strong>${file.name}</strong>
+                    <span style="color: #666; margin-left: 10px;">${formatSize(file.size)}</span>
+                `;
+                fileList.appendChild(item);
+            });
+        }
+
+        uploadBtn.onclick = async () => {
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploading...';
+            results.innerHTML = '';
+            stats.style.display = 'grid';
+            mainProgress.style.display = 'block';
+
+            const totalBytes = selectedFiles.reduce((sum, f) => sum + f.size, 0);
+            let uploadedBytes = 0;
+            let startTime = Date.now();
+
+            document.getElementById('totalSize').textContent = formatSize(totalBytes);
+
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+
+                try {
+                    const result = await uploadFile(file, (loaded, total) => {
+                        const fileProgress = loaded;
+                        const overallProgress = uploadedBytes + fileProgress;
+                        const percent = Math.round(overallProgress / totalBytes * 100);
+
+                        // Update stats
+                        document.getElementById('uploaded').textContent = formatSize(overallProgress);
+
+                        // Calculate speed
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        const speed = overallProgress / elapsed;
+                        document.getElementById('speed').textContent = formatSize(speed) + '/s';
+
+                        // Calculate time remaining
+                        const remaining = totalBytes - overallProgress;
+                        const timeLeft = remaining / speed;
+                        document.getElementById('timeLeft').textContent = formatTime(timeLeft);
+
+                        // Update progress bar
+                        document.getElementById('mainProgressFill').style.width = percent + '%';
+                        document.getElementById('mainProgressFill').textContent = percent + '%';
+                    });
+
+                    uploadedBytes += file.size;
+
+                    // Show success with URL
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'success';
+                    successDiv.innerHTML = `
+                        <strong>✓ ${file.name} uploaded successfully!</strong>
+                        <div class="url-display">${result}</div>
+                        <a href="${result}" target="_blank" style="color: #155724;">Open in new tab →</a>
+                    `;
+                    results.appendChild(successDiv);
+
+                } catch (error) {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'error';
+                    errorDiv.innerHTML = `<strong>✗ Failed to upload ${file.name}</strong><br>${error.message}`;
+                    results.appendChild(errorDiv);
+                }
+            }
+
+            uploadBtn.textContent = 'Upload More Files';
+            uploadBtn.disabled = false;
+            selectedFiles = [];
+            fileInput.value = '';
+        };
+
+        function uploadFile(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+
+                xhr.upload.onprogress = (e) => {
+                    if (e.lengthComputable && onProgress) {
+                        onProgress(e.loaded, e.total);
+                    }
+                };
+
+                xhr.onload = () => {
+                    if (xhr.status === 200) {
+                        // transfer.sh returns the URL as plain text
+                        resolve(xhr.responseText.trim());
+                    } else {
+                        reject(new Error(`Upload failed with status ${xhr.status}`));
+                    }
+                };
+
+                xhr.onerror = () => reject(new Error('Network error'));
+
+                // Use transfer.sh API
+                const url = 'https://transfer.sh/' + encodeURIComponent(file.name);
+
+                console.log('Uploading to:', url);
+                xhr.open('PUT', url);
+
+                // Set max days to 14
+                xhr.setRequestHeader('Max-Days', '14');
+
+                // Send the file directly
+                xhr.send(file);
+            });
+        }
+    </script>
+</body>
+</html>
