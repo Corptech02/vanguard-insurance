@@ -655,9 +655,9 @@
                         // Handle different response types
                         const responseText = xhr.responseText;
 
-                        if (uploadUrl === 'https://transfer.sh/') {
+                        if (uploadUrl === 'https://0x0.st') {
                             // transfer.sh returns a URL as plain text
-                            console.log('Upload successful to transfer.sh:', file.name);
+                            console.log('Upload successful to 0x0.st:', file.name);
                             console.log('Download URL:', responseText);
 
                             // Show the download URL to the user (if we have the status element)
@@ -694,20 +694,22 @@
                 const uploadEndpoints = [
                     'http://192.168.40.232:8897/upload',  // Local API
                     'http://localhost:8897/upload',        // Localhost API
-                    'https://transfer.sh/',                // Public file transfer service
+                    'https://0x0.st',                      // Public file transfer service
                 ];
 
-                // For GitHub Pages, we'll use transfer.sh as fallback
+                // For GitHub Pages, we'll use 0x0.st as fallback
                 const uploadUrl = window.location.hostname === 'corptech02.github.io'
-                    ? 'https://transfer.sh/'
+                    ? 'https://0x0.st'
                     : uploadEndpoints[0];
 
                 console.log('Starting upload:', file.name, 'Size:', formatFileSize(file.size), 'URL:', uploadUrl);
 
-                if (uploadUrl === 'https://transfer.sh/') {
-                    // Special handling for transfer.sh
-                    xhr.open('PUT', uploadUrl + encodeURIComponent(file.name));
-                    xhr.send(file);
+                if (uploadUrl === 'https://0x0.st') {
+                    // Special handling for 0x0.st
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    xhr.open('POST', uploadUrl);
+                    xhr.send(formData);
                 } else {
                     xhr.open('POST', uploadUrl);
                     xhr.send(formData);
@@ -717,7 +719,7 @@
 
         // Check server connection (disabled for now since API is not available)
         async function checkServerStatus() {
-            // Since we're using transfer.sh, just show as connected
+            // Since we're using 0x0.st, just show as connected
             const statusDot = document.querySelector('.status-dot');
             const statusText = document.querySelector('.server-status span');
 
