@@ -236,69 +236,6 @@ async def get_leads(
 
 @app.get("/api/carrier/profile/{dot_number}")
 async def get_carrier_profile(dot_number: int):
-    """Get comprehensive carrier profile including inspection data"""
-    with get_db(FMCSA_DB) as conn:
-        cursor = conn.cursor()
-
-        # Get carrier basic information
-        cursor.execute("""
-            SELECT * FROM carriers WHERE dot_number = ?
-        """, (dot_number,))
-
-        carrier = cursor.fetchone()
-        if not carrier:
-            raise HTTPException(status_code=404, detail="Carrier not found")
-
-        carrier_data = dict(carrier)
-
-        # Get vehicle inspection records
-        cursor.execute("""
-            SELECT
-                inspection_id,
-                insp_date,
-                report_state,
-                report_number,
-                insp_level_id,
-                location_desc,
-                gross_comb_veh_wt,
-                viol_total,
-                oos_total,
-                driver_viol_total,
-                vehicle_viol_total,
-                hazmat_viol_total,
-                insp_interstate
-            FROM vehicle_inspections
-            WHERE dot_number = ?
-            ORDER BY insp_date DESC
-            LIMIT 50
-        """, (dot_number,))
-
-        inspections = [dict(row) for row in cursor.fetchall()]
-
-        # Get inspection summary statistics
-        cursor.execute("""
-            SELECT
-                COUNT(*) as total_inspections,
-                SUM(viol_total) as total_violations,
-                SUM(oos_total) as total_oos,
-                AVG(viol_total) as avg_violations,
-                MAX(insp_date) as last_inspection,
-                MIN(insp_date) as first_inspection
-            FROM vehicle_inspections
-            WHERE dot_number = ?
-        """, (dot_number,))
-
-        inspection_stats = dict(cursor.fetchone()) if cursor.fetchone() else {}
-
-        return {
-            "carrier": carrier_data,
-            "inspection_summary": inspection_stats,
-            "recent_inspections": inspections,
-            "total_inspection_records": len(inspections)
-        }
-
-@app.get("/api/carrier/profile/{dot_number}")
-async def get_carrier_profile(dot_number: int):
     """Get complete carrier profile by DOT number"""
     with get_db(FMCSA_DB) as conn:
         cursor = conn.cursor()
