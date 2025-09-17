@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Export Policies - Vanguard Insurance</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        #output {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .instructions {
+            background: #e6fffa;
+            padding: 15px;
+            border-left: 4px solid #4299e1;
+            margin: 20px 0;
+        }
+        .error {
+            background: #fed7d7;
+            padding: 15px;
+            border-left: 4px solid #f56565;
+            margin: 20px 0;
+        }
+        .success {
+            background: #c6f6d5;
+            padding: 15px;
+            border-left: 4px solid #48bb78;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📤 Export Policies from Local Database</h1>
+
+        <div class="instructions">
+            <h3>Instructions:</h3>
+            <ol>
+                <li><strong>Run this page on your OTHER PC</strong> where the policies are stored</li>
+                <li>Click "Export All Policies" to extract your data</li>
+                <li>Copy the generated JSON data</li>
+                <li>Go back to the main Vanguard Insurance page</li>
+                <li>Use the Import feature to add these policies to the centralized database</li>
+            </ol>
+        </div>
+
+        <button onclick="exportPolicies()">📤 Export All Policies</button>
+        <button onclick="copyToClipboard()">📋 Copy to Clipboard</button>
+        <button onclick="downloadAsFile()">💾 Download as File</button>
+
+        <div id="status"></div>
+        <div id="output" style="display: none;"></div>
+    </div>
+
+    <script>
+        let exportedData = null;
+
+        async function exportPolicies() {
+            const statusDiv = document.getElementById('status');
+            const outputDiv = document.getElementById('output');
+
+            statusDiv.innerHTML = '<div class="instructions">🔍 Searching for policies in local storage...</div>';
+
+            try {
+                // First try localStorage
+                const localPolicies = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    if (key.includes('policy') || key.includes('Policy')) {
+                        const value = localStorage.getItem(key);
+                        try {
+                            const parsed = JSON.parse(value);
+                            if (parsed) {
+                                localPolicies.push({
+                                    key: key,
+                                    data: parsed
+                                });
+                            }
+                        } catch (e) {
+                            // Not JSON, skip
+                        }
+                    }
+                }
+
+                // Try to get from IndexedDB if available
+                const idbPolicies = await getIndexedDBPolicies();
+
+                // Combine all found policies
+                exportedData = {
+                    timestamp: new Date().toISOString(),
+                    source: window.location.hostname,
+                    localStorage: localPolicies,
+                    indexedDB: idbPolicies,
+                    metadata: {
+                        userAgent: navigator.userAgent,
+                        exportVersion: '1.0'
+                    }
+                };
+
+                // Display results
+                if (localPolicies.length > 0 || idbPolicies.length > 0) {
+                    statusDiv.innerHTML = `
+                        <div class="success">
+                            ✅ Found ${localPolicies.length} policies in localStorage and ${idbPolicies.length} in IndexedDB
+                        </div>
+                    `;
+                    outputDiv.style.display = 'block';
+                    outputDiv.textContent = JSON.stringify(exportedData, null, 2);
+                } else {
+                    statusDiv.innerHTML = `
+                        <div class="error">
+                            ❌ No policies found in local storage.
+                            Make sure you're running this on the PC where you created the policies.
+                        </div>
+                    `;
+                }
+
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <div class="error">
+                        ❌ Error exporting policies: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        async function getIndexedDBPolicies() {
+            const policies = [];
+
+            // Check if IndexedDB is available
+            if (!window.indexedDB) {
+                return policies;
+            }
+
+            try {
+                // Try common database names
+                const dbNames = ['vanguard', 'policies', 'insurance', 'vanguardInsurance'];
+
+                for (const dbName of dbNames) {
+                    try {
+                        const db = await openDB(dbName);
+                        if (db) {
+                            const data = await getAllFromDB(db);
+                            if (data.length > 0) {
+                                policies.push(...data);
+                            }
+                            db.close();
+                        }
+                    } catch (e) {
+                        // Database doesn't exist, continue
+                    }
+                }
+            } catch (error) {
+                console.error('IndexedDB error:', error);
+            }
+
+            return policies;
+        }
+
+        function openDB(name) {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(name);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function getAllFromDB(db) {
+            return new Promise((resolve, reject) => {
+                const data = [];
+                const objectStoreNames = db.objectStoreNames;
+
+                if (objectStoreNames.length === 0) {
+                    resolve(data);
+                    return;
+                }
+
+                try {
+                    const transaction = db.transaction(Array.from(objectStoreNames), 'readonly');
+
+                    for (let i = 0; i < objectStoreNames.length; i++) {
+                        const storeName = objectStoreNames[i];
+                        const store = transaction.objectStore(storeName);
+                        const request = store.getAll();
+
+                        request.onsuccess = () => {
+                            if (request.result && request.result.length > 0) {
+                                data.push({
+                                    store: storeName,
+                                    records: request.result
+                                });
+                            }
+                        };
+                    }
+
+                    transaction.oncomplete = () => resolve(data);
+                    transaction.onerror = () => reject(transaction.error);
+                } catch (e) {
+                    resolve(data);
+                }
+            });
+        }
+
+        function copyToClipboard() {
+            if (!exportedData) {
+                alert('Please export policies first!');
+                return;
+            }
+
+            const text = JSON.stringify(exportedData, null, 2);
+            navigator.clipboard.writeText(text).then(() => {
+                document.getElementById('status').innerHTML = `
+                    <div class="success">
+                        ✅ Copied to clipboard! Now paste this into the import page.
+                    </div>
+                `;
+            });
+        }
+
+        function downloadAsFile() {
+            if (!exportedData) {
+                alert('Please export policies first!');
+                return;
+            }
+
+            const text = JSON.stringify(exportedData, null, 2);
+            const blob = new Blob([text], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `vanguard_policies_export_${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('status').innerHTML = `
+                <div class="success">
+                    ✅ Downloaded as file!
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>
