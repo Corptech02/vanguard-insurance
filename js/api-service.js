@@ -23,17 +23,17 @@ const getAPIBaseURL = () => {
         return 'http://72.23.167.167:8897';
     }
 
-    // For GitHub Pages, use the api.vigagency.com endpoint
+    // For GitHub Pages, use the cloudflare tunnel endpoint
     if (window.location.hostname.includes('github.io')) {
-        return 'https://api.vigagency.com';
+        return 'https://establishment-high-mostly-modifications.trycloudflare.com';
     }
 
-    // For other HTTPS sites, try to use api.vigagency.com as well
+    // For other HTTPS sites, use the cloudflare tunnel endpoint
     if (window.location.protocol === 'https:') {
-        return 'https://api.vigagency.com';
+        return 'https://establishment-high-mostly-modifications.trycloudflare.com';
     }
 
-    return 'http://192.168.40.232:8897';
+    return 'https://establishment-high-mostly-modifications.trycloudflare.com';
 };
 
 const API_BASE_URL = getAPIBaseURL();
@@ -644,6 +644,31 @@ const apiService = {
                 total_premium: policies.reduce((sum, policy) => sum + (parseFloat(policy.premium) || 0), 0),
                 monthly_lead_premium: leads.reduce((sum, lead) => sum + (parseFloat(lead.premium) || 0), 0)
             };
+        }
+    },
+
+    // Get comprehensive carrier profile
+    async getCarrierProfile(dotNumber) {
+        try {
+            const API_BASE_URL = this.getAPIBaseURL();
+            const response = await fetch(`${API_BASE_URL}/api/carrier/profile/${dotNumber}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'ngrok-skip-browser-warning': 'true'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            console.log('Carrier profile loaded:', data);
+            return data;
+        } catch (error) {
+            console.error('Error fetching carrier profile:', error);
+            throw error;
         }
     }
 };
