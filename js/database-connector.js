@@ -70,10 +70,8 @@ window.addEventListener('DOMContentLoaded', function() {
                     }
                 } else {
                     // Fallback to direct API call
-                    // Use direct IP for now since localtunnel requires authentication
-                    const API_URL = window.location.hostname === 'localhost'
-                        ? 'http://localhost:8897/api/search'
-                        : 'http://192.168.40.232:8897/api/search';
+                    // Use centralized API
+                    const API_URL = (window.VANGUARD_API_URL || 'https://suites-experience-learn-arrested.trycloudflare.com') + '/api/search';
 
                     response = await fetch(API_URL, {
                         method: 'POST',
@@ -181,11 +179,7 @@ window.addEventListener('DOMContentLoaded', function() {
                 stats = await window.apiService.getStats();
             } else {
                 // Fallback to direct API call
-                const API_URL = window.location.hostname === 'localhost'
-                    ? 'http://localhost:8897/api/stats/summary'
-                    : window.location.hostname.includes('github.io')
-                    ? 'https://vanguard-insurance-api.loca.lt/api/stats/summary'
-                    : 'http://192.168.40.232:8897/api/stats/summary';
+                const API_URL = (window.VANGUARD_API_URL || 'https://suites-experience-learn-arrested.trycloudflare.com') + '/api/stats/summary';
 
                 const response = await fetch(API_URL, {
                     headers: {

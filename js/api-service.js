@@ -1,39 +1,23 @@
 // API Service for comprehensive Vanguard Insurance API
 // Dynamic API URL configuration
 const getAPIBaseURL = () => {
-    // Check for manually set API URL first
+    // Check for global configuration from api-config.js first
+    if (window.VANGUARD_API_URL) {
+        console.log('Using configured API URL:', window.VANGUARD_API_URL);
+        return window.VANGUARD_API_URL;
+    }
+
+    // Check for manually set API URL in localStorage
     const customAPI = localStorage.getItem('VANGUARD_API_URL');
     if (customAPI) {
-        console.log('Using custom API URL:', customAPI);
+        console.log('Using custom API URL from localStorage:', customAPI);
         return customAPI;
     }
 
-    // Default URLs
-    if (window.location.hostname === 'localhost') {
-        return 'http://localhost:8897';
-    }
-
-    // Use vigagency.com subdomain if on that domain
-    if (window.location.hostname === 'vanguard.vigagency.com') {
-        return 'https://api.vigagency.com';
-    }
-
-    // Try public IP if accessible
-    if (window.location.hostname === '72.23.167.167') {
-        return 'http://72.23.167.167:8897';
-    }
-
-    // For GitHub Pages, use the cloudflare tunnel endpoint
-    if (window.location.hostname.includes('github.io')) {
-        return 'https://establishment-high-mostly-modifications.trycloudflare.com';
-    }
-
-    // For other HTTPS sites, use the cloudflare tunnel endpoint
-    if (window.location.protocol === 'https:') {
-        return 'https://establishment-high-mostly-modifications.trycloudflare.com';
-    }
-
-    return 'https://establishment-high-mostly-modifications.trycloudflare.com';
+    // Fallback to the current Cloudflare tunnel
+    const defaultURL = 'https://suites-experience-learn-arrested.trycloudflare.com';
+    console.log('Using default API URL:', defaultURL);
+    return defaultURL;
 };
 
 const API_BASE_URL = getAPIBaseURL();
