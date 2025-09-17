@@ -1,26 +1,35 @@
 #!/usr/bin/env python3
 """
-Vehicle Inspection Data Updater
-Fetches vehicle inspection data from DOT API and merges with existing carrier database
+Update vehicle inspections data from DOT API
+Fetches recent vehicle inspection data and merges with existing carrier database
+Enhanced to include VIN and vehicle details
 """
 
-import sqlite3
 import requests
+import sqlite3
 import json
 from datetime import datetime
 import time
+import logging
 import sys
 
-DB_PATH = '/home/corp06/DB-system/fmcsa_complete.db'
-API_ENDPOINT = 'https://data.transportation.gov/resource/fx4q-ay7w.json'
+# Setup logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
-def create_inspection_table(conn):
-    """Create or update the vehicle_inspections table"""
+# Database path - use the main database
+DB_PATH = "/home/corp06/DB-system/fmcsa_complete.db"
+API_URL = "https://data.transportation.gov/resource/fx4q-ay7w.json"
+
+def create_vehicle_inspections_table(conn):
+    """Create vehicle_inspections table if it doesn't exist"""
     cursor = conn.cursor()
 
-    # Create the vehicle_inspections table if it doesn't exist
-    cursor.execute('''
-        CREATE TABLE IF NOT EXISTS vehicle_inspections (
+    # Drop existing table if it exists (to ensure proper schema)
+    cursor.execute("DROP TABLE IF EXISTS vehicle_inspections")
+
+    cursor.execute("""
+        CREATE TABLE vehicle_inspections (
             inspection_id TEXT PRIMARY KEY,
             dot_number INTEGER,
             insp_date TEXT,
@@ -32,6 +41,8 @@ def create_inspection_table(conn):
             insp_carrier_city TEXT,
             insp_carrier_state TEXT,
             insp_carrier_zip_code TEXT,
+            location_desc TEXT,
+            county_code_state TEXT,
             gross_comb_veh_wt TEXT,
             viol_total INTEGER,
             oos_total INTEGER,
@@ -41,264 +52,314 @@ def create_inspection_table(conn):
             vehicle_oos_total INTEGER,
             hazmat_viol_total INTEGER,
             hazmat_oos_total INTEGER,
-            location_desc TEXT,
-            county_code_state TEXT,
             insp_interstate TEXT,
-            last_updated TIMESTAMP,
-            FOREIGN KEY (dot_number) REFERENCES carriers (dot_number)
+            last_updated TEXT,
+
+            -- Additional vehicle info fields from API
+            vehicle_vin TEXT,
+            vehicle_make TEXT,
+            vehicle_model TEXT,
+            vehicle_year TEXT,
+            vehicle_type TEXT,
+            vehicle_license_state TEXT,
+            vehicle_license_number TEXT,
+
+            -- Additional fields from API
+            post_acc_ind TEXT,
+            census_source_id TEXT,
+            insp_facility TEXT,
+            service_center TEXT,
+            region TEXT
         )
-    ''')
+    """)
 
-    # Create index for faster lookups
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_inspection_dot_number
-        ON vehicle_inspections (dot_number)
-    ''')
+    # Create indexes for faster lookups
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_vehicle_inspections_dot
+        ON vehicle_inspections(dot_number)
+    """)
 
-    cursor.execute('''
-        CREATE INDEX IF NOT EXISTS idx_inspection_date
-        ON vehicle_inspections (insp_date)
-    ''')
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_vehicle_inspections_date
+        ON vehicle_inspections(insp_date)
+    """)
+
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_vehicle_inspections_vin
+        ON vehicle_inspections(vehicle_vin)
+    """)
 
     conn.commit()
-    print("✅ Vehicle inspections table created/verified")
+    logger.info("Vehicle inspections table created/verified")
 
-def fetch_inspection_data(offset=0, limit=1000):
+def fetch_inspections(offset=0, limit=1000):
     """Fetch inspection data from DOT API"""
     params = {
-        '$limit': limit,
-        '$offset': offset,
-        '$order': 'insp_date DESC'  # Get most recent inspections first
+        "$limit": limit,
+        "$offset": offset,
+        "$order": "insp_date DESC"  # Get most recent first
     }
 
     try:
-        response = requests.get(API_ENDPOINT, params=params, timeout=30)
+        response = requests.get(API_URL, params=params, timeout=30)
         response.raise_for_status()
         return response.json()
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Error fetching data: {e}")
+    except requests.RequestException as e:
+        logger.error(f"Error fetching data: {e}")
         return []
 
-def update_inspections(conn, inspections):
-    """Update database with inspection data"""
-    cursor = conn.cursor()
-    updated_count = 0
-    inserted_count = 0
+def safe_int(value, default=0):
+    """Safely convert to integer"""
+    try:
+        return int(value) if value else default
+    except (ValueError, TypeError):
+        return default
 
-    for inspection in inspections:
-        try:
-            # Extract DOT number (remove leading zeros)
-            dot_number = int(inspection.get('dot_number', 0))
-            if dot_number == 0:
-                continue
+def safe_str(value, default=""):
+    """Safely convert to string"""
+    return str(value) if value else default
 
-            # Check if this carrier exists in our database
-            cursor.execute('SELECT dot_number FROM carriers WHERE dot_number = ?', (dot_number,))
-            if not cursor.fetchone():
-                continue  # Skip if carrier not in our database
+def update_inspection_record(cursor, inspection):
+    """Update or insert inspection record"""
+    try:
+        # Extract fields with safe defaults
+        data = {
+            'inspection_id': safe_str(inspection.get('inspection_id')),
+            'dot_number': safe_int(inspection.get('dot_number')),
+            'insp_date': safe_str(inspection.get('insp_date')),
+            'report_state': safe_str(inspection.get('report_state')),
+            'report_number': safe_str(inspection.get('report_number')),
+            'insp_level_id': safe_str(inspection.get('insp_level_id')),
+            'location_desc': safe_str(inspection.get('location_desc')),
+            'county_code_state': safe_str(inspection.get('county_code_state')),
+            'gross_comb_veh_wt': safe_str(inspection.get('gross_comb_veh_wt')),
+            'viol_total': safe_int(inspection.get('viol_total')),
+            'oos_total': safe_int(inspection.get('oos_total')),
+            'driver_viol_total': safe_int(inspection.get('driver_viol_total')),
+            'driver_oos_total': safe_int(inspection.get('driver_oos_total')),
+            'vehicle_viol_total': safe_int(inspection.get('vehicle_viol_total')),
+            'vehicle_oos_total': safe_int(inspection.get('vehicle_oos_total')),
+            'hazmat_viol_total': safe_int(inspection.get('hazmat_viol_total')),
+            'hazmat_oos_total': safe_int(inspection.get('hazmat_oos_total')),
+            'insp_interstate': safe_str(inspection.get('insp_interstate')),
+            'last_updated': datetime.now().isoformat()
+        }
 
-            inspection_id = inspection.get('inspection_id')
-            if not inspection_id:
-                continue
+        # Add carrier info if available
+        data['insp_carrier_name'] = safe_str(inspection.get('insp_carrier_name'))
+        data['insp_carrier_street'] = safe_str(inspection.get('insp_carrier_street'))
+        data['insp_carrier_city'] = safe_str(inspection.get('insp_carrier_city'))
+        data['insp_carrier_state'] = safe_str(inspection.get('insp_carrier_state'))
+        data['insp_carrier_zip_code'] = safe_str(inspection.get('insp_carrier_zip_code'))
 
-            # Prepare data for insertion/update
-            data = (
-                inspection_id,
-                dot_number,
-                inspection.get('insp_date', ''),
-                inspection.get('report_state', ''),
-                inspection.get('report_number', ''),
-                inspection.get('insp_level_id', ''),
-                inspection.get('insp_carrier_name', ''),
-                inspection.get('insp_carrier_street', ''),
-                inspection.get('insp_carrier_city', ''),
-                inspection.get('insp_carrier_state', ''),
-                inspection.get('insp_carrier_zip_code', ''),
-                inspection.get('gross_comb_veh_wt', ''),
-                int(inspection.get('viol_total', 0)),
-                int(inspection.get('oos_total', 0)),
-                int(inspection.get('driver_viol_total', 0)),
-                int(inspection.get('driver_oos_total', 0)),
-                int(inspection.get('vehicle_viol_total', 0)),
-                int(inspection.get('vehicle_oos_total', 0)),
-                int(inspection.get('hazmat_viol_total', 0)),
-                int(inspection.get('hazmat_oos_total', 0)),
-                inspection.get('location_desc', ''),
-                inspection.get('county_code_state', ''),
-                inspection.get('insp_interstate', ''),
-                datetime.now().isoformat()
+        # Vehicle info - will need separate API call for detailed VIN data
+        data['vehicle_vin'] = safe_str(inspection.get('vehicle_vin'))
+        data['vehicle_make'] = safe_str(inspection.get('vehicle_make'))
+        data['vehicle_model'] = safe_str(inspection.get('vehicle_model'))
+        data['vehicle_year'] = safe_str(inspection.get('vehicle_year'))
+        data['vehicle_type'] = safe_str(inspection.get('vehicle_type'))
+        data['vehicle_license_state'] = safe_str(inspection.get('vehicle_license_state'))
+        data['vehicle_license_number'] = safe_str(inspection.get('vehicle_license_number'))
+
+        # Additional fields
+        data['post_acc_ind'] = safe_str(inspection.get('post_acc_ind'))
+        data['census_source_id'] = safe_str(inspection.get('census_source_id'))
+        data['insp_facility'] = safe_str(inspection.get('insp_facility'))
+        data['service_center'] = safe_str(inspection.get('service_center'))
+        data['region'] = safe_str(inspection.get('region'))
+
+        # Use REPLACE to update if exists, insert if new
+        cursor.execute("""
+            REPLACE INTO vehicle_inspections (
+                inspection_id, dot_number, insp_date, report_state, report_number,
+                insp_level_id, insp_carrier_name, insp_carrier_street, insp_carrier_city,
+                insp_carrier_state, insp_carrier_zip_code, location_desc, county_code_state,
+                gross_comb_veh_wt, viol_total, oos_total, driver_viol_total, driver_oos_total,
+                vehicle_viol_total, vehicle_oos_total, hazmat_viol_total, hazmat_oos_total,
+                insp_interstate, last_updated, vehicle_vin, vehicle_make, vehicle_model,
+                vehicle_year, vehicle_type, vehicle_license_state, vehicle_license_number,
+                post_acc_ind, census_source_id, insp_facility, service_center, region
+            ) VALUES (
+                :inspection_id, :dot_number, :insp_date, :report_state, :report_number,
+                :insp_level_id, :insp_carrier_name, :insp_carrier_street, :insp_carrier_city,
+                :insp_carrier_state, :insp_carrier_zip_code, :location_desc, :county_code_state,
+                :gross_comb_veh_wt, :viol_total, :oos_total, :driver_viol_total, :driver_oos_total,
+                :vehicle_viol_total, :vehicle_oos_total, :hazmat_viol_total, :hazmat_oos_total,
+                :insp_interstate, :last_updated, :vehicle_vin, :vehicle_make, :vehicle_model,
+                :vehicle_year, :vehicle_type, :vehicle_license_state, :vehicle_license_number,
+                :post_acc_ind, :census_source_id, :insp_facility, :service_center, :region
             )
+        """, data)
 
-            # Use INSERT OR REPLACE to update if exists or insert if new
-            cursor.execute('''
-                INSERT OR REPLACE INTO vehicle_inspections VALUES (
-                    ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-                )
-            ''', data)
+        return True
+    except Exception as e:
+        logger.error(f"Error updating inspection {inspection.get('inspection_id')}: {e}")
+        return False
 
-            if cursor.rowcount > 0:
-                inserted_count += 1
-
-        except Exception as e:
-            print(f"Error processing inspection {inspection.get('inspection_id')}: {e}")
-            continue
-
-    conn.commit()
-    return inserted_count
-
-def add_inspection_summary_to_carriers(conn):
-    """Add summary columns to carriers table for inspection data"""
+def update_carrier_inspection_stats(conn):
+    """Update carriers table with latest inspection statistics"""
     cursor = conn.cursor()
 
-    # Add new columns if they don't exist
-    try:
-        cursor.execute('ALTER TABLE carriers ADD COLUMN total_inspections INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass  # Column already exists
+    # Add columns if they don't exist
+    columns_to_add = [
+        ("last_inspection_date", "TEXT"),
+        ("total_inspections", "INTEGER DEFAULT 0"),
+        ("total_violations", "INTEGER DEFAULT 0"),
+        ("avg_violations", "REAL DEFAULT 0"),
+        ("total_oos", "INTEGER DEFAULT 0"),
+        ("vehicle_count", "INTEGER DEFAULT 0")
+    ]
 
-    try:
-        cursor.execute('ALTER TABLE carriers ADD COLUMN total_violations INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass
+    for col_name, col_type in columns_to_add:
+        try:
+            cursor.execute(f"ALTER TABLE carriers ADD COLUMN {col_name} {col_type}")
+            logger.info(f"Added column {col_name} to carriers table")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
 
-    try:
-        cursor.execute('ALTER TABLE carriers ADD COLUMN total_oos INTEGER DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute('ALTER TABLE carriers ADD COLUMN last_inspection_date TEXT')
-    except sqlite3.OperationalError:
-        pass
-
-    try:
-        cursor.execute('ALTER TABLE carriers ADD COLUMN avg_violations_per_inspection REAL DEFAULT 0')
-    except sqlite3.OperationalError:
-        pass
-
-    # Update carrier records with inspection summary
-    cursor.execute('''
+    # Update carrier statistics
+    cursor.execute("""
         UPDATE carriers
         SET
+            last_inspection_date = (
+                SELECT MAX(insp_date)
+                FROM vehicle_inspections
+                WHERE vehicle_inspections.dot_number = carriers.dot_number
+            ),
             total_inspections = (
-                SELECT COUNT(*) FROM vehicle_inspections
+                SELECT COUNT(*)
+                FROM vehicle_inspections
                 WHERE vehicle_inspections.dot_number = carriers.dot_number
             ),
             total_violations = (
-                SELECT COALESCE(SUM(viol_total), 0) FROM vehicle_inspections
+                SELECT COALESCE(SUM(viol_total), 0)
+                FROM vehicle_inspections
+                WHERE vehicle_inspections.dot_number = carriers.dot_number
+            ),
+            avg_violations = (
+                SELECT COALESCE(AVG(viol_total), 0)
+                FROM vehicle_inspections
                 WHERE vehicle_inspections.dot_number = carriers.dot_number
             ),
             total_oos = (
-                SELECT COALESCE(SUM(oos_total), 0) FROM vehicle_inspections
-                WHERE vehicle_inspections.dot_number = carriers.dot_number
-            ),
-            last_inspection_date = (
-                SELECT MAX(insp_date) FROM vehicle_inspections
-                WHERE vehicle_inspections.dot_number = carriers.dot_number
-            ),
-            avg_violations_per_inspection = (
-                SELECT CASE
-                    WHEN COUNT(*) > 0 THEN CAST(SUM(viol_total) AS REAL) / COUNT(*)
-                    ELSE 0
-                END
+                SELECT COALESCE(SUM(oos_total), 0)
                 FROM vehicle_inspections
                 WHERE vehicle_inspections.dot_number = carriers.dot_number
+            ),
+            vehicle_count = (
+                SELECT COUNT(DISTINCT vehicle_vin)
+                FROM vehicle_inspections
+                WHERE vehicle_inspections.dot_number = carriers.dot_number
+                AND vehicle_vin IS NOT NULL AND vehicle_vin != ''
             )
         WHERE EXISTS (
-            SELECT 1 FROM vehicle_inspections
+            SELECT 1
+            FROM vehicle_inspections
             WHERE vehicle_inspections.dot_number = carriers.dot_number
         )
-    ''')
+    """)
 
-    affected_rows = cursor.rowcount
+    affected = cursor.rowcount
     conn.commit()
-    print(f"✅ Updated {affected_rows} carriers with inspection summary data")
+    logger.info(f"Updated {affected} carriers with inspection statistics")
 
 def main():
-    """Main function to orchestrate the data update"""
-    print("=" * 60)
-    print("🚗 VEHICLE INSPECTION DATA UPDATER")
-    print("=" * 60)
+    """Main function to update inspection data"""
+    logger.info("=" * 60)
+    logger.info("Starting vehicle inspection data update...")
+    logger.info("=" * 60)
 
     # Connect to database
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
 
     try:
-        # Create/verify inspection table
-        create_inspection_table(conn)
+        # Create table if needed
+        create_vehicle_inspections_table(conn)
 
-        # Fetch and process data in batches
+        # Check if carriers with DOT numbers exist
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM carriers WHERE dot_number IS NOT NULL AND dot_number > 0")
+        carrier_count = cursor.fetchone()[0]
+        logger.info(f"Found {carrier_count:,} carriers with DOT numbers")
+
+        # Fetch and update data
         offset = 0
-        limit = 1000
+        batch_size = 1000
         total_processed = 0
-        batch_num = 1
+        total_updated = 0
+        max_records = 50000  # Limit for initial import
 
-        print("\n📥 Fetching inspection data from DOT API...")
-        print("This may take several minutes for large datasets...")
+        logger.info("Fetching inspection data from DOT API...")
+        logger.info("This may take several minutes...")
 
-        while True:
-            print(f"\n📦 Processing batch {batch_num} (records {offset} - {offset + limit})...")
-
-            # Fetch batch of inspection data
-            inspections = fetch_inspection_data(offset, limit)
+        while total_processed < max_records:
+            logger.info(f"Fetching batch at offset {offset}...")
+            inspections = fetch_inspections(offset, batch_size)
 
             if not inspections:
-                print("✅ No more records to fetch")
+                logger.info("No more data to fetch")
                 break
 
-            # Process and insert/update records
-            processed = update_inspections(conn, inspections)
-            total_processed += processed
+            cursor = conn.cursor()
+            batch_updated = 0
 
-            print(f"   Processed {processed} inspection records")
+            # Filter to only include inspections for carriers in our database
+            for inspection in inspections:
+                dot_number = safe_int(inspection.get('dot_number'))
+                if dot_number > 0:
+                    # Check if carrier exists in our database
+                    cursor.execute("SELECT 1 FROM carriers WHERE dot_number = ? LIMIT 1", (dot_number,))
+                    if cursor.fetchone():
+                        if update_inspection_record(cursor, inspection):
+                            batch_updated += 1
 
-            # If we got less than the limit, we've reached the end
-            if len(inspections) < limit:
+            conn.commit()
+
+            total_processed += len(inspections)
+            total_updated += batch_updated
+
+            logger.info(f"Processed {len(inspections)} records, updated {batch_updated}")
+
+            # If we got less than batch_size, we've reached the end
+            if len(inspections) < batch_size:
                 break
 
-            offset += limit
-            batch_num += 1
+            offset += batch_size
 
-            # Be nice to the API
+            # Rate limiting to avoid overwhelming the API
             time.sleep(0.5)
 
-            # Limit for testing (remove this for full import)
-            if batch_num > 10:  # Process only first 10,000 records for testing
-                print("\n⚠️  Stopping at 10,000 records for testing")
-                print("   Remove this limit in production")
-                break
+        # Update carrier statistics
+        logger.info("Updating carrier statistics...")
+        update_carrier_inspection_stats(conn)
 
-        print(f"\n✅ Total inspection records processed: {total_processed}")
-
-        # Update carrier summary information
-        print("\n📊 Updating carrier summary information...")
-        add_inspection_summary_to_carriers(conn)
-
-        # Show some statistics
+        # Get summary statistics
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT
-                COUNT(DISTINCT dot_number) as carriers_with_inspections,
-                COUNT(*) as total_inspections,
-                AVG(viol_total) as avg_violations,
-                MAX(insp_date) as most_recent_inspection
-            FROM vehicle_inspections
-        ''')
+        cursor.execute("SELECT COUNT(*) FROM vehicle_inspections")
+        total_inspections = cursor.fetchone()[0]
 
-        stats = cursor.fetchone()
-        print("\n📈 DATABASE STATISTICS:")
-        print(f"   Carriers with inspections: {stats['carriers_with_inspections']:,}")
-        print(f"   Total inspection records: {stats['total_inspections']:,}")
-        print(f"   Average violations per inspection: {stats['avg_violations']:.2f}")
-        print(f"   Most recent inspection: {stats['most_recent_inspection']}")
+        cursor.execute("SELECT COUNT(DISTINCT dot_number) FROM vehicle_inspections")
+        carriers_with_inspections = cursor.fetchone()[0]
 
-        print("\n✅ Vehicle inspection data update complete!")
+        cursor.execute("SELECT COUNT(DISTINCT vehicle_vin) FROM vehicle_inspections WHERE vehicle_vin IS NOT NULL AND vehicle_vin != ''")
+        unique_vins = cursor.fetchone()[0]
+
+        logger.info(f"\n{'=' * 60}")
+        logger.info("UPDATE COMPLETE")
+        logger.info(f"{'=' * 60}")
+        logger.info(f"Total records processed: {total_processed:,}")
+        logger.info(f"Total records updated: {total_updated:,}")
+        logger.info(f"Total inspections in database: {total_inspections:,}")
+        logger.info(f"Carriers with inspection data: {carriers_with_inspections:,}")
+        logger.info(f"Unique VINs found: {unique_vins:,}")
+        logger.info(f"{'=' * 60}")
 
     except Exception as e:
-        print(f"\n❌ Error: {e}")
+        logger.error(f"Error during update: {e}")
         import traceback
         traceback.print_exc()
+        conn.rollback()
     finally:
         conn.close()
 

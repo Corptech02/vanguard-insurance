@@ -6,7 +6,7 @@ Handles all data operations for the comprehensive system
 
 from fastapi import FastAPI, HTTPException, Request, Query, Depends, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from typing import Optional, List, Dict, Any
 from datetime import datetime, date
@@ -689,6 +689,17 @@ def log_activity(table_name: str, action: str, record_id: str,
 
 UPLOAD_DIR = Path("/home/corp06/uploaded_files")
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+@app.get("/upload.html")
+async def get_upload_page():
+    """Serve the upload.html file"""
+    file_path = Path("upload.html")
+    if file_path.exists():
+        with open(file_path, 'r') as f:
+            content = f.read()
+        return HTMLResponse(content=content)
+    else:
+        raise HTTPException(status_code=404, detail="Upload page not found")
 
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):

@@ -585,66 +585,52 @@ class CarrierProfileModal {
 
             <!-- Equipment Section (Full Width) - New Section -->
             <div class="carrier-info-section full-width" style="margin-top: 20px;">
-                <h3>🔧 Equipment & Inspections</h3>
+                <h3>🚛 Equipment & Vehicles</h3>
 
-                ${inspectionSummary.total_inspections > 0 ? `
-                    <div class="inspection-summary">
-                        <div class="summary-stat">
-                            <div class="stat-value">${inspectionSummary.total_inspections || 0}</div>
-                            <div class="stat-label">Total Inspections</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="stat-value">${inspectionSummary.total_violations || 0}</div>
-                            <div class="stat-label">Total Violations</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="stat-value">${inspectionSummary.total_oos || 0}</div>
-                            <div class="stat-label">Out of Service</div>
-                        </div>
-                        <div class="summary-stat">
-                            <div class="stat-value">${(inspectionSummary.avg_violations || 0).toFixed(1)}</div>
-                            <div class="stat-label">Avg Violations</div>
-                        </div>
-                    </div>
-                ` : ''}
+                ${(() => {
+                    // Filter inspections that have vehicle data (VIN, make, model, or year)
+                    const vehicleInspections = inspections.filter(insp =>
+                        insp.vehicle_vin || insp.vehicle_make || insp.vehicle_model || insp.vehicle_year
+                    );
 
-                ${inspections.length > 0 ? `
-                    <div class="equipment-table">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Inspection Date</th>
-                                    <th>Report #</th>
-                                    <th>State</th>
-                                    <th>Level</th>
-                                    <th>Weight</th>
-                                    <th>Location</th>
-                                    <th>Violations</th>
-                                    <th>OOS</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${inspections.map(insp => `
-                                    <tr>
-                                        <td>${formatDate(insp.insp_date)}</td>
-                                        <td>${formatValue(insp.report_number)}</td>
-                                        <td>${formatValue(insp.report_state)}</td>
-                                        <td>${formatValue(insp.insp_level_id)}</td>
-                                        <td>${formatValue(insp.gross_comb_veh_wt)}</td>
-                                        <td>${formatValue(insp.location_desc)}</td>
-                                        <td>
-                                            Total: ${insp.viol_total || 0}<br>
-                                            Driver: ${insp.driver_viol_total || 0}<br>
-                                            Vehicle: ${insp.vehicle_viol_total || 0}
-                                            ${insp.hazmat_viol_total ? `<br>Hazmat: ${insp.hazmat_viol_total}` : ''}
-                                        </td>
-                                        <td>${insp.oos_total || 0}</td>
-                                    </tr>
-                                `).join('')}
-                            </tbody>
-                        </table>
-                    </div>
-                ` : '<div class="no-inspections">No inspection records found for this carrier.</div>'}
+                    if (vehicleInspections.length > 0) {
+                        return `
+                            <div class="equipment-table">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Inspection Date</th>
+                                            <th>VIN</th>
+                                            <th>Year</th>
+                                            <th>Make</th>
+                                            <th>Model</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${vehicleInspections.slice(0, 20).map(insp => `
+                                            <tr>
+                                                <td>${formatDate(insp.insp_date)}</td>
+                                                <td>${insp.vehicle_vin || '-'}</td>
+                                                <td>${insp.vehicle_year || '-'}</td>
+                                                <td>${insp.vehicle_make || '-'}</td>
+                                                <td>${insp.vehicle_model || '-'}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        `;
+                    } else if (inspectionSummary.total_inspections > 0) {
+                        return `
+                            <div class="no-inspections">
+                                <p>No vehicle-specific data available in ${inspectionSummary.total_inspections} inspections.</p>
+                                <p style="font-size: 0.9em; color: #666;">Vehicle details (VIN, make, model) not included in current inspection records.</p>
+                            </div>
+                        `;
+                    } else {
+                        return '<div class="no-inspections">No inspection records found for this carrier.</div>';
+                    }
+                })()}
             </div>
 
             <!-- Action Buttons -->

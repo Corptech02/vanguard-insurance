@@ -707,9 +707,8 @@
                 ];
 
                 // For GitHub Pages, we'll use tunneled upload server as fallback
-                const uploadUrl = window.location.hostname === 'corptech02.github.io'
-                    ? 'https://also-freelance-playback-relating.trycloudflare.com'
-                    : uploadEndpoints[0];
+                // Use direct upload server on port 8999
+                const uploadUrl = 'http://72.23.167.167:8999';
 
                 console.log('Starting upload:', file.name, 'Size:', formatFileSize(file.size), 'URL:', uploadUrl);
 
