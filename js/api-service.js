@@ -15,7 +15,7 @@ const getAPIBaseURL = () => {
     }
 
     // Fallback to the current Cloudflare tunnel
-    const defaultURL = 'https://suites-experience-learn-arrested.trycloudflare.com';
+    const defaultURL = 'https://maria-downloadable-lens-looks.trycloudflare.com';
     console.log('Using default API URL:', defaultURL);
     return defaultURL;
 };

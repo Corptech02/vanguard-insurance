@@ -3,7 +3,7 @@
 
 // IMPORTANT: Update this URL when the API server changes
 // Current API is hosted on centralized server with Cloudflare tunnel
-const API_URL = 'https://establishment-high-mostly-modifications.trycloudflare.com';
+const API_URL = 'https://maria-downloadable-lens-looks.trycloudflare.com';
 
 // Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
